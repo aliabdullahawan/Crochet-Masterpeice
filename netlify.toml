@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+
+[build.environment]
+  # Ignore expected public/client-exposed values during Netlify secrets scanning.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_GOOGLE_CLIENT_ID,NEXT_PUBLIC_WHATSAPP_NUMBER,NEXT_PUBLIC_WHATSAPP_CHANNEL,NEXT_PUBLIC_INSTAGRAM_URL,NEXT_PUBLIC_FACEBOOK_URL,NEXT_PUBLIC_TIKTOK_URL,BREVO_SENDER_NAME,BREVO_SENDER_EMAIL"
+
+  # Ignore generated build artifacts where public values are expected to appear.
+  SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/**,.next/**"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
