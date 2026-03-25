@@ -509,7 +509,7 @@ export const Navbar = () => {
                     onMarkAllRead={async () => {
                       setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
                       if (user) {
-                        await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
+                        await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("user_id", user.id).eq("is_read", false);
                       }
                     }}
                   />

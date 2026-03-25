@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export interface CategoryCardItem {
   id: string;
   title: string;
+  emoji?: string;
   description: string;
   bgColor: string; // tailwind gradient classes
   href: string;

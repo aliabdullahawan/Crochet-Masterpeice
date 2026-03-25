@@ -66,7 +66,7 @@ export async function signUpWithEmail(email: string, password: string, name: str
         name,
         phone: phone ?? "",
         address: "",
-      }, { onConflict: "id" });
+      } as unknown as never, { onConflict: "id" });
     } catch {
       // Trigger handles it — this is just a safety net
     }

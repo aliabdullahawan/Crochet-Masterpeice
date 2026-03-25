@@ -290,7 +290,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
                 onClick={(e) => {
                   e.stopPropagation();
                   if (outOfStock) return;
-                  addToCart({ productId: product.id, name: product.name, price: product.price, original_price: product.original_price, category: product.category_name, category_id: product.category_id, stock_quantity: product.stock_quantity, emoji: "" });
+                  addToCart({ productId: product.id, name: product.name, price: product.price, original_price: product.original_price, category: product.category_name, category_id: product.category_id, emoji: "" });
                 }}
                 className={cn("p-2 rounded-xl border transition-all btn-bubble", outOfStock ? "bg-red-50 border-red-200 text-red-400 cursor-not-allowed" : "bg-cream-100 border-caramel/20 text-caramel hover:bg-caramel/10")}
                 title="Add to cart"

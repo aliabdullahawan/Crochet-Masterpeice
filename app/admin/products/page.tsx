@@ -82,13 +82,13 @@ const ProductField = ({
   label, name, type = "text", placeholder, hint, form, errors, onChange,
 }: {
   label: string;
-  name: string;
+  name: keyof ProductFormData;
   type?: string;
   placeholder?: string;
   hint?: string;
-  form: Record<string, unknown>;
-  errors: Record<string, string | undefined>;
-  onChange: (name: string, value: string) => void;
+  form: ProductFormData;
+  errors: Partial<Record<keyof ProductFormData, string>>;
+  onChange: (name: keyof ProductFormData, value: string) => void;
 }) => (
   <div>
     <label className="block text-xs font-sans font-semibold text-ink-light/65 uppercase tracking-wider mb-1.5">{label}</label>
@@ -443,7 +443,7 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
             <div>
               <p className="text-sm font-bold font-sans text-ink-dark">PKR {displayPrice.toLocaleString()}</p>
               {showDiscountPrice && (
-                <p className="text-[10px] text-ink-light/40 font-sans line-through">PKR {product.original_price.toLocaleString()}</p>
+                <p className="text-[10px] text-ink-light/40 font-sans line-through">PKR {Number(product.original_price ?? 0).toLocaleString()}</p>
               )}
             </div>
             <div className="flex items-center gap-1">
@@ -485,7 +485,7 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
       <div>
         <p className="text-sm font-bold font-sans text-ink-dark">PKR {displayPrice.toLocaleString()}</p>
         {showDiscountPrice && (
-          <p className="text-[10px] text-ink-light/40 font-sans line-through">PKR {product.original_price.toLocaleString()}</p>
+          <p className="text-[10px] text-ink-light/40 font-sans line-through">PKR {Number(product.original_price ?? 0).toLocaleString()}</p>
         )}
       </div>
 
@@ -653,7 +653,7 @@ export default function AdminProductsPage() {
       images: data.images ?? [],
     };
     if (editing) {
-      const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("products").update(payload as unknown as never).eq("id", editing.id);
       if (error) { alert("Save failed: " + error.message); return; }
 
       const inferredDiscountValue = (() => {
@@ -686,9 +686,9 @@ export default function AdminProductsPage() {
           };
 
           if (existingId) {
-            await supabase.from("discounts").update(modernPayload).eq("id", existingId);
+            await supabase.from("discounts").update(modernPayload as unknown as never).eq("id", existingId);
           } else {
-            await supabase.from("discounts").insert(modernPayload);
+            await supabase.from("discounts").insert(modernPayload as unknown as never);
           }
         } else {
           const legacyCheck = await supabase.from("discounts").select("id").eq("product_id", editing.id).limit(1);
@@ -703,19 +703,19 @@ export default function AdminProductsPage() {
             end_date: null,
           };
           if (existingId) {
-            await supabase.from("discounts").update(legacyPayload).eq("id", existingId);
+            await supabase.from("discounts").update(legacyPayload as unknown as never).eq("id", existingId);
           } else {
-            await supabase.from("discounts").insert(legacyPayload);
+            await supabase.from("discounts").insert(legacyPayload as unknown as never);
           }
         }
       } else {
         const modernDeactivate = await supabase
           .from("discounts")
-          .update({ active: false })
+          .update({ active: false } as unknown as never)
           .eq("applies_to", "product")
           .eq("target_id", editing.id);
         if (modernDeactivate.error) {
-          await supabase.from("discounts").update({ active: false }).eq("product_id", editing.id);
+          await supabase.from("discounts").update({ active: false } as unknown as never).eq("product_id", editing.id);
         }
       }
 
@@ -723,6 +723,7 @@ export default function AdminProductsPage() {
         ? {
             ...pr,
             ...payload,
+            original_price: payload.original_price ?? undefined,
             category_name: cat?.name ?? pr.category_name,
             discount_active: data.discount_active,
             discount_type: "percent",
@@ -731,8 +732,9 @@ export default function AdminProductsPage() {
         : pr
       ));
     } else {
-      const { data: inserted, error } = await supabase.from("products").insert(payload).select().single();
+      const { data: inserted, error } = await supabase.from("products").insert(payload as unknown as never).select().single();
       if (error) { alert("Create failed: " + error.message); return; }
+      const insertedRow = inserted as ({ id: string; original_price?: number | null } & Record<string, unknown>) | null;
       const inferredDiscountValue = (() => {
         const sale = Number(data.price);
         const original = Number(data.original_price || 0);
@@ -741,31 +743,32 @@ export default function AdminProductsPage() {
       })();
       const finalDiscountValue = inferredDiscountValue;
 
-      if (inserted && data.discount_active && finalDiscountValue > 0) {
+      if (insertedRow && data.discount_active && finalDiscountValue > 0) {
         const modernInsert = await supabase.from("discounts").insert({
           code: null,
           discount_type: "percent",
           discount_value: finalDiscountValue,
           applies_to: "product",
-          target_id: inserted.id,
+          target_id: insertedRow.id,
           active: true,
           start_date: new Date().toISOString(),
           end_date: null,
-        });
+        } as unknown as never);
         if (modernInsert.error) {
           await supabase.from("discounts").insert({
             code: null,
             discount_type: "percent",
             discount_value: finalDiscountValue,
-            product_id: inserted.id,
+            product_id: insertedRow.id,
             active: true,
             start_date: new Date().toISOString(),
             end_date: null,
-          });
+          } as unknown as never);
         }
       }
-      if (inserted) setProducts(p => [...p, {
-        ...inserted, category_name: cat?.name ?? "",
+      if (insertedRow) setProducts(p => [...p, {
+        ...(insertedRow as unknown as Product), category_name: cat?.name ?? "",
+        original_price: insertedRow.original_price ?? undefined,
         average_rating: 0, review_count: 0,
         discount_active: data.discount_active,
         discount_type: "percent",
@@ -885,13 +888,13 @@ export default function AdminProductsPage() {
                 onDelete={() => setDelId(p.id)}
                 onToggle={async () => {
                   const newVal = !p.is_active;
-                  const { error } = await supabase.from("products").update({ is_active: newVal }).eq("id", p.id);
+                  const { error } = await supabase.from("products").update({ is_active: newVal } as unknown as never).eq("id", p.id);
                   if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_active: newVal } : pr));
                   else alert("Update failed: " + error.message);
                 }}
                 onToggleFeatured={async () => {
                   const newVal = !p.is_featured;
-                  const { error } = await supabase.from("products").update({ is_featured: newVal }).eq("id", p.id);
+                  const { error } = await supabase.from("products").update({ is_featured: newVal } as unknown as never).eq("id", p.id);
                   if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_featured: newVal } : pr));
                   else alert("Update failed: " + error.message);
                 }}

@@ -121,8 +121,10 @@ export default function LoginPage() {
         .eq("password_hash", password)
         .single();
 
-      if (!adminErr && adminData) {
-        startAdminSession(adminData.name, adminData.email);
+      const admin = (adminData as { name: string; email: string } | null);
+
+      if (!adminErr && admin) {
+        startAdminSession(admin.name, admin.email);
         setLoading(false);
         window.location.href = "/admin/dashboard";
         return;

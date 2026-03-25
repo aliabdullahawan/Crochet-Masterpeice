@@ -396,9 +396,10 @@ export default function ProductDetailPage() {
         .single();
 
       if (data && !error) {
+        const listing = data as { images?: string[] | null; image_url?: string | null } & Record<string, unknown>;
         setProduct({
-          ...data,
-          images: data.images?.length ? data.images : (data.image_url ? [data.image_url] : []),
+          ...(listing as unknown as ProductDetail),
+          images: listing.images?.length ? listing.images : (listing.image_url ? [listing.image_url] : []),
         } as ProductDetail);
         setPageLoading(false);
         return;
@@ -566,7 +567,6 @@ export default function ProductDetailPage() {
         original_price: product.original_price,
         category: product.category_name,
         category_id: product.category_id,
-        stock_quantity: product.stock_quantity,
         emoji: "",
       }, Math.min(quantity, remainingStock));
 
@@ -723,7 +723,7 @@ export default function ProductDetailPage() {
                 onClick={() => addToCart({
                   productId: product.id, name: product.name,
                   price: product.price, original_price: product.original_price,
-                  category: product.category_name, category_id: product.category_id, stock_quantity: product.stock_quantity, emoji: "",
+                  category: product.category_name, category_id: product.category_id, emoji: "",
                 }, Math.min(quantity, remainingStock))}
                 disabled={outOfStock || remainingStock <= 0}
               />

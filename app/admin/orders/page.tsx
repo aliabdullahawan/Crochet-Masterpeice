@@ -285,10 +285,12 @@ export default function AdminOrdersPage() {
       .select("id, stock_quantity")
       .in("id", productIds);
 
-    const updates = (products ?? []).map((p) => {
+    const typedProducts = (products ?? []) as Array<{ id: string; stock_quantity: number | null }>;
+
+    const updates = typedProducts.map((p) => {
       const orderedQty = quantityByProduct.get(p.id) ?? 0;
       const nextStock = Math.max(0, Number(p.stock_quantity ?? 0) - orderedQty);
-      return supabase.from("products").update({ stock_quantity: nextStock }).eq("id", p.id);
+      return supabase.from("products").update({ stock_quantity: nextStock } as unknown as never).eq("id", p.id);
     });
 
     await Promise.all(updates);
@@ -306,7 +308,7 @@ export default function AdminOrdersPage() {
 
     const resolvedId = (data as { id: string } | null)?.id ?? null;
     if (resolvedId) {
-      await supabase.from("orders").update({ user_id: resolvedId }).eq("id", order.id);
+      await supabase.from("orders").update({ user_id: resolvedId } as unknown as never).eq("id", order.id);
       setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, user_id: resolvedId } : o));
       setSelected((prev) => prev?.id === order.id ? { ...prev, user_id: resolvedId } : prev);
     }
@@ -325,7 +327,7 @@ export default function AdminOrdersPage() {
 
     const shouldDeductStock = status === "shipped" && current.status !== "shipped" && current.status !== "delivered";
 
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+    const { error } = await supabase.from("orders").update({ status } as unknown as never).eq("id", id);
     if (error) { alert("Status update failed: " + error.message); return; }
 
     const notifyUserId = await resolveOrderUserId(current);
@@ -367,7 +369,7 @@ export default function AdminOrdersPage() {
     // - clean/legacy schema: orders.note
     const { error: adminNoteErr } = await supabase
       .from("orders")
-      .update({ admin_note: message })
+      .update({ admin_note: message } as unknown as never)
       .eq("id", id);
 
     if (adminNoteErr) {
@@ -382,7 +384,7 @@ export default function AdminOrdersPage() {
 
         const { error: noteErr } = await supabase
           .from("orders")
-          .update({ note: mergedNote })
+          .update({ note: mergedNote } as unknown as never)
           .eq("id", id);
 
         if (noteErr) {

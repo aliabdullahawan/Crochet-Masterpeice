@@ -13,6 +13,14 @@ interface Category {
   image_url?: string; // base64 data URL or Supabase URL when connected
 }
 
+interface CategoryForm {
+  name: string;
+  description: string;
+  active: boolean;
+  sort_order: number;
+  image_url: string;
+}
+
 // Categories loaded from Supabase
 
 function useAdminAuth() {
@@ -62,10 +70,10 @@ export default function AdminCategoriesPage() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", description: "", active: true, sort_order: 99 });
+  const [form, setForm] = useState<CategoryForm>({ name: "", description: "", active: true, sort_order: 99, image_url: "" });
   const [err, setErr] = useState("");
 
-  const openNew = () => { setEditing(null); setForm({ name: "", description: "", active: true, sort_order: cats.length + 1 }); setErr(""); setModal(true); };
+  const openNew = () => { setEditing(null); setForm({ name: "", description: "", active: true, sort_order: cats.length + 1, image_url: "" }); setErr(""); setModal(true); };
   const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, description: c.description, active: c.active, sort_order: c.sort_order, image_url: c.image_url ?? "" }); setErr(""); setModal(true); };
 
   const [saving, setSaving] = useState(false);
@@ -73,22 +81,40 @@ export default function AdminCategoriesPage() {
   const handleSave = async () => {
     if (!form.name.trim()) { setErr("Category name is required."); return; }
     setSaving(true);
+    const payload = {
+      name: form.name,
+      description: form.description,
+      is_active: form.active,
+      sort_order: Math.max(1, form.sort_order),
+      image_url: form.image_url || null,
+    };
+
     if (editing) {
-      const { error } = await supabase.from("categories").update({
-        name: form.name, description: form.description,
-        is_active: form.active, sort_order: Math.max(1, form.sort_order),
-        image_url: form.image_url || null,
-      }).eq("id", editing.id);
+      const { error } = await supabase.from("categories").update(payload as unknown as never).eq("id", editing.id);
       if (error) { setErr(error.message); setSaving(false); return; }
       setCats((p) => p.map((c) => c.id === editing.id ? { ...c, ...form, sort_order: Math.max(1, form.sort_order) } : c));
     } else {
-      const { data, error } = await supabase.from("categories").insert({
-        name: form.name, description: form.description,
-        is_active: form.active, sort_order: Math.max(1, form.sort_order),
-        image_url: form.image_url || null,
-      }).select().single();
+      const { data, error } = await supabase.from("categories").insert(payload as unknown as never).select().single();
       if (error) { setErr(error.message); setSaving(false); return; }
-      if (data) setCats((p) => [...p, { ...data, active: data.is_active, product_count: 0, image_url: data.image_url }]);
+      if (data) {
+        const inserted = data as {
+          id: string;
+          name: string;
+          description: string | null;
+          image_url: string | null;
+          is_active: boolean;
+          sort_order: number;
+        };
+        setCats((p) => [...p, {
+          id: inserted.id,
+          name: inserted.name,
+          description: inserted.description ?? "",
+          image_url: inserted.image_url ?? undefined,
+          active: inserted.is_active,
+          sort_order: inserted.sort_order,
+          product_count: 0,
+        }]);
+      }
     }
     setSaving(false);
     setModal(false);

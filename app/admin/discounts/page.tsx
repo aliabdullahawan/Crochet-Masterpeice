@@ -101,14 +101,14 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
 
   const handleSave = () => { if (validate()) onSave(form); };
 
-  const Field = ({ label, name, type = "text", placeholder, hint }: { label: string; name: string; type?: string; placeholder?: string; hint?: string }) => (
+  const Field = ({ label, name, type = "text", placeholder, hint }: { label: string; name: keyof DiscountForm; type?: string; placeholder?: string; hint?: string }) => (
     <div>
       <label className="block text-xs font-sans font-semibold text-ink-light/65 uppercase tracking-wider mb-1.5">{label}</label>
-      <input type={type} value={(form as Record<string, unknown>)[name] as string}
+      <input type={type} value={String(form[name] ?? "")}
         onChange={(e) => {
           let v = e.target.value;
           if (type === "number") v = String(Math.max(0, Number(v)));
-          setForm(f => ({ ...f, [name]: v }));
+          setForm(f => ({ ...f, [name]: v } as DiscountForm));
           setErrors(er => ({ ...er, [name]: undefined }));
         }}
         min={type === "number" ? "0" : undefined}
@@ -508,13 +508,16 @@ export default function AdminDiscountsPage() {
       end_date: discount.end_date,
     };
     if (editing) {
-      const { error } = await supabase.from("discounts").update(dbPayload).eq("id", editing.id);
+      const { error } = await supabase.from("discounts").update(dbPayload as unknown as never).eq("id", editing.id);
       if (error) { alert("Save failed: " + error.message); return; }
       setDiscounts(p => p.map(d => d.id === editing.id ? discount : d));
     } else {
-      const { data: ins, error } = await supabase.from("discounts").insert(dbPayload).select().single();
+      const { data: ins, error } = await supabase.from("discounts").insert(dbPayload as unknown as never).select().single();
       if (error) { alert("Create failed: " + error.message); return; }
-      if (ins) setDiscounts(p => [...p, { ...discount, id: ins.id }]);
+      if (ins) {
+        const inserted = ins as { id: string };
+        setDiscounts(p => [...p, { ...discount, id: inserted.id }]);
+      }
     }
     setModal(false); setEditing(undefined);
   };
@@ -625,7 +628,7 @@ export default function AdminDiscountsPage() {
               <DiscountRow key={d.id} d={d}
                 onEdit={() => { setEditing(d); setModal(true); }}
                 onDelete={() => setDelId(d.id)}
-                onToggle={async () => { const newActive = !d.active; await supabase.from('discounts').update({ active: newActive }).eq('id', d.id); setDiscounts(p => p.map(di => di.id === d.id ? { ...di, active: newActive } : di)); }}
+                onToggle={async () => { const newActive = !d.active; await supabase.from('discounts').update({ active: newActive } as unknown as never).eq('id', d.id); setDiscounts(p => p.map(di => di.id === d.id ? { ...di, active: newActive } : di)); }}
                 onCopy={() => d.code && copyCode(d.code)}
               />
             ))}

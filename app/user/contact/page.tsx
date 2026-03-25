@@ -25,7 +25,7 @@ const TikTokIcon = ({ size = 22 }: { size?: number }) => (
 
 interface SocialPlatform {
   name: string; handle: string; url: string; description: string;
-  icon: React.ReactNode; gradient: string; textColor: string; followLabel: string;
+  icon: React.ReactNode; gradient: string; iconBg: string; btnBg: string; textColor: string; followLabel: string;
 }
 
 const SOCIALS: SocialPlatform[] = [

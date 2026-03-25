@@ -140,7 +140,7 @@ export default function ForgotPasswordPage() {
     const { error } = await sendPasswordReset(email.trim());
     setIsLoading(false);
     if (error) {
-      setEmailError(error.message);
+      setError(error.message);
       return;
     }
     setCountdown(60);

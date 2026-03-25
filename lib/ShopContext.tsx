@@ -14,6 +14,7 @@ export interface CartItem {
   original_price?: number;
   category: string;
   category_id?: string;
+  stock_quantity?: number;
   quantity: number;
   emoji: string;
 }

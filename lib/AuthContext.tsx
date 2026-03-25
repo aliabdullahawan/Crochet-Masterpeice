@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: u.email!,
                 name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email ?? "User",
                 avatar_url: u.user_metadata?.avatar_url ?? null,
-              }, { onConflict: "id" });
+              } as unknown as never, { onConflict: "id" });
             } catch { /* users table may not exist yet */ }
           }
         }

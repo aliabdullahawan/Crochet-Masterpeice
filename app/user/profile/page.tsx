@@ -108,8 +108,9 @@ export default function UserProfilePage() {
       });
       // Load user's chosen avatar style from DB
       supabase.from("users").select("avatar_url").eq("id", user.id).single().then(({ data }) => {
-        if (data?.avatar_url?.includes("dicebear")) {
-          const match = data.avatar_url.match(/7\.x\/([^/]+)\//);
+        const row = data as { avatar_url?: string | null } | null;
+        if (row?.avatar_url?.includes("dicebear")) {
+          const match = row.avatar_url.match(/7\.x\/([^/]+)\//);
           if (match) setAvatarStyle(match[1]);
         }
       });
@@ -125,7 +126,7 @@ export default function UserProfilePage() {
     if (!error) {
       await supabase.from("users").update({
         name: form.name, phone: form.phone || null, address: form.address || null,
-      }).eq("id", user.id);
+      } as unknown as never).eq("id", user.id);
       localStorage.setItem("cm_user_name", form.name);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -139,7 +140,7 @@ export default function UserProfilePage() {
     setSaving(true);
     const avatarUrl = dicebearUrl(user.email ?? user.id, avatarStyle);
     await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
-    await supabase.from("users").update({ avatar_url: avatarUrl }).eq("id", user.id);
+    await supabase.from("users").update({ avatar_url: avatarUrl } as unknown as never).eq("id", user.id);
     localStorage.setItem("cm_user_avatar", avatarUrl);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

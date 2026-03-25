@@ -162,11 +162,11 @@ export default function NotificationsPage() {
   const markAllRead = async () => {
     if (!user) return;
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
+    await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("user_id", user.id).eq("is_read", false);
   };
   const markRead = async (id: string) => {
     setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
-    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+    await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("id", id);
   };
   const deleteNotif = async (id: string) => {
     setNotifs((prev) => prev.filter((n) => n.id !== id));
