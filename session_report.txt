@@ -1,0 +1,526 @@
+================================================================
+CROCHET MASTERPIECE — SESSION REPORTS
+================================================================
+
+================================================================
+SESSION 1 REPORT
+Date: 2025-03-20
+Duration: Single session
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE:
+  Project setup + Authentication pages (Login, Forgot Password, Signup)
+
+WHAT WAS BUILT:
+─────────────────────────────────────────────────────────────
+1. FULL PROJECT SCAFFOLD
+   - Next.js 15 (App Router) + TypeScript + Tailwind CSS 3
+   - Complete folder structure for both user and admin sections
+   - package.json with all required dependencies
+   - tsconfig.json, postcss.config.mjs, next.config.ts
+
+2. DESIGN SYSTEM (tailwind.config.ts + globals.css)
+   - Brand palette: cream, blush, mauve, caramel, latte, rose, ink
+   - Custom fonts: Playfair Display (display), Dancing Script (script),
+     Nunito (UI), Lato (body) — loaded from Google Fonts
+   - 15+ custom animations: float, bloom, shimmer, petal fall,
+     morph-in, slide-up, yarn-unwind, sparkle, etc.
+   - Glassmorphism utilities (.glass, .glass-light, .glass-navbar)
+   - Consistent CSS custom properties for all brand tokens
+   - Custom scrollbar, selection highlight, noise texture overlay
+   - Input styles, button bubble effect, gradient text utilities
+   - Yarn divider decoration
+
+3. LOGIN PAGE (/user/login)
+   - Glassmorphism card with blush/cream gradient header
+   - Animated logo area with entrance stagger (8 layers, 100ms apart)
+   - Interactive inputs with mouse-following radial gradient glow
+     (top and bottom border light tracks cursor position)
+   - Google OAuth button (UI complete, backend TODO)
+   - Show/hide password toggle
+   - Forgot password link → /user/forgot-password
+   - Shatter-explosion button with particle shards on click
+   - Ring expansion animation on button press
+   - Falling petal background decorations
+   - SVG yarn ball decorations (slowly rotating)
+   - Gold sparkle stars scattered at key positions
+   - Guest access link → home
+   - Sign up redirect link with animated underline
+
+4. FORGOT PASSWORD PAGE (/user/forgot-password)
+   - 4-step flow: Email → OTP → New Password → Success
+   - Visual step indicator with checkmarks
+   - OTP input: 6-digit individual boxes, paste-to-fill, auto-advance,
+     backspace-to-previous behaviour
+   - 60-second countdown timer for "Resend Code"
+   - Password strength bar (4 segments, colour-coded)
+   - Password match validation
+   - Success state with bloom animation and checkmark
+   - All steps animate in with morph-in effect
+
+5. SIGNUP PAGE (/user/signup)
+   - All required fields: name, email, password, confirm, phone, address
+   - Avatar picker: 8 predefined emoji avatars with gradient backgrounds,
+     ring highlight on selection, scale-up hover
+   - Two-column password layout on larger screens
+   - Textarea for delivery address
+   - Animated checkbox for terms agreement
+   - Staggered field entrance animations
+   - Full form validation with per-field error messages
+
+6. CROCHET LOGO SVG (/components/ui/CrochetLogo.tsx)
+   - Fully recreated in code — no image file dependency
+   - Circular frame with caramel stroke
+   - Pink flower (top left) with gold centre
+   - Green leaf/branch botanical element
+   - Gold wheat/feather accent (top right)
+   - Three yarn balls (pink, teal, cream) with thread lines
+   - Angled crochet hook
+   - "Crochet master piece" text using Playfair + Dancing Script
+   - Three variants: full, icon, horizontal
+   - Scales to any size
+
+7. DATABASE.sql (complete Supabase schema)
+   - Tables: users, admins, avatars, site_settings, categories,
+     products, product_images, discounts, orders, order_items,
+     custom_orders, reviews, wishlist, cart, notifications
+   - All binary image storage (BYTEA — no URLs)
+   - Indexes optimised for: fuzzy search (pg_trgm), foreign keys,
+     status/boolean filters, date sorting
+   - Row Level Security on all user-facing tables
+   - Triggers: auto updated_at, auto-expire discounts,
+     auto-refresh product rating on review CRUD
+   - Stored procedures: apply_coupon_code(), place_order()
+   - Views: product_listing, order_summary, analytics_daily,
+     discount_usage_stats
+   - Custom ENUM types: order_status, order_source, notification_type
+
+8. SUPPORTING FILES
+   - lib/utils.ts — cn(), formatPrice(), formatNumber(),
+     buildWhatsAppOrderMessage(), social URLs
+   - .env.example — all env vars documented and grouped
+   - .gitignore — production-ready for Vercel
+
+DESIGN DECISIONS:
+─────────────────────────────────────────────────────────────
+- Theme: Warm cream/blush/mauve palette, no dark mode anywhere
+- Typography: Playfair Display for headings, Dancing Script for
+  accent text, Nunito for UI, Lato for body — intentionally
+  non-generic, not Inter/Roboto
+- Animations: Cinematic staggered entrance (not instant),
+  mouse-tracking glow on inputs, bloom effects for success states,
+  petal falls for background atmosphere
+- All inputs have hover AND focus states that are visually distinct
+- Buttons always have 3 states: default → hover → active (scale-down)
+- No AI-style purple gradients; brand colours used consistently
+
+KNOWN LIMITATIONS (to address in future sessions):
+─────────────────────────────────────────────────────────────
+- No Supabase connection yet (all async calls are mocked with setTimeout)
+- No actual OTP sending (Brevo integration deferred)
+- Google OAuth button is UI only
+- Logo uses Google Fonts — will need fonts preloaded for production
+
+CURRENT PROGRESS: 4 of 26 tasks complete (15%)
+NEXT SESSION: Task 5 — User Navbar (transparent, sticky, animated)
+              Task 6 — User Hero Section (product carousel, social counts)
+
+INSTALL INSTRUCTIONS FOR YOUR MACHINE:
+─────────────────────────────────────────────────────────────
+1. Unzip the project folder
+2. cd crochet-masterpiece
+3. npm install
+4. cp .env.example .env.local
+5. Fill in your Supabase URL + keys in .env.local
+6. npm run dev
+7. Visit http://localhost:3000
+   → Redirects to /user/login automatically
+
+================================================================
+END OF SESSION 1 REPORT
+================================================================
+
+================================================================
+SESSION 2 REPORT
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE:
+  Fix Session 1 CSS error + Build Navbar + Hero Section
+
+BUG FIXES:
+  - globals.css: `font-600` → `font-semibold` (Tailwind doesn't
+    have numeric font weight classes without a plugin)
+  - login/page.tsx: `font-700` → `font-bold`
+  - Navbar.tsx: `duration-400 ease-smooth` → `duration-300 ease-in-out`
+
+NAVBAR (components/layout/Navbar.tsx):
+  Design choices:
+  - Transparent on initial load, smooth transition to glass-blur
+    (backdrop-filter: blur(20px) saturate(200%)) when scrolled > 20px
+  - Logo: horizontal variant of CrochetLogo SVG
+  - Center links: dual-line scroll-reveal hover animation — the text
+    slides up to reveal the caramel-coloured copy underneath
+  - Active page: caramel dot below link + colour change
+  - Right side icons: Wishlist (heart fills on items), Cart (bag),
+    Bell (notification count badge with bloom animation)
+  - "Get Started" pill button: gradient from-caramel to-rose with
+    shimmer on hover; morphs to "My Account" + avatar when logged in
+  - Notification dropdown: persists while cursor is inside (ref-based
+    outside-click detection), shows icon per type, mark all read
+  - Profile dropdown: shows login/signup when logged out, profile/
+    orders/logout when logged in
+  - Discount ticker: full-width marquee banner above navbar showing
+    all active discount codes with scrolling animation
+  - Mobile: hamburger ↔ X icon swap with rotate animation,
+    slide-down menu with icon-row links + wishlist/cart shortcuts
+
+HERO SECTION (components/user/HeroSection.tsx):
+  Design choices:
+  - yarn-pattern background (radial gradients, no image dependency)
+  - Three-layer parallax on scroll via framer-motion useScroll +
+    useTransform: text fades/scales out, decorations move at 2x rate
+  - Headline cycles through 4 phrases every 3.5s using
+    AnimatePresence with blur-in/blur-out transition
+  - Social count cards: IntersectionObserver triggers count-up
+    animation (ease-out cubic) the moment cards enter viewport
+  - Infinite carousel: CSS animation (transform translateX -50%),
+    doubled array of products, pauses on hover
+  - Product cards: framer-motion spring on hover (scale 1.04, y -10),
+    AnimatePresence quick-buy overlay slides up, spotlight glow,
+    discount badge with pulse, price strikethrough for discounted items
+  - Floating yarn SVGs: framer-motion y + rotate loop animations
+  - Scroll indicator: bouncing dot inside mouse-wheel outline
+  - All data points are ready for Supabase — just swap mock arrays
+
+CURRENT PROGRESS: 7/26 tasks complete (27%)
+NEXT SESSION: Featured Products section, About/Why Us section,
+              Reviews carousel (stagger testimonials style),
+              Footer with hover text effect + animated social buttons
+
+================================================================
+END OF SESSION 2 REPORT
+================================================================
+
+================================================================
+SESSION 3 REPORT
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Complete the Home Page — all sections + Footer
+
+SECTIONS BUILT:
+
+1. FEATURED PRODUCTS (FeaturedProducts.tsx)
+   - Responsive 3-column product grid with staggered reveal
+   - Each card has a spotlight glow that follows the cursor in real
+     time using onMouseMove + CSS radial-gradient at mouse position
+   - Shimmer border: CSS WebkitMask trick creates a glowing border
+     that only shows near the cursor
+   - Shatter buttons: mini explosion particles on every Add/Wishlist
+     click — same pattern as login but scaled down for cards
+   - All price states handled: normal, discounted (strikethrough),
+     discount badge, featured badge
+   - Quick View overlay: AnimatePresence slide-up on hover
+   - Floating petals appear on individual card hover
+
+2. ABOUT SECTION (AboutSection.tsx)
+   - Left column: rotating dashed ring (30s CSS spin), 3 orbiting
+     emoji elements bouncing independently via framer-motion
+   - Stats row: scale-in animation triggered by IntersectionObserver
+   - Right column: admin-editable body text split by double newline
+     so each paragraph animates in separately
+   - Feature pills styled as tags
+   - Parallax: useScroll + useTransform moves the visual column
+     at different rate from page scroll (-20px to +20px range)
+
+3. CUSTOM ORDER BANNER (CustomOrderBanner.tsx)
+   - 3-step explainer with numbered floating badges
+   - Cards lift on hover with border transition
+   - 4 floating emoji decorations animate independently
+   - No-login note below CTA for clarity
+
+4. REVIEWS CAROUSEL (ReviewsSection.tsx)
+   - Stagger layout: cards fan out with position offsets, rotation,
+     and Y translation based on index distance from centre
+   - Click any card → it becomes centre (reorder via array shift)
+   - Angled cut: CSS clip-path polygon for the notched corner style
+   - Box shadow only on centre card (like original reference)
+   - Dot indicators: active dot stretches to a pill shape
+   - 7 Pakistani customer names with realistic review content
+
+5. FOOTER (Footer.tsx)
+   - Dark theme with ink-dark background, stands out from cream body
+   - Social buttons expand to show platform name on hover using
+     framer-motion width animation (0 → auto)
+   - HoverTextSVG: SVG radial gradient mask follows cursor to reveal
+     coloured version of text over the drawn stroke version
+   - Back to top: fixed button, framer-motion opacity + scale in/out
+     triggered at scroll > 400px
+   - WhatsApp direct link button with green brand colour
+
+HOME PAGE COMPLETE — 5 sections + Navbar + Footer:
+  / → HeroSection → FeaturedProducts → AboutSection →
+  CustomOrderBanner → ReviewsSection → Footer
+
+CURRENT PROGRESS: 12/26 tasks (46%)
+NEXT SESSION: Shop page + Product Detail page
+================================================================
+END OF SESSION 3 REPORT
+================================================================
+
+================================================================
+SESSION 4 REPORT
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Social count API + Shop Page + Product Detail Page
+
+SOCIAL COUNTS API (/api/social-counts):
+  - Instagram Graph API: works if INSTAGRAM_ACCESS_TOKEN + INSTAGRAM_USER_ID set
+  - Facebook Graph API: works if FACEBOOK_ACCESS_TOKEN + FACEBOOK_PAGE_ID set
+  - TikTok Research API: works if TIKTOK_ACCESS_TOKEN set
+  - WhatsApp: NO public API — admin manually sets count in Supabase
+  - Site users: real count from Supabase users table via service role
+  - All responses cached 5min (s-maxage=300)
+  - Graceful fallback to Supabase site_settings manual values
+  - HeroSection now fetches from this route on mount
+
+SHOP PAGE:
+  - Animated search: adapted glowing conic-gradient search bar.
+    Cream/caramel version of the dark reference — rotates on hover,
+    spins faster on focus, smooth 2s CSS animation
+  - Real relative search: filters by name, category, AND tags
+  - Desktop sidebar sticky at top-28 inside scrollable page
+  - Mobile drawer: framer-motion spring slide from left
+  - Filter state syncs to URL searchParams (featured, category)
+  - Price range: two overlapping range inputs — validates that
+    min never exceeds max before updating state
+  - framer-motion layout prop on grid: products animate into new
+    positions when filters change rather than jumping
+
+PRODUCT DETAIL PAGE:
+  - Gallery: AnimatePresence with scale+opacity transition between
+    images, thumbnail row with pill indicator
+  - Discount end date: shown as "Sale ends [date]" banner
+  - Savings calculation: shows exact PKR saved
+  - Coupon: applies locally, appended to WhatsApp message string
+  - Order popup: THE KEY FEATURE — two-option modal:
+    1) Send query to admin (website, requires login)
+    2) Buy via WhatsApp (opens wa.me with pre-built message
+       including product name, quantity, price, coupon code)
+  - Review system: shows existing reviews with admin replies,
+    has write-review form with interactive star selector
+  - All sections separated by yarn-divider decorative element
+
+CURRENT PROGRESS: 16/26 tasks (62%)
+NEXT SESSION: Custom Order + Contact Us (completing user section)
+================================================================
+END OF SESSION 4 REPORT
+================================================================
+
+================================================================
+SESSION 5 REPORT
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Humanize copy + Custom Order page + Contact Us page
+
+HUMANIZATION CHANGES:
+  The existing pages used competent but generic marketing copy.
+  This pass rewrote all text to feel like a real person speaking:
+  - First person throughout ("I make...", "I'll reply...", "Hi!")
+  - Conversational asides ("totally fine!", "No rush — take your time!")
+  - Honest about limitations ("We'll figure out the rest on WhatsApp")
+  - Warm but not saccharine — sounds like a real craftsperson, not a brand
+
+CUSTOM ORDER PAGE:
+  Key design decision: the form has three clearly numbered sections
+  (About You / What are you after / Budget & Timing) so users don't
+  feel overwhelmed. Section 3 is explicitly marked "(totally optional)"
+  to lower the barrier to submitting.
+
+  The category selector is a visual tile grid instead of a dropdown —
+  more tactile, more in keeping with the handmade aesthetic.
+
+  The description textarea has a character counter and encouraging
+  placeholder text that tells users exactly what to share.
+
+  WhatsApp message format:
+    🧶 Custom Order Request — Crochet Masterpiece
+    👤 Name: [name]
+    📞 WhatsApp: [phone]
+    📍 Address: [address]
+    🎨 Category: [category]
+    📝 Description: [description]
+    💰 Budget: PKR X – PKR Y
+    ⏰ Needed by: [timeframe]
+    _Sent from website_ ✨
+
+CONTACT PAGE:
+  Each social platform card is written with a distinct personality
+  note about that channel (WA = "fastest", IG = "finished pieces",
+  TikTok = "oddly satisfying"). The chat form explicitly notes that
+  nothing is stored — builds trust with privacy-conscious users.
+
+USER SECTION STATUS: COMPLETE
+  ✅ Login, Forgot Password, Signup
+  ✅ Home (Hero, Featured, About, Custom CTA, Reviews, Footer)
+  ✅ Shop + Product Detail
+  ✅ Custom Order
+  ✅ Contact Us
+
+CURRENT PROGRESS: 19/26 tasks (73%)
+NEXT SESSION: Admin section begins
+================================================================
+END OF SESSION 5 REPORT
+================================================================
+
+================================================================
+SESSION 6 REPORT
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Loading screen + Expanding categories + Cart + Wishlist +
+           Notifications + Shop improvements + Custom order pre-fill
+
+KEY ARCHITECTURE NOTE:
+  All cart, wishlist, and notification state is currently in component
+  useState. When Supabase is connected:
+  - Cart: SELECT * FROM cart WHERE user_id = auth.uid()
+  - Wishlist: SELECT * FROM wishlist WHERE user_id = auth.uid()
+  - Notifications: SELECT * FROM notifications WHERE user_id = auth.uid()
+  All UPDATE/DELETE operations map directly to the DATABASE.sql schema.
+
+LOADING SCREEN:
+  Uses luma-spin keyframe animation adapted with caramel/blush colours
+  instead of gray. The progress bar is fake but feels realistic —
+  25% at 200ms, 55% at 500ms, 80% at 900ms, 95% at 1400ms, 100% at 1800ms.
+  Messages cycle every 700ms through yarn-themed loading copy.
+
+EXPANDING CATEGORIES:
+  Uses CSS grid-template-columns transition (not JS width animation)
+  for performance. The grid column values change from "1fr 1fr 1fr..."
+  to "4fr 1fr 1fr..." and CSS handles the smooth interpolation.
+  Responsive: on mobile switches to grid-template-rows.
+
+USER SECTION: 100% COMPLETE ✅
+
+⚠️ CONTEXT LIMIT NOTE:
+  This conversation is approaching its context window limit.
+  The admin section (Admin Login, Dashboard, Navbar, Categories,
+  Products, Analytics, Orders, Users) + Google OAuth should be
+  built in a NEW conversation. Paste session_task.txt as the
+  first message to continue seamlessly.
+
+TOTAL PROGRESS: 24/26 tasks done (92%)
+REMAINING: Admin section tasks (split across ~3 sessions) + Google OAuth
+================================================================
+END OF SESSION 6 REPORT
+================================================================
+
+================================================================
+SESSION 7 REPORT  
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Cart/wishlist global state + bubble effect + spotlight cards
+           + animated social icons + move categories section
+
+SHOP CONTEXT (lib/ShopContext.tsx):
+  Key behavior per spec:
+  - addToCart: if product already in cart, INCREMENTS quantity (no duplicate)
+  - addToCartFromWishlist: adds to cart but KEEPS the wishlist item
+  - placeOrder: clears ONLY cart. Wishlist survives the order.
+  - Navbar badges now show live counts from context
+
+GLOW CARD:
+  CSS pointer-tracking technique using CSS custom properties --x/--y
+  set on every pointermove event. The ::before/::after pseudo-elements
+  read these values via radial-gradient positioning. The result is a
+  glowing border that appears to track the cursor globally across the page.
+  Applied to FeaturedProducts and Shop page cards.
+
+BUBBLE BUTTON:
+  On click, spawns 8-13 bubble particles at the exact click position
+  with random angles and velocities. Each bubble is a framer-motion
+  span that animates to scale 0 as it travels outward. A shockwave
+  ring also expands from the click point. The existing btn-bubble CSS
+  class is preserved — the BubbleButton component and useBubbleEffect
+  hook ADD on top of existing effects.
+
+ANIMATED SOCIAL ICONS:
+  Plus button slides RIGHT (not up) to reveal 4 social icons behind it.
+  Icons animate from blurred/rotated to clear/straight with spring physics.
+  Integrated in Footer bottom bar.
+
+CATEGORIES POSITION:
+  Moved from after Hero to just ABOVE CustomOrderBanner, as requested.
+  New order: Hero → Featured Products → About → Categories → Custom Order CTA → Reviews
+
+USER SECTION: 100% COMPLETE ✅
+
+⚠️ START NEW CHAT FOR ADMIN SECTION
+   Copy session_task.txt into new conversation as context.
+================================================================
+END OF SESSION 7 REPORT
+================================================================
+
+================================================================
+SESSION 15 REPORT
+Date: 2025-03-20
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Admin Discounts, Google OAuth, Supabase wiring,
+           richer card colours, env setup, MD files
+
+KEY DELIVERABLES:
+  .env.local — all 4 Supabase keys + Brevo keys configured
+  lib/supabase.ts — typed client ready for connection
+  Google OAuth — one-click login via supabase.auth.signInWithOAuth
+  Admin Discounts — full CRUD with coupon codes, product/category targeting
+  Card theme — warm brown/pink gradient variants across admin + user
+
+PROJECT STATUS: FEATURE COMPLETE
+================================================================
+
+================================================================
+SESSION 16 REPORT
+Date: 2025-03-21
+Status: COMPLETE ✓
+================================================================
+
+OBJECTIVE: Full Supabase auth wiring, user profile, admin profile
+           with social counts, no hardcoding anywhere
+
+KEY CHANGES:
+  - ALL auth is now real Supabase calls — no hardcoded credentials
+  - Google OAuth wired (needs GOOGLE_CLIENT_SECRET in Supabase dashboard)
+  - OTP password reset fully wired (step 1: email → step 2: verify → step 3: update)
+  - User profile page with DiceBear avatar picker (4 styles)
+  - Admin profile: manual social count editor → saves to site_settings
+
+GOOGLE OAUTH NOTE:
+  You need to add the Google Client Secret in:
+  Supabase Dashboard → Auth → Providers → Google
+  Client ID: 35407490439-uo798spa0vucha5udi31khgt7s7lti1e.apps.googleusercontent.com
+  Client Secret: (get from Google Console → your project → OAuth credentials)
+
+  Also add to Google Console → Authorized redirect URIs:
+  https://ppsulgueckychgazdjbr.supabase.co/auth/v1/callback
+
+BREVO EMAIL NOTE:
+  Supabase will send OTP emails via its default template.
+  To use Brevo for beautiful custom emails, configure:
+  Supabase Dashboard → Auth → SMTP Settings
+  Host: smtp-relay.brevo.com  Port: 587
+  User: amnamubeen516@gmail.com  Pass: (BREVO_SMTP_KEY value)
+================================================================

@@ -1,0 +1,511 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Dancing+Script:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700;800&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================
+   CSS CUSTOM PROPERTIES — CROCHET MASTERPIECE
+   ============================================= */
+:root {
+  /* Brand Colors */
+  --cream-50:   #FFFDF7;
+  --cream-100:  #FFF8ED;
+  --cream-200:  #FFF1D6;
+  --cream-300:  #FFE8B8;
+  --cream:      #F5EDD6;
+
+  --blush-50:   #FFF0F3;
+  --blush-100:  #FFD6DE;
+  --blush-200:  #FFB3C1;
+  --blush:      #F4B8C1;
+
+  --mauve-100:  #F0D6F5;
+  --mauve-200:  #E0B0EB;
+  --mauve:      #C9A0DC;
+
+  --caramel:    #C8956C;
+  --latte:      #B89070;
+  --rose:       #E8A0A8;
+
+  --ink-light:  #7A6655;
+  --ink:        #4A3728;
+  --ink-dark:   #2D1F14;
+
+  /* Semantic Tokens */
+  --bg-primary:     var(--cream-100);
+  --bg-secondary:   var(--cream-50);
+  --bg-card:        rgba(255, 248, 237, 0.92);
+  --border-soft:    rgba(200, 149, 108, 0.2);
+  --border-blush:   rgba(244, 184, 193, 0.4);
+
+  --text-primary:   var(--ink);
+  --text-secondary: var(--ink-light);
+  --text-accent:    var(--caramel);
+
+  --shadow-ambient: 0 4px 24px rgba(74, 55, 40, 0.08);
+  --shadow-hover:   0 12px 40px rgba(74, 55, 40, 0.15);
+
+  /* Spacing */
+  --navbar-height: 72px;
+
+  /* Z-index scale */
+  --z-navbar:     100;
+  --z-modal:      200;
+  --z-tooltip:    300;
+  --z-toast:      400;
+}
+
+/* =============================================
+   BASE STYLES
+   ============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--cream-100);
+  color: var(--ink);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* =============================================
+   TYPOGRAPHY
+   ============================================= */
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--ink-dark);
+  line-height: 1.2;
+}
+
+.font-script {
+  font-family: 'Dancing Script', cursive;
+}
+
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* =============================================
+   SCROLLBAR STYLING
+   ============================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--blush);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--rose);
+}
+
+/* =============================================
+   SELECTION
+   ============================================= */
+::selection {
+  background: rgba(244, 184, 193, 0.4);
+  color: var(--ink-dark);
+}
+
+/* =============================================
+   GLASSMORPHISM UTILITIES
+   ============================================= */
+.glass {
+  background: rgba(255, 248, 237, 0.72);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(244, 184, 193, 0.3);
+}
+
+.glass-light {
+  background: rgba(255, 253, 247, 0.85);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(244, 184, 193, 0.25);
+}
+
+.glass-navbar {
+  background: rgba(255, 248, 237, 0.82);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border-bottom: 1px solid rgba(244, 184, 193, 0.35);
+}
+
+/* =============================================
+   BUTTON BASE — SHARED BY ALL BUTTONS
+   ============================================= */
+.btn-base {
+  @apply relative inline-flex items-center justify-center font-sans font-semibold 
+         rounded-full overflow-hidden cursor-pointer select-none
+         transition-all duration-300 ease-out;
+}
+
+.btn-base:active {
+  transform: scale(0.97);
+}
+
+/* Bubble click effect via pseudo element */
+.btn-bubble::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s, transform 0.5s;
+}
+
+.btn-bubble:active::after {
+  opacity: 1;
+  transform: scale(2);
+  transition: opacity 0s, transform 0s;
+}
+
+/* =============================================
+   CARD UTILITIES
+   ============================================= */
+.card-soft {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-ambient);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.card-soft:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* =============================================
+   INPUT STYLES
+   ============================================= */
+.input-crochet {
+  @apply w-full px-4 py-3 rounded-2xl font-sans text-sm
+         transition-all duration-300 outline-none;
+  background: rgba(255, 248, 237, 0.9);
+  border: 1.5px solid rgba(200, 149, 108, 0.25);
+  color: var(--ink);
+  box-shadow: inset 0 2px 4px rgba(74, 55, 40, 0.04);
+}
+
+.input-crochet::placeholder {
+  color: var(--ink-light);
+  opacity: 0.7;
+}
+
+.input-crochet:focus {
+  border-color: var(--blush);
+  background: rgba(255, 253, 247, 1);
+  box-shadow: 0 0 0 3px rgba(244, 184, 193, 0.2),
+              inset 0 2px 4px rgba(74, 55, 40, 0.03);
+}
+
+/* =============================================
+   DECORATIVE YARN DIVIDER
+   ============================================= */
+.yarn-divider {
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--blush) 20%, 
+    var(--mauve) 50%, 
+    var(--caramel) 80%, 
+    transparent 100%
+  );
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+/* =============================================
+   PAGE TRANSITION WRAPPER
+   ============================================= */
+.page-enter {
+  animation: morphIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =============================================
+   DECORATIVE PETALS (background elements)
+   ============================================= */
+.petal {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.15;
+  animation: petalFall linear infinite;
+}
+
+/* =============================================
+   CURSOR GLOW — for interactive sections
+   ============================================= */
+.cursor-glow {
+  position: absolute;
+  pointer-events: none;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 184, 193, 0.15) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s;
+  z-index: 0;
+}
+
+/* =============================================
+   NOISE TEXTURE OVERLAY
+   ============================================= */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* =============================================
+   UTILITY ANIMATIONS (use in className)
+   ============================================= */
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
+.animate-delay-500 { animation-delay: 500ms; }
+.animate-delay-600 { animation-delay: 600ms; }
+.animate-delay-700 { animation-delay: 700ms; }
+.animate-delay-800 { animation-delay: 800ms; }
+
+.opacity-0-init {
+  opacity: 0;
+}
+
+/* =============================================
+   OTP INPUT
+   ============================================= */
+.otp-input {
+  @apply w-12 h-14 text-center text-2xl font-display font-semibold
+         rounded-2xl outline-none transition-all duration-200;
+  background: rgba(255, 248, 237, 0.9);
+  border: 2px solid rgba(200, 149, 108, 0.25);
+  color: var(--ink-dark);
+}
+
+.otp-input:focus {
+  border-color: var(--blush);
+  box-shadow: 0 0 0 3px rgba(244, 184, 193, 0.25);
+  background: white;
+}
+
+/* =============================================
+   SPARKLE ANIMATION
+   ============================================= */
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
+.sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* =============================================
+   GRADIENT TEXT UTILITY
+   ============================================= */
+.text-gradient-blush {
+  background: linear-gradient(135deg, var(--caramel) 0%, var(--blush) 50%, var(--mauve) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-warm {
+  background: linear-gradient(135deg, var(--ink) 0%, var(--caramel) 50%, var(--rose) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* =============================================
+   GLOBAL BUBBLE BUTTON EFFECT
+   Applied via .btn-bubble class on any element
+   ============================================= */
+.btn-bubble {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Bubble pop animation triggered via JS — see BubbleButton.tsx */
+@keyframes bubblePop {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  60%  { transform: translate(var(--bx), var(--by)) scale(1.2); opacity: 0.8; }
+  100% { transform: translate(var(--bx), var(--by)) scale(0); opacity: 0; }
+}
+
+@keyframes shockwave {
+  0%   { width: 0; height: 0; opacity: 0.8; }
+  100% { width: 60px; height: 60px; opacity: 0; }
+}
+
+/* =============================================
+   SPOTLIGHT CARD (GlowCard) GLOBAL STYLES
+   ============================================= */
+[data-glow]::before,
+[data-glow]::after {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: calc(var(--border-size, 3px) * -1);
+  border: var(--border-size, 3px) solid transparent;
+  border-radius: calc(var(--radius, 14) * 1px);
+  background-attachment: fixed;
+  background-size: calc(100% + (2 * var(--border-size, 3px))) calc(100% + (2 * var(--border-size, 3px)));
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  mask: linear-gradient(transparent, transparent), linear-gradient(white, white);
+  mask-clip: padding-box, border-box;
+  mask-composite: intersect;
+}
+
+[data-glow]::before {
+  background-image: radial-gradient(
+    calc(var(--spotlight-size, 200px) * 0.75) calc(var(--spotlight-size, 200px) * 0.75) at
+    calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
+    hsl(var(--hue, 30) 80% 60% / 0.8), transparent 100%
+  );
+  filter: brightness(2);
+}
+
+[data-glow]::after {
+  background-image: radial-gradient(
+    calc(var(--spotlight-size, 200px) * 0.5) calc(var(--spotlight-size, 200px) * 0.5) at
+    calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
+    hsl(0 100% 100% / 0.6), transparent 100%
+  );
+}
+
+[data-glow] [data-glow] {
+  position: absolute;
+  inset: 0;
+  will-change: filter;
+  border-radius: calc(var(--radius, 14) * 1px);
+  filter: blur(calc(var(--border-size, 3px) * 10));
+  background: none;
+  pointer-events: none;
+  border: none;
+}
+
+/* =============================================
+   ANIMATED SEARCH BAR CUSTOM PROPERTIES
+   ============================================= */
+@keyframes searchSpin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.search-glow-layer::before {
+  animation: searchSpin 4s linear infinite;
+}
+
+/* =============================================
+   RICHER CARD VARIANTS — brown + pink multi-tone
+   ============================================= */
+.card-warm {
+  background: linear-gradient(135deg, rgba(255,248,237,0.95) 0%, rgba(244,184,193,0.12) 50%, rgba(200,149,108,0.08) 100%);
+  border: 1.5px solid rgba(200,149,108,0.18);
+}
+
+.card-blush {
+  background: linear-gradient(135deg, rgba(255,248,237,0.95) 0%, rgba(244,184,193,0.18) 40%, rgba(201,160,220,0.10) 100%);
+  border: 1.5px solid rgba(244,184,193,0.25);
+}
+
+.card-deep {
+  background: linear-gradient(135deg, rgba(74,55,40,0.03) 0%, rgba(200,149,108,0.10) 50%, rgba(244,184,193,0.15) 100%);
+  border: 1.5px solid rgba(200,149,108,0.22);
+}
+
+/* Multi-colour shimmer border for featured cards */
+.card-rainbow-border {
+  position: relative;
+}
+.card-rainbow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, #C8956C, #F4B8C1, #C9A0DC, #E8A0A8, #C8956C);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Admin stat card variants */
+.admin-card-caramel {
+  background: linear-gradient(135deg, #FFF8ED 0%, rgba(200,149,108,0.12) 100%);
+  border-color: rgba(200,149,108,0.25);
+}
+.admin-card-blush {
+  background: linear-gradient(135deg, #FFF8ED 0%, rgba(244,184,193,0.18) 100%);
+  border-color: rgba(244,184,193,0.30);
+}
+.admin-card-mauve {
+  background: linear-gradient(135deg, #FFF8ED 0%, rgba(201,160,220,0.15) 100%);
+  border-color: rgba(201,160,220,0.25);
+}
+.admin-card-rose {
+  background: linear-gradient(135deg, #FFF8ED 0%, rgba(232,160,168,0.15) 100%);
+  border-color: rgba(232,160,168,0.25);
+}
+
+/* Product card image area gradient overlays for variety */
+.img-overlay-caramel { background: linear-gradient(135deg, rgba(200,149,108,0.15) 0%, rgba(255,248,237,0.90) 100%); }
+.img-overlay-blush   { background: linear-gradient(135deg, rgba(244,184,193,0.20) 0%, rgba(255,248,237,0.90) 100%); }
+.img-overlay-mauve   { background: linear-gradient(135deg, rgba(201,160,220,0.18) 0%, rgba(255,248,237,0.90) 100%); }
+.img-overlay-rose    { background: linear-gradient(135deg, rgba(232,160,168,0.18) 0%, rgba(255,248,237,0.90) 100%); }
+
+/* =============================================
+   PINK ACCENT ENHANCEMENTS
+   Richer pink across cards and backgrounds
+   ============================================= */
+.bg-pink-warm {
+  background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EE 40%, #FFF8ED 100%);
+}
+
+/* Random stock image overlays for page sections */
+.section-texture-1 { background-image: url("/images/bg-yarn-table.jpg"); background-size: cover; background-position: center; }
+.section-texture-2 { background-image: url("/images/bg-hands-knitting.jpg"); background-size: cover; background-position: center; }
+
+/* Richer pink button */
+.btn-pink {
+  background: linear-gradient(135deg, #e91e8c 0%, #F4B8C1 50%, #C9A0DC 100%);
+  color: white;
+  border: none;
+}
+
+/* Colourful stat card variants */
+.stat-card-pink   { background: linear-gradient(135deg, rgba(233,30,140,0.08) 0%, rgba(244,184,193,0.15) 100%); border-color: rgba(233,30,140,0.2); }
+.stat-card-violet { background: linear-gradient(135deg, rgba(201,160,220,0.12) 0%, rgba(155,100,200,0.08) 100%); border-color: rgba(201,160,220,0.25); }
+.stat-card-warm   { background: linear-gradient(135deg, rgba(200,149,108,0.10) 0%, rgba(212,168,144,0.15) 100%); border-color: rgba(200,149,108,0.22); }
+
+/* Product card hover ring effect */
+.product-card-hover:hover {
+  box-shadow: 0 0 0 2px rgba(244,184,193,0.5), 0 20px 40px rgba(74,55,40,0.12);
+}
