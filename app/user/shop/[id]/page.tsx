@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, ShoppingCart, Star, ChevronLeft, ChevronRight,
@@ -15,17 +15,21 @@ import { cn } from "@/lib/utils";
 import { useShop } from "@/lib/ShopContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
 
 /* =============================================
    TYPES
    ============================================= */
 interface Review {
   id: string;
+  product_id?: string;
+  user_id?: string | null;
   user_name: string;
   avatar_emoji: string;
   rating: number;
   comment: string;
   date: string;
+  created_at?: string;
   admin_reply?: string;
 }
 
@@ -370,6 +374,7 @@ const AddToCartButton = ({ onClick, disabled = false }: { onClick: () => void; d
    ============================================= */
 export default function ProductDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user, isLoggedIn, displayName } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -384,6 +389,9 @@ export default function ProductDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewSort, setReviewSort] = useState<"newest" | "lowest" | "highest">("newest");
+  const [showMyReviewsOnly, setShowMyReviewsOnly] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
   const { addToCart, addToWishlist, removeFromWishlist, isWishlisted, setAppliedCoupon, cartItems } = useShop();
 
   useEffect(() => {
@@ -497,37 +505,102 @@ export default function ProductDetailPage() {
 
     void loadProduct();
 
-    // Fetch reviews
-    supabase.from("reviews").select("id, user_name, rating, comment, created_at")
-      .eq("product_id", id).order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data) {
-          const mappedReviews = data.map((r: {id:string;user_name:string;rating:number;comment:string;created_at:string}) => ({
+    // Fetch reviews (works with and without reviews.admin_reply column)
+    const loadReviews = async () => {
+      const hiddenReviewIds = await getHiddenReviewIdSet();
+
+      let dataWithModeration: Array<{
+        id: string;
+        product_id: string;
+        user_id?: string | null;
+        user_name: string;
+        rating: number;
+        comment: string;
+        admin_reply?: string | null;
+        created_at: string;
+      }> | null = null;
+
+      const withModeration = await supabase
+        .from("reviews")
+        .select("id, product_id, user_id, user_name, rating, comment, admin_reply, created_at")
+        .eq("product_id", id)
+        .order("created_at", { ascending: false });
+
+      if (!withModeration.error) {
+        dataWithModeration = withModeration.data as typeof dataWithModeration;
+      } else {
+        const legacy = await supabase
+          .from("reviews")
+          .select("id, product_id, user_id, user_name, rating, comment, created_at")
+          .eq("product_id", id)
+          .order("created_at", { ascending: false });
+
+        if (!legacy.error) {
+          dataWithModeration = (legacy.data ?? []).map((r) => ({
+            ...(r as {
+              id: string;
+              product_id: string;
+              user_id?: string | null;
+              user_name: string;
+              rating: number;
+              comment: string;
+              created_at: string;
+            }),
+            admin_reply: null,
+          }));
+        }
+      }
+
+      if (!dataWithModeration) return;
+
+      const mappedReviews = dataWithModeration
+        .map((r) => ({
           id: r.id,
+          product_id: r.product_id,
+          user_id: r.user_id ?? null,
           user_name: r.user_name,
           avatar_emoji: "🌸",
           rating: r.rating,
           comment: r.comment,
+          admin_reply: r.admin_reply ?? undefined,
+          created_at: r.created_at,
           date: new Date(r.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }),
-          }));
+        }))
+        .filter((r) => !isReviewHiddenByModeration(r.id, r.admin_reply, hiddenReviewIds));
 
-          setReviews(mappedReviews);
+      setReviews(mappedReviews);
 
-          const count = mappedReviews.length;
-          const sum = mappedReviews.reduce((acc, item) => acc + (Number(item.rating) || 0), 0);
-          const avg = count > 0 ? Number((sum / count).toFixed(1)) : 0;
+      const count = mappedReviews.length;
+      const sum = mappedReviews.reduce((acc, item) => acc + (Number(item.rating) || 0), 0);
+      const avg = count > 0 ? Number((sum / count).toFixed(1)) : 0;
 
-          setProduct((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              average_rating: avg,
-              review_count: count,
-            };
-          });
-        }
+      setProduct((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          average_rating: avg,
+          review_count: count,
+        };
       });
+    };
+
+    void loadReviews();
   }, [params.id]);
+
+  useEffect(() => {
+    const mineOnly = searchParams.get("mine") === "1";
+    setShowMyReviewsOnly(mineOnly);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const targetReviewId = searchParams.get("review");
+    if (!targetReviewId || reviews.length === 0) return;
+
+    const target = document.getElementById(`review-${targetReviewId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [searchParams, reviews]);
 
   // Loading state
   if (pageLoading) {
@@ -678,10 +751,13 @@ export default function ProductDetailPage() {
         setReviews((prev) => [
           {
             id: inserted.id,
+            product_id: product.id,
+            user_id: user.id,
             user_name: inserted.user_name,
             avatar_emoji: "🌸",
             rating: inserted.rating,
             comment: inserted.comment,
+            created_at: inserted.created_at,
             date: new Date(inserted.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }),
           },
           ...prev,
@@ -714,6 +790,51 @@ export default function ProductDetailPage() {
       setReviewSubmitting(false);
     }
   };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!user) return;
+    const ok = window.confirm("Delete this review?");
+    if (!ok) return;
+
+    setDeletingReviewId(reviewId);
+    try {
+      const { error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", reviewId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setReviews((prev) => {
+        const nextReviews = prev.filter((r) => r.id !== reviewId);
+        const count = nextReviews.length;
+        const sum = nextReviews.reduce((acc, item) => acc + (Number(item.rating) || 0), 0);
+        const avg = count > 0 ? Number((sum / count).toFixed(1)) : 0;
+
+        setProduct((existing) => {
+          if (!existing) return existing;
+          return { ...existing, average_rating: avg, review_count: count };
+        });
+
+        return nextReviews;
+      });
+    } catch (error) {
+      setReviewMessage(error instanceof Error ? error.message : "Could not delete review.");
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
+  const displayedReviews = reviews
+    .filter((r) => !showMyReviewsOnly || (user && r.user_id === user.id))
+    .sort((a, b) => {
+      if (reviewSort === "lowest") return a.rating - b.rating;
+      if (reviewSort === "highest") return b.rating - a.rating;
+      const at = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bt = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bt - at;
+    });
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -978,7 +1099,30 @@ export default function ProductDetailPage() {
           <div className="yarn-divider mb-8" />
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h2 className="font-display text-xl font-semibold text-ink-dark">Customer Reviews</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReviewSort((s) => (s === "lowest" ? "highest" : "lowest"))}
+                  className="px-3 py-1.5 rounded-xl border border-caramel/25 bg-white/80 text-xs font-sans font-semibold text-caramel hover:bg-caramel/10 transition-all btn-bubble"
+                >
+                  {reviewSort === "lowest" ? "Lowest → Highest" : "Highest → Lowest"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMyReviewsOnly((v) => !v)}
+                  disabled={!isLoggedIn}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl border text-xs font-sans font-semibold transition-all btn-bubble",
+                    showMyReviewsOnly
+                      ? "border-caramel/40 bg-caramel/12 text-caramel"
+                      : "border-caramel/25 bg-white/80 text-ink-light hover:text-caramel",
+                    !isLoggedIn && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  My Reviews
+                </button>
+              </div>
               <div className="flex gap-0.5">
                 {[1,2,3,4,5].map((i) => <Star key={i} className={cn("w-4 h-4", i <= Math.round(product.average_rating) ? "fill-caramel text-caramel" : "text-caramel/15")} />)}
               </div>
@@ -988,8 +1132,11 @@ export default function ProductDetailPage() {
 
           {/* Review cards */}
           <div className="grid sm:grid-cols-2 gap-4 mb-8">
-            {reviews.map((r) => (
-              <div key={r.id} className="glass rounded-2xl border border-blush/20 p-4 space-y-3">
+            {displayedReviews.map((r) => (
+              <div id={`review-${r.id}`} key={r.id} className={cn(
+                "glass rounded-2xl border border-blush/20 p-4 space-y-3",
+                searchParams.get("review") === r.id && "ring-2 ring-caramel/35"
+              )}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-lg">{r.avatar_emoji}</div>
@@ -1003,6 +1150,16 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
                 <p className="text-sm text-ink/80 font-sans leading-relaxed">{r.comment}</p>
+                {isLoggedIn && user && r.user_id === user.id && (
+                  <button
+                    type="button"
+                    onClick={() => { void handleDeleteReview(r.id); }}
+                    disabled={deletingReviewId === r.id}
+                    className="px-3 py-1.5 rounded-xl border border-red-200 text-red-500 bg-red-50 hover:bg-red-100 text-xs font-sans font-bold transition-all btn-bubble disabled:opacity-60"
+                  >
+                    {deletingReviewId === r.id ? "Deleting..." : "Delete"}
+                  </button>
+                )}
                 {r.admin_reply && (
                   <div className="bg-caramel/8 border border-caramel/15 rounded-xl px-3 py-2">
                     <p className="text-[10px] font-sans font-bold text-caramel mb-0.5">Crochet Masterpiece replied:</p>
@@ -1011,6 +1168,11 @@ export default function ProductDetailPage() {
                 )}
               </div>
             ))}
+            {displayedReviews.length === 0 && (
+              <div className="sm:col-span-2 rounded-2xl border border-caramel/15 bg-white/70 p-6 text-center">
+                <p className="text-sm font-sans text-ink-light/60">No reviews found for this filter.</p>
+              </div>
+            )}
           </div>
 
           {/* Write review */}

@@ -83,7 +83,12 @@ const CartRow = ({
     animate={{ opacity: 1, x: 0 }}
     exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
     transition={{ duration: 0.3 }}
-    className="flex gap-4 p-4 rounded-2xl glass border border-blush/20 hover:border-blush/35 transition-all duration-200 group"
+    onClick={(e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("button, a")) return;
+      window.location.href = `/user/shop/${item.productId}`;
+    }}
+    className="flex gap-4 p-4 rounded-2xl glass border border-blush/20 hover:border-blush/35 transition-all duration-200 group cursor-pointer"
   >
     {/* Product image placeholder */}
     <Link href={`/user/shop/${item.productId}`}
@@ -114,17 +119,17 @@ const CartRow = ({
 
     {/* Qty + remove */}
     <div className="flex flex-col items-end justify-between gap-2 flex-shrink-0">
-      <button onClick={() => onRemove(item.id)}
+      <button onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
         className="p-1.5 rounded-lg text-ink-light/30 hover:text-rose hover:bg-rose/10 transition-all duration-200 btn-bubble opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
       <div className="flex items-center gap-1.5 rounded-xl border border-caramel/20 bg-white/60 px-1">
-        <button onClick={() => onQty(item.id, item.quantity - 1)}
+        <button onClick={(e) => { e.stopPropagation(); onQty(item.id, item.quantity - 1); }}
           className="p-1 text-ink-light/50 hover:text-caramel transition-colors btn-bubble">
           <Minus className="w-3 h-3" />
         </button>
         <span className="w-6 text-center text-sm font-bold font-sans text-ink">{item.quantity}</span>
-          <button disabled={outOfStock || atMax} onClick={() => onQty(item.id, item.quantity + 1)}
+          <button disabled={outOfStock || atMax} onClick={(e) => { e.stopPropagation(); onQty(item.id, item.quantity + 1); }}
             className={cn("p-1 transition-colors btn-bubble", outOfStock || atMax ? "text-ink-light/25 cursor-not-allowed" : "text-ink-light/50 hover:text-caramel")}>
           <Plus className="w-3 h-3" />
         </button>

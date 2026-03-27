@@ -33,6 +33,11 @@ interface Notification {
   type: "order" | "promo" | "system";
 }
 
+const DISCOUNT_CACHE_KEY = "cm_nav_discounts";
+const DISCOUNT_CACHE_TTL_MS = 60_000;
+const NOTIF_CACHE_PREFIX = "cm_nav_notifs_";
+const NOTIF_CACHE_TTL_MS = 20_000;
+
 /* =============================================
    ANIMATED NAV LINK (hover = slide up reveal)
    ============================================= */
@@ -305,6 +310,24 @@ export const Navbar = () => {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const loadNotifications = async (userId: string) => {
+    if (typeof window !== "undefined") {
+      const cachedRaw = sessionStorage.getItem(`${NOTIF_CACHE_PREFIX}${userId}`);
+      if (cachedRaw) {
+        try {
+          const cached = JSON.parse(cachedRaw) as { ts: number; items: Notification[] };
+          if (Array.isArray(cached.items) && Date.now() - cached.ts <= NOTIF_CACHE_TTL_MS) {
+            setNotifications(cached.items);
+            return;
+          }
+          if (Array.isArray(cached.items)) {
+            setNotifications(cached.items);
+          }
+        } catch {
+          // ignore cache parse errors
+        }
+      }
+    }
+
     const { data } = await supabase
       .from("notifications")
       .select("id, type, message, is_read, created_at")
@@ -313,7 +336,7 @@ export const Navbar = () => {
       .limit(8);
 
     if (!data) return;
-    setNotifications((data as {
+    const mapped = (data as {
       id: string;
       type: string;
       message: string;
@@ -325,29 +348,87 @@ export const Navbar = () => {
       time: new Date(n.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short" }),
       read: n.is_read,
       type: n.type === "promo" || n.type === "discount" ? "promo" : n.type === "order_update" ? "order" : "system",
-    })));
+    }));
+
+    setNotifications(mapped);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(`${NOTIF_CACHE_PREFIX}${userId}`, JSON.stringify({ ts: Date.now(), items: mapped }));
+    }
   };
 
   const loadActiveDiscounts = async () => {
-    const { data } = await supabase
+    if (typeof window !== "undefined") {
+      const cachedRaw = sessionStorage.getItem(DISCOUNT_CACHE_KEY);
+      if (cachedRaw) {
+        try {
+          const cached = JSON.parse(cachedRaw) as {
+            ts: number;
+            items: Array<{ code: string; label: string; percent: number; endsAt?: string }>;
+          };
+          if (Array.isArray(cached.items)) {
+            setActiveDiscounts(cached.items);
+          }
+          if (Date.now() - cached.ts <= DISCOUNT_CACHE_TTL_MS) {
+            return;
+          }
+        } catch {
+          // ignore cache parse errors
+        }
+      }
+    }
+
+    const [{ data }, hiddenSettings] = await Promise.all([
+      supabase
       .from("discounts")
-      .select("code, discount_value, end_date")
+      .select("id, code, discount_value, end_date")
       .eq("active", true)
-      .not("code", "is", null);
+      .not("code", "is", null),
+      supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "hidden_discount_banner_ids")
+        .maybeSingle(),
+    ]);
+
+    let hiddenIds = new Set<string>();
+    try {
+      const parsed = JSON.parse((hiddenSettings.data as { value?: string } | null)?.value ?? "[]");
+      hiddenIds = new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : []);
+    } catch {
+      hiddenIds = new Set<string>();
+    }
 
     if (!data?.length) {
       setActiveDiscounts([]);
       return;
     }
 
-    setActiveDiscounts(
-      data.map((d: { code: string; discount_value: number; end_date: string | null }) => ({
+    const now = new Date();
+    const rows = (data as Array<{ id?: string; code: string; discount_value: number; end_date: string | null }>).filter((d) => {
+      const notExpired = !d.end_date || new Date(d.end_date) >= now;
+      const notHidden = d.id ? !hiddenIds.has(d.id) : true;
+      return notExpired && notHidden;
+    });
+
+    if (!rows.length) {
+      setActiveDiscounts([]);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(DISCOUNT_CACHE_KEY, JSON.stringify({ ts: Date.now(), items: [] }));
+      }
+      return;
+    }
+
+    const mapped = rows.map((d: { code: string; discount_value: number; end_date: string | null }) => ({
         code: d.code,
         label: "selected products",
         percent: d.discount_value,
         endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
-      }))
-    );
+      }));
+
+    setActiveDiscounts(mapped);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(DISCOUNT_CACHE_KEY, JSON.stringify({ ts: Date.now(), items: mapped }));
+    }
   };
 
   // Scroll listener
@@ -383,7 +464,7 @@ export const Navbar = () => {
     };
 
     load();
-    const timer = setInterval(load, 10000);
+    const timer = setInterval(load, 30000);
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
 
@@ -421,13 +502,16 @@ export const Navbar = () => {
     };
 
     load();
-    const timer = setInterval(load, 15000);
+    const timer = setInterval(load, 60000);
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
 
     const channel = supabase
       .channel("navbar-discounts-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "discounts" }, () => {
+        load();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, () => {
         load();
       })
       .subscribe();
@@ -448,11 +532,17 @@ export const Navbar = () => {
   return (
     <>
       {/* Discount ticker */}
-      <DiscountBanner discounts={activeDiscounts} />
+      {activeDiscounts.length > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-[120]">
+          <DiscountBanner discounts={activeDiscounts} />
+        </div>
+      )}
+      {activeDiscounts.length > 0 && <div className="h-7" />}
 
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full transition-all duration-500",
+          "sticky z-[100] w-full transition-all duration-500",
+          activeDiscounts.length > 0 ? "top-7" : "top-0",
           scrolled
             ? "glass-navbar shadow-navbar py-3"
             : "bg-transparent py-4"

@@ -309,7 +309,7 @@ export default function CustomOrderPage() {
         </div>
         {/* Floating decor */}
         {["", "", "", "🪡"].map((em, i) => (
-          <motion.span key={em}
+          <motion.span key={`decor-${i}-${em || "empty"}`}
             className="absolute text-2xl pointer-events-none select-none opacity-15"
             style={{ left: `${8 + i * 24}%`, top: `${15 + (i % 2) * 55}%` }}
             animate={{ y: [0, -12, 0], rotate: [0, i % 2 ? 10 : -10, 0] }}

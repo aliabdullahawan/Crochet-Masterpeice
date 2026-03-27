@@ -55,8 +55,13 @@ const WishlistCard = ({
       transition={{ duration: 0.3 }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a")) return;
+        window.location.href = `/user/shop/${item.productId}`;
+      }}
       className={cn(
-        "relative rounded-3xl border overflow-hidden transition-all duration-300",
+        "relative rounded-3xl border overflow-hidden transition-all duration-300 cursor-pointer",
         hover ? "border-blush/50 shadow-card -translate-y-1.5" : "border-blush/20 shadow-soft bg-white/80"
       )}
     >
@@ -81,7 +86,7 @@ const WishlistCard = ({
         </div>
         {/* Remove wishlist */}
         <button
-          onClick={(e) => { e.preventDefault(); onRemove(item.id); }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(item.id); }}
           className="absolute top-3 right-3 w-8 h-8 rounded-xl bg-white/80 border border-rose/20 flex items-center justify-center hover:bg-rose/10 hover:border-rose/40 transition-all btn-bubble"
         >
           <Heart className="w-4 h-4 fill-rose text-rose" />
@@ -105,7 +110,7 @@ const WishlistCard = ({
               <span className="text-xs text-ink-light/35 line-through ml-1.5">PKR {item.original_price.toLocaleString()}</span>
             )}
           </div>
-          <button onClick={() => onAddCart(item.id)}
+          <button onClick={(e) => { e.stopPropagation(); onAddCart(item.id); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <ShoppingCart className="w-3 h-3" /> Add
           </button>

@@ -24,10 +24,13 @@ interface Discount {
   max_uses: number | null;
   uses_count: number;
   active: boolean;
+  hidden_from_banner?: boolean;
   start_date: string;
   end_date: string | null;
   created_at: string;
 }
+
+const HIDDEN_BANNER_IDS_KEY = "hidden_discount_banner_ids";
 
 const PRODUCTS_LIST: { id: string; name: string }[] = []; // Cleared — loaded from Supabase // Loaded from Supabase categories // Loaded from Supabase when connected
 
@@ -255,11 +258,15 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
 /* =============================================
    DISCOUNT ROW
    ============================================= */
-const DiscountRow = ({ d, onEdit, onDelete, onToggle, onCopy }: {
-  d: Discount; onEdit: () => void; onDelete: () => void; onToggle: () => void; onCopy: () => void;
+const DiscountRow = ({ d, onEdit, onDelete, onToggle, onToggleBanner, onCopy }: {
+  d: Discount; onEdit: () => void; onDelete: () => void; onToggle: () => void; onToggleBanner: () => void; onCopy: () => void;
 }) => {
   const isExpired = d.end_date && new Date(d.end_date) < new Date();
   const isFull = d.max_uses !== null && d.uses_count >= d.max_uses;
+  const toggleLabel = d.active && !isExpired ? "Deactivate" : (isExpired ? "Make Active" : "Activate");
+  const toggleClass = d.active && !isExpired
+    ? "bg-red-50 border-red-200 text-red-400 hover:bg-red-100"
+    : "bg-green-50 border-green-200 text-green-600 hover:bg-green-100";
   const statusColor = !d.active ? "bg-red-50 text-red-400 border-red-200"
     : isExpired ? "bg-amber-50 text-amber-600 border-amber-200"
     : isFull ? "bg-purple-50 text-purple-600 border-purple-200"
@@ -307,19 +314,24 @@ const DiscountRow = ({ d, onEdit, onDelete, onToggle, onCopy }: {
           </div>
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap items-center gap-2 mt-1">
           <button onClick={onToggle}
             className={cn("px-2.5 py-1.5 rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble",
-              d.active ? "bg-red-50 border-red-200 text-red-400 hover:bg-red-100" : "bg-green-50 border-green-200 text-green-600")}>
-            {d.active ? "Deactivate" : "Activate"}
+              toggleClass)}>
+            {toggleLabel}
           </button>
-          <button onClick={onEdit} className="p-1.5 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble"><Pencil className="w-3.5 h-3.5" /></button>
-          <button onClick={onDelete} className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button onClick={onToggleBanner}
+            className={cn("px-2.5 py-1.5 rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble",
+              d.hidden_from_banner ? "bg-caramel/12 border-caramel/30 text-caramel hover:bg-caramel/20" : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100")}>
+            {d.hidden_from_banner ? "Show Bar" : "Hide Bar"}
+          </button>
+          <button onClick={onEdit} className="p-2 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble" title="Edit discount"><Pencil className="w-3.5 h-3.5" /></button>
+          <button onClick={onDelete} className="p-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble" title="Delete discount"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
 
       {/* Desktop layout */}
-      <div className="hidden md:grid gap-4 items-center" style={{ gridTemplateColumns: "1fr 90px 110px 100px 90px 130px" }}>
+      <div className="hidden md:grid gap-4 items-center" style={{ gridTemplateColumns: "1fr 90px 110px 100px 90px 260px" }}>
 
         {/* Code + target */}
         <div>
@@ -382,14 +394,19 @@ const DiscountRow = ({ d, onEdit, onDelete, onToggle, onCopy }: {
         </span>
 
         {/* Actions */}
-        <div className="flex gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex flex-wrap items-center justify-end gap-2">
         <button onClick={onToggle}
-          className={cn("px-2.5 py-1.5 rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble",
-            d.active ? "bg-red-50 border-red-200 text-red-400 hover:bg-red-100" : "bg-green-50 border-green-200 text-green-600")}>
-          {d.active ? "Deactivate" : "Activate"}
+          className={cn("px-3 py-1.5 min-w-[94px] rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble whitespace-nowrap",
+            toggleClass)}>
+          {toggleLabel}
         </button>
-        <button onClick={onEdit} className="p-1.5 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble"><Pencil className="w-3.5 h-3.5" /></button>
-        <button onClick={onDelete} className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble"><Trash2 className="w-3.5 h-3.5" /></button>
+        <button onClick={onToggleBanner}
+          className={cn("px-3 py-1.5 min-w-[86px] rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble whitespace-nowrap",
+            d.hidden_from_banner ? "bg-caramel/12 border-caramel/30 text-caramel hover:bg-caramel/20" : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100")}>
+          {d.hidden_from_banner ? "Show Bar" : "Hide Bar"}
+        </button>
+        <button onClick={onEdit} className="p-2 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble" title="Edit discount"><Pencil className="w-3.5 h-3.5" /></button>
+        <button onClick={onDelete} className="p-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble" title="Delete discount"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
     </motion.div>
@@ -409,10 +426,11 @@ export default function AdminDiscountsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [productsRes, categoriesRes, discountsRes] = await Promise.all([
+        const [productsRes, categoriesRes, discountsRes, hiddenBannerIds] = await Promise.all([
           supabase.from("products").select("id, name").eq("is_active", true).order("name"),
           supabase.from("categories").select("id, name").eq("is_active", true).order("sort_order"),
           supabase.from("discounts").select("*").order("created_at", { ascending: false }),
+          readHiddenBannerIds(),
         ]);
 
         const products = (productsRes.data ?? []) as { id: string; name: string }[];
@@ -461,6 +479,7 @@ export default function AdminDiscountsPage() {
             max_uses: d.max_uses,
             uses_count: d.uses_count,
             active: d.active,
+            hidden_from_banner: hiddenBannerIds.has(d.id),
             start_date: d.start_date?.split("T")[0] ?? "",
             end_date: d.end_date?.split("T")[0] ?? null,
             created_at: d.created_at?.split("T")[0] ?? "",
@@ -476,6 +495,28 @@ export default function AdminDiscountsPage() {
   const [delId, setDelId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "active" | "expired" | "inactive">("all");
+
+  const readHiddenBannerIds = async () => {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", HIDDEN_BANNER_IDS_KEY)
+      .maybeSingle();
+
+    try {
+      const parsed = JSON.parse((data as { value?: string } | null)?.value ?? "[]");
+      return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : []);
+    } catch {
+      return new Set<string>();
+    }
+  };
+
+  const writeHiddenBannerIds = async (ids: Set<string>) => {
+    const payload = JSON.stringify(Array.from(ids));
+    await supabase
+      .from("site_settings")
+      .upsert({ key: HIDDEN_BANNER_IDS_KEY, value: payload } as unknown as never, { onConflict: "key" });
+  };
 
   const handleSave = async (form: DiscountForm) => {
     const targetList = form.applies_to === "product" ? productsList : form.applies_to === "category" ? categoriesList : [];
@@ -618,7 +659,7 @@ export default function AdminDiscountsPage() {
             <p className="text-[10px] font-sans font-bold text-ink-light/50 uppercase tracking-widest">Discounts</p>
           </div>
           <div className="hidden md:grid px-5 py-3 border-b border-caramel/10 bg-caramel/4"
-            style={{ display: "grid", gridTemplateColumns: "1fr 90px 110px 100px 90px 130px", gap: "1rem" }}>
+            style={{ display: "grid", gridTemplateColumns: "1fr 90px 110px 100px 90px 260px", gap: "1rem" }}>
             {["Code / Target", "Value", "Uses", "Expiry", "Status", ""].map((h) => (
               <p key={h} className="text-[10px] font-sans font-bold text-ink-light/50 uppercase tracking-widest">{h}</p>
             ))}
@@ -628,7 +669,37 @@ export default function AdminDiscountsPage() {
               <DiscountRow key={d.id} d={d}
                 onEdit={() => { setEditing(d); setModal(true); }}
                 onDelete={() => setDelId(d.id)}
-                onToggle={async () => { const newActive = !d.active; await supabase.from('discounts').update({ active: newActive } as unknown as never).eq('id', d.id); setDiscounts(p => p.map(di => di.id === d.id ? { ...di, active: newActive } : di)); }}
+                onToggle={async () => {
+                  const isExpired = Boolean(d.end_date && new Date(d.end_date) < new Date());
+                  const shouldActivate = !d.active || isExpired;
+                  const payload = shouldActivate
+                    ? ({ active: true, ...(isExpired ? { end_date: null } : {}) })
+                    : ({ active: false });
+
+                  await supabase
+                    .from("discounts")
+                    .update(payload as unknown as never)
+                    .eq("id", d.id);
+
+                  setDiscounts((p) =>
+                    p.map((di) =>
+                      di.id === d.id
+                        ? {
+                            ...di,
+                            active: shouldActivate,
+                            end_date: shouldActivate && isExpired ? null : di.end_date,
+                          }
+                        : di
+                    )
+                  );
+                }}
+                onToggleBanner={async () => {
+                  const ids = await readHiddenBannerIds();
+                  if (d.hidden_from_banner) ids.delete(d.id);
+                  else ids.add(d.id);
+                  await writeHiddenBannerIds(ids);
+                  setDiscounts((p) => p.map((di) => di.id === d.id ? { ...di, hidden_from_banner: !d.hidden_from_banner } : di));
+                }}
                 onCopy={() => d.code && copyCode(d.code)}
               />
             ))}

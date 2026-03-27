@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useShop } from "@/lib/ShopContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
 
 /* =============================================
    TYPES
@@ -224,6 +225,11 @@ const ShopCard = ({ product }: { product: Product }) => {
           onMouseMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMouse({ x: e.clientX - r.left, y: e.clientY - r.top }); }}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest("button, a")) return;
+            window.location.href = `/user/shop/${product.id}`;
+          }}
           className={cn("relative rounded-3xl overflow-hidden border border-blush/20 bg-white/90 transition-all duration-300 group", hover ? "shadow-[0_16px_40px_rgba(74,55,40,0.15)] -translate-y-1.5" : "shadow-card")}
         >
           {/* Cursor glow */}
@@ -321,6 +327,7 @@ const ShopCard = ({ product }: { product: Product }) => {
                   disabled={outOfStock}
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     if (outOfStock) return;
                     addToCart({ productId: product.id, name: product.name, price: product.price, original_price: product.original_price, category: product.category_name, category_id: product.category_id, emoji: "" });
                   }}
@@ -331,7 +338,7 @@ const ShopCard = ({ product }: { product: Product }) => {
                 </button>
                 <button
                   disabled={outOfStock}
-                  onClick={(e) => { e.preventDefault(); if (!outOfStock) setShowOrder(true); }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!outOfStock) setShowOrder(true); }}
                   className={cn("flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-sans font-bold transition-all btn-bubble",
                     outOfStock ? "bg-red-100 text-red-500 border border-red-200 cursor-not-allowed" : "bg-gradient-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5")}
                 >
@@ -528,10 +535,28 @@ function ShopContent() {
         return;
       }
 
-      const { data: reviewRows } = await supabase
+      const hiddenReviewIds = await getHiddenReviewIdSet();
+
+      let reviewRows: Array<{ id: string; product_id: string; rating: number; admin_reply?: string | null }> | null = null;
+
+      const withModeration = await supabase
         .from("reviews")
-        .select("product_id, rating")
+        .select("id, product_id, rating, admin_reply")
         .in("product_id", productIds);
+
+      if (!withModeration.error) {
+        reviewRows = (withModeration.data ?? []) as typeof reviewRows;
+      } else {
+        const legacy = await supabase
+          .from("reviews")
+          .select("id, product_id, rating")
+          .in("product_id", productIds);
+
+        reviewRows = (legacy.data ?? []).map((r) => ({
+          ...(r as { id: string; product_id: string; rating: number }),
+          admin_reply: null,
+        }));
+      }
 
       if (!reviewRows) {
         setProducts(mapped);
@@ -540,7 +565,8 @@ function ShopContent() {
       }
 
       const stats = new Map<string, { sum: number; count: number }>();
-      for (const row of reviewRows as Array<{ product_id: string; rating: number }>) {
+      for (const row of reviewRows) {
+        if (isReviewHiddenByModeration(row.id, row.admin_reply, hiddenReviewIds)) continue;
         const current = stats.get(row.product_id) ?? { sum: 0, count: 0 };
         stats.set(row.product_id, {
           sum: current.sum + (Number(row.rating) || 0),

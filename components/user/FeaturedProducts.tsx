@@ -8,6 +8,7 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { Heart, ShoppingCart, Star, ArrowRight, Sparkles, Tag, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
 
 /* =============================================
    TYPES
@@ -384,10 +385,28 @@ export const FeaturedProducts = () => {
         return;
       }
 
-      const { data: reviewRows } = await supabase
+      const hiddenReviewIds = await getHiddenReviewIdSet();
+
+      let reviewRows: Array<{ id: string; product_id: string; rating: number; admin_reply?: string | null }> | null = null;
+
+      const withModeration = await supabase
         .from("reviews")
-        .select("product_id, rating")
+        .select("id, product_id, rating, admin_reply")
         .in("product_id", productIds);
+
+      if (!withModeration.error) {
+        reviewRows = (withModeration.data ?? []) as typeof reviewRows;
+      } else {
+        const legacy = await supabase
+          .from("reviews")
+          .select("id, product_id, rating")
+          .in("product_id", productIds);
+
+        reviewRows = (legacy.data ?? []).map((r) => ({
+          ...(r as { id: string; product_id: string; rating: number }),
+          admin_reply: null,
+        }));
+      }
 
       if (!reviewRows) {
         setProducts(mapped);
@@ -395,7 +414,8 @@ export const FeaturedProducts = () => {
       }
 
       const stats = new Map<string, { sum: number; count: number }>();
-      for (const row of reviewRows as Array<{ product_id: string; rating: number }>) {
+      for (const row of reviewRows) {
+        if (isReviewHiddenByModeration(row.id, row.admin_reply, hiddenReviewIds)) continue;
         const current = stats.get(row.product_id) ?? { sum: 0, count: 0 };
         stats.set(row.product_id, {
           sum: current.sum + (Number(row.rating) || 0),

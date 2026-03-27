@@ -9,6 +9,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { signOut, supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
+import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
 
 /* =============================================
    AVATAR STYLES — DiceBear
@@ -52,8 +53,17 @@ const STATUS_COLORS: Record<string, string> = {
    ============================================= */
 export default function UserProfilePage() {
   const { user, loading } = useRequireAuth();
-  const [tab, setTab] = useState<"profile" | "orders" | "avatar">("profile");
+  const [tab, setTab] = useState<"profile" | "orders" | "reviews" | "avatar">("profile");
   const [orders, setOrders] = useState<{id:string;product:string;total:number;status:string;date:string}[]>([]);
+  const [reviews, setReviews] = useState<Array<{
+    id: string;
+    product_id: string;
+    product_name: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+  }>>([]);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
   // Fetch user's orders from Supabase
   useEffect(() => {
@@ -91,6 +101,70 @@ export default function UserProfilePage() {
       window.removeEventListener("focus", loadOrders);
       document.removeEventListener("visibilitychange", onVisible);
     };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadMyReviews = async () => {
+      const hiddenReviewIds = await getHiddenReviewIdSet();
+
+      let rows: Array<{
+        id: string;
+        product_id: string;
+        rating: number;
+        comment: string;
+        admin_reply?: string | null;
+        created_at: string;
+      }> = [];
+
+      const withModeration = await supabase
+        .from("reviews")
+        .select("id, product_id, rating, comment, admin_reply, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!withModeration.error && withModeration.data) {
+        rows = withModeration.data as typeof rows;
+      } else {
+        const legacy = await supabase
+          .from("reviews")
+          .select("id, product_id, rating, comment, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        if (legacy.data) {
+          rows = (legacy.data as Array<{ id: string; product_id: string; rating: number; comment: string; created_at: string }>).map((r) => ({
+            ...r,
+            admin_reply: null,
+          }));
+        }
+      }
+
+      rows = rows.filter((r) => !isReviewHiddenByModeration(r.id, r.admin_reply, hiddenReviewIds));
+
+      const productIds = Array.from(new Set(rows.map((r) => r.product_id)));
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, name")
+        .in("id", productIds);
+
+      const productMap = new Map<string, string>(
+        ((products ?? []) as Array<{ id: string; name: string }>).map((p) => [p.id, p.name])
+      );
+
+      setReviews(
+        rows.map((r) => ({
+          id: r.id,
+          product_id: r.product_id,
+          product_name: productMap.get(r.product_id) ?? "Product",
+          rating: r.rating,
+          comment: r.comment,
+          created_at: r.created_at,
+        }))
+      );
+    };
+
+    void loadMyReviews();
   }, [user]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -152,6 +226,27 @@ export default function UserProfilePage() {
     window.location.href = "/user/login";
   };
 
+  const deleteMyReview = async (reviewId: string) => {
+    if (!user) return;
+    const ok = window.confirm("Delete this review?");
+    if (!ok) return;
+
+    setDeletingReviewId(reviewId);
+    try {
+      const { error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", reviewId)
+        .eq("user_id", user.id);
+
+      if (!error) {
+        setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      }
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
@@ -209,7 +304,7 @@ export default function UserProfilePage() {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
-          {(["profile", "orders", "avatar"] as const).map((t) => (
+          {(["profile", "orders", "reviews", "avatar"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={cn("px-5 py-2 rounded-xl text-xs font-sans font-semibold capitalize transition-all btn-bubble border",
                 tab === t ? "bg-gradient-to-r from-caramel to-rose text-white border-transparent shadow-button"
@@ -316,6 +411,62 @@ export default function UserProfilePage() {
                   <Package className="w-8 h-8 text-caramel/30" />
                   <p className="font-display text-base text-ink-dark">No orders yet</p>
                   <Link href="/user/shop" className="text-sm text-caramel font-sans font-semibold hover:text-ink transition-colors">Browse our shop →</Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {tab === "reviews" && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-3xl border border-blush/20 overflow-hidden">
+            <div className="px-6 py-4 border-b border-blush/15">
+              <h2 className="font-display text-base font-semibold text-ink-dark">My Reviews</h2>
+              <p className="text-xs text-ink-light/50 font-sans mt-0.5">All reviews you posted</p>
+            </div>
+            <div className="divide-y divide-blush/10">
+              {reviews.map((r) => (
+                <div
+                  key={r.id}
+                  className="px-6 py-4 hover:bg-caramel/4 transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest("button, a")) return;
+                    window.location.href = `/user/shop/${r.product_id}?review=${r.id}&mine=1#review-${r.id}`;
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/user/shop/${r.product_id}?review=${r.id}&mine=1#review-${r.id}`} className="text-sm font-sans font-semibold text-caramel hover:text-ink transition-colors">
+                        {r.product_name}
+                      </Link>
+                      <div className="flex gap-0.5 mt-1">
+                        {[1,2,3,4,5].map((i) => <Star key={i} className={cn("w-3 h-3", i <= r.rating ? "fill-caramel text-caramel" : "text-caramel/15")} />)}
+                      </div>
+                      <p className="text-sm text-ink-light/75 font-sans mt-2">{r.comment}</p>
+                      <p className="text-[10px] text-ink-light/45 font-sans mt-1">
+                        {new Date(r.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void deleteMyReview(r.id);
+                      }}
+                      disabled={deletingReviewId === r.id}
+                      className="px-3 py-1.5 rounded-xl border border-red-200 text-red-500 bg-red-50 hover:bg-red-100 text-xs font-sans font-bold transition-all btn-bubble disabled:opacity-60"
+                    >
+                      {deletingReviewId === r.id ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {reviews.length === 0 && (
+                <div className="flex flex-col items-center py-16 gap-3 text-center">
+                  <Star className="w-8 h-8 text-caramel/30" />
+                  <p className="font-display text-base text-ink-dark">No reviews yet</p>
+                  <Link href="/user/shop" className="text-sm text-caramel font-sans font-semibold hover:text-ink transition-colors">Review a product →</Link>
                 </div>
               )}
             </div>

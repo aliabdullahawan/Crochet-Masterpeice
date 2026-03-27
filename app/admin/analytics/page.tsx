@@ -15,6 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
+type DatePreset = "daily" | "weekly" | "monthly" | "yearly" | "max" | "custom";
+
 function useAdminAuth() {
   useEffect(() => {
     if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
@@ -154,6 +156,9 @@ const TopProductRow = ({ product, index }: {
 export default function AdminAnalyticsPage() {
   useAdminAuth();
   const [period, setPeriod] = useState<"daily" | "monthly">("daily");
+  const [datePreset, setDatePreset] = useState<DatePreset>("monthly");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [monthly, setMonthly] = useState(EMPTY_MONTHLY);
   const [daily, setDaily] = useState(EMPTY_DAILY);
@@ -165,16 +170,48 @@ export default function AdminAnalyticsPage() {
   const [avgFulfillmentDays, setAvgFulfillmentDays] = useState(0);
   const [customerSatisfaction, setCustomerSatisfaction] = useState(0);
 
-  useEffect(() => { loadAnalyticsData(); }, []);
+  const resolveRange = () => {
+    const now = new Date();
+    const end = now.toISOString();
+
+    const startByDays = (days: number) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() - days);
+      return d.toISOString();
+    };
+
+    if (datePreset === "daily") return { start: startByDays(1), end };
+    if (datePreset === "weekly") return { start: startByDays(7), end };
+    if (datePreset === "monthly") return { start: startByDays(30), end };
+    if (datePreset === "yearly") return { start: startByDays(365), end };
+    if (datePreset === "custom" && customFrom && customTo) {
+      return {
+        start: new Date(`${customFrom}T00:00:00`).toISOString(),
+        end: new Date(`${customTo}T23:59:59`).toISOString(),
+      };
+    }
+    return { start: null as string | null, end: null as string | null };
+  };
+
+  useEffect(() => {
+    void loadAnalyticsData();
+  }, [datePreset, customFrom, customTo]);
 
   const loadAnalyticsData = async () => {
     try {
+      const range = resolveRange();
+
       // Fetch daily analytics from view
-      const { data: dailyRaw } = await supabase
+      let dailyQuery = supabase
         .from("analytics_daily")
         .select("date, order_count, revenue")
         .order("date", { ascending: true })
-        .limit(30);
+        .limit(366);
+
+      if (range.start) dailyQuery = dailyQuery.gte("date", range.start.slice(0, 10));
+      if (range.end) dailyQuery = dailyQuery.lte("date", range.end.slice(0, 10));
+
+      const { data: dailyRaw } = await dailyQuery;
 
       if (dailyRaw?.length) {
         setDaily(dailyRaw.map((r:{date:string;order_count:number;revenue:number}, i:number) => ({
@@ -185,11 +222,15 @@ export default function AdminAnalyticsPage() {
       }
 
       // Aggregate monthly from orders
-      const { data: ordersRaw } = await supabase
+      let ordersQuery = supabase
         .from("orders")
-        .select("total_amount, created_at, updated_at, user_id, customer_email, customer_phone")
-        .eq("status", "delivered")
-        .gte("created_at", new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString());
+        .select("id, total_amount, created_at, updated_at, user_id, customer_email, customer_phone")
+        .eq("status", "delivered");
+
+      if (range.start) ordersQuery = ordersQuery.gte("created_at", range.start);
+      if (range.end) ordersQuery = ordersQuery.lte("created_at", range.end);
+
+      const { data: ordersRaw } = await ordersQuery;
 
       if (ordersRaw?.length) {
         const monthMap: Record<string, {revenue:number;orders:number;customers:Set<string>}> = {};
@@ -229,27 +270,30 @@ export default function AdminAnalyticsPage() {
         setMonthly(Object.entries(monthMap).slice(-6).map(([month, v]) => ({
           month, revenue: v.revenue, orders: v.orders, customers: v.customers.size,
         })));
-      } else {
-        setUniqueCustomers(0);
-        setRepeatRate(0);
-        setAvgFulfillmentDays(0);
       }
 
-      const { data: ratingsRaw } = await supabase
+      let reviewsQuery = supabase
         .from("reviews")
-        .select("rating");
+        .select("rating, created_at");
+      if (range.start) reviewsQuery = reviewsQuery.gte("created_at", range.start);
+      if (range.end) reviewsQuery = reviewsQuery.lte("created_at", range.end);
+      const { data: ratingsRaw } = await reviewsQuery;
       if (ratingsRaw?.length) {
         const avg = (ratingsRaw as { rating: number }[]).reduce((sum, r) => sum + Number(r.rating || 0), 0) / ratingsRaw.length;
         setCustomerSatisfaction(Math.round(avg * 10));
-      } else {
-        setCustomerSatisfaction(0);
       }
 
       // Top products by revenue
-      const { data: topRaw } = await supabase
-        .from("order_items")
-        .select("product_name, quantity, unit_price, order:orders!inner(status)")
-        .eq("orders.status", "delivered");
+      const orderIds = (ordersRaw ?? []).map((o:{id:string}) => o.id);
+      let topRaw: Array<{product_name:string;quantity:number;unit_price:number}> | null = null;
+      if (orderIds.length > 0) {
+        const { data: topData } = await supabase
+          .from("order_items")
+          .select("product_name, quantity, unit_price")
+          .in("order_id", orderIds);
+        topRaw = (topData ?? []) as typeof topRaw;
+      }
+
       if (topRaw?.length) {
         const productMap: Record<string, {revenue:number;orders:number}> = {};
         topRaw.forEach((i:{product_name:string;quantity:number;unit_price:number}) => {
@@ -280,9 +324,12 @@ export default function AdminAnalyticsPage() {
       }
 
       // Order sources
-      const { data: srcRaw } = await supabase
+      let sourceQuery = supabase
         .from("orders")
         .select("source");
+      if (range.start) sourceQuery = sourceQuery.gte("created_at", range.start);
+      if (range.end) sourceQuery = sourceQuery.lte("created_at", range.end);
+      const { data: srcRaw } = await sourceQuery;
       if (srcRaw?.length) {
         const srcCount: Record<string, number> = {};
         srcRaw.forEach((o:{source:string}) => { srcCount[o.source] = (srcCount[o.source]||0)+1; });
@@ -323,6 +370,44 @@ export default function AdminAnalyticsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Date range controls */}
+        <div className="glass rounded-2xl border border-caramel/15 p-3 sm:p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {(["daily", "weekly", "monthly", "yearly", "max", "custom"] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setDatePreset(p)}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-sans font-semibold capitalize border transition-all btn-bubble",
+                  datePreset === p
+                    ? "bg-caramel/15 border-caramel/35 text-caramel"
+                    : "border-caramel/15 text-ink-light/60 hover:border-caramel/30 bg-white/70"
+                )}
+              >
+                {p === "weekly" ? "Weekly" : p}
+              </button>
+            ))}
+          </div>
+          {datePreset === "custom" && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <label className="text-xs font-sans text-ink-light/60">From</label>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink outline-none"
+              />
+              <label className="text-xs font-sans text-ink-light/60">To</label>
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink outline-none"
+              />
+            </div>
+          )}
         </div>
 
         {/* Key stats */}

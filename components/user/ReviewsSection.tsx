@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
 
 /* =============================================
    TYPES
@@ -137,18 +138,49 @@ export const ReviewsSection = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
 
   const loadLatestReviews = React.useCallback(async () => {
-    const { data: reviewRows, error } = await supabase
+    const hiddenReviewIds = await getHiddenReviewIdSet();
+
+    let reviewRows: Array<{
+      id: string;
+      user_name: string;
+      rating: number;
+      comment: string;
+      admin_reply?: string | null;
+      product_id: string;
+      created_at: string;
+    }> = [];
+
+    const withModeration = await supabase
       .from("reviews")
-      .select("id, user_name, rating, comment, product_id, created_at")
+      .select("id, user_name, rating, comment, admin_reply, product_id, created_at")
       .order("created_at", { ascending: false })
       .limit(15);
 
-    if (error || !reviewRows || reviewRows.length === 0) {
+    if (!withModeration.error && withModeration.data) {
+      reviewRows = withModeration.data as typeof reviewRows;
+    } else {
+      const legacy = await supabase
+        .from("reviews")
+        .select("id, user_name, rating, comment, product_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(15);
+
+      if (legacy.data) {
+        reviewRows = (legacy.data as Array<{ id: string; user_name: string; rating: number; comment: string; product_id: string; created_at: string }>).map((r) => ({
+          ...r,
+          admin_reply: null,
+        }));
+      }
+    }
+
+    if (!reviewRows || reviewRows.length === 0) {
       setReviews([]);
       return;
     }
 
-    const productIds = Array.from(new Set(reviewRows.map((r) => r.product_id).filter(Boolean)));
+    const visibleRows = reviewRows.filter((r) => !isReviewHiddenByModeration(r.id, r.admin_reply, hiddenReviewIds));
+
+    const productIds = Array.from(new Set(visibleRows.map((r) => r.product_id).filter(Boolean)));
     const { data: productRows } = await supabase
       .from("products")
       .select("id, name")
@@ -168,7 +200,7 @@ export const ReviewsSection = () => {
     const productEmojis = ["🧶", "🌸", "✨", "🧵", "💝", "🎀"];
 
     setReviews(
-      reviewRows.map((r, i) => ({
+      visibleRows.map((r: { id: string; user_name: string; rating: number; comment: string; product_id: string; created_at: string }, i) => ({
         id: r.id,
         user_name: r.user_name || "Customer",
         avatar_emoji: productEmojis[i % productEmojis.length],
@@ -281,7 +313,9 @@ export const ReviewsSection = () => {
               key={review.id}
               review={review}
               position={position}
-              onClick={() => move(position)}
+              onClick={() => {
+                window.location.href = `/user/shop/${review.product_id}?review=${review.id}#review-${review.id}`;
+              }}
               cardSize={cardSize}
             />
           );

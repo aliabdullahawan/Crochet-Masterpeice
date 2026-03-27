@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Grid3X3, BarChart3,
-  ShoppingBag, Users, Tag, Bell, User, LogOut,
+  ShoppingBag, Users, Tag, Bell, User, LogOut, Star,
   ChevronDown, Menu, X, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ const navLinks = [
   { href: "/admin/orders",     label: "Orders",     icon: <ShoppingBag className="w-4 h-4" /> },
   { href: "/admin/discounts",  label: "Discounts",  icon: <Tag className="w-4 h-4" /> },
   { href: "/admin/analytics",  label: "Analytics",  icon: <BarChart3 className="w-4 h-4" /> },
+  { href: "/admin/reviews",    label: "Reviews",    icon: <Star className="w-4 h-4" /> },
   { href: "/admin/customers",  label: "Customers",  icon: <Users className="w-4 h-4" /> },
 ];
 
