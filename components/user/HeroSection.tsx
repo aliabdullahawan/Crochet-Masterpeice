@@ -53,28 +53,36 @@ const TikTokIcon = ({ size = 20 }: { size?: number }) => (
 const AnimatedCounter = ({ target, duration = 2000 }: { target: number; duration?: number }) => {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !started.current) {
-        started.current = true;
-        const start = Date.now();
-        const step = () => {
-          const elapsed = Date.now() - start;
-          const progress = Math.min(elapsed / duration, 1);
-          // Ease out cubic
-          const eased = 1 - Math.pow(1 - progress, 3);
-          setCount(Math.floor(eased * target));
-          if (progress < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      }
+      if (entry.isIntersecting) setIsVisible(true);
     }, { threshold: 0.3 });
 
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [target, duration]);
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const from = count;
+    const to = Math.max(0, Number(target) || 0);
+    const start = Date.now();
+
+    const step = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = Math.floor(from + (to - from) * eased);
+      setCount(next);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  }, [target, duration, isVisible]);
 
   return <span ref={ref}>{formatNumber(count)}</span>;
 };
@@ -339,29 +347,87 @@ export const HeroSection = () => {
   // ── Fetch real social counts from /api/social-counts ──
   // That route tries official APIs first, falls back to admin-set values in Supabase
   const [socialData, setSocialData] = useState({
-    whatsapp: 0, instagram: 0, facebook: 0, tiktok: 0,
-    site_users: 0, total_community: 0,
+    whatsapp: 0,
+    instagram: 0,
+    facebook: 0,
+    tiktok: 0,
+    site_users: 0,
+    total_community: 0,
   });
   const [countsLoaded, setCountsLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
 
+    const loadManualCountsFromSupabase = async () => {
+      const [{ data: settings }, { count: usersCount }] = await Promise.all([
+        supabase
+          .from("site_settings")
+          .select("key,value")
+          .in("key", [
+            "instagram_count_manual",
+            "facebook_count_manual",
+            "tiktok_count_manual",
+            "whatsapp_count_manual",
+          ]),
+        supabase.from("users").select("*", { count: "exact", head: true }),
+      ]);
+
+      const getManual = (key: string) => {
+        const raw = settings?.find((s: { key: string; value: string }) => s.key === key)?.value;
+        const parsed = parseInt(raw ?? "", 10);
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+
+      const whatsapp = getManual("whatsapp_count_manual");
+      const instagram = getManual("instagram_count_manual");
+      const facebook = getManual("facebook_count_manual");
+      const tiktok = getManual("tiktok_count_manual");
+      const siteUsers = usersCount ?? 0;
+
+      return {
+        whatsapp,
+        instagram,
+        facebook,
+        tiktok,
+        site_users: siteUsers,
+        total_community: whatsapp + instagram + facebook + tiktok + siteUsers,
+      };
+    };
+
     const loadSocialCounts = async () => {
       try {
         const r = await fetch("/api/social-counts", { cache: "no-store" });
+        if (!r.ok) throw new Error(`social-counts HTTP ${r.status}`);
         const d = await r.json();
         if (!active) return;
-        setSocialData({
-          whatsapp:        d.whatsapp?.count       ?? 0,
-          instagram:       d.instagram?.count      ?? 0,
-          facebook:        d.facebook?.count       ?? 0,
-          tiktok:          d.tiktok?.count         ?? 0,
-          site_users:      d.site_users?.count     ?? 0,
+        const next = {
+          whatsapp: d.whatsapp?.count ?? 0,
+          instagram: d.instagram?.count ?? 0,
+          facebook: d.facebook?.count ?? 0,
+          tiktok: d.tiktok?.count ?? 0,
+          site_users: d.site_users?.count ?? 0,
           total_community: d.total_community?.count ?? 0,
-        });
+        };
+
+        const looksEmpty =
+          next.whatsapp === 0 &&
+          next.instagram === 0 &&
+          next.facebook === 0 &&
+          next.tiktok === 0;
+
+        if (looksEmpty) {
+          const manual = await loadManualCountsFromSupabase();
+          if (!active) return;
+          setSocialData(manual);
+          return;
+        }
+
+        setSocialData(next);
       } catch {
-        // Silent fail — keep previous values.
+        const manual = await loadManualCountsFromSupabase();
+        if (!active) return;
+        setSocialData(manual);
       } finally {
         if (active) setCountsLoaded(true);
       }
@@ -393,22 +459,62 @@ export const HeroSection = () => {
   // Products — fetched from Supabase
   const [products, setProducts] = useState<Product[]>([]);
   useEffect(() => {
-    supabase
-      .from("products")
-      .select("id, name, price, original_price, is_featured, average_rating, categories(name), image_url, images")
-      .eq("is_active", true)
-      .eq("is_featured", true)
-      .limit(6)
-      .then(({ data }) => {
-        if (data) setProducts(data.map((p: {id:string;name:string;price:number;original_price:number|null;average_rating:number;categories:{name:string}|null;image_url?:string|null;images?:string[]|null}) => ({
-          id: p.id, name: p.name, price: p.price,
-          original_price: p.original_price ?? undefined,
-          category_name: (p.categories as {name:string}|null)?.name ?? "",
-          average_rating: p.average_rating,
-          image_url: p.image_url ?? undefined,
-          images: p.images ?? [],
-        })));
-      });
+    const loadHeroProducts = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, price, original_price, is_featured, average_rating, categories(name), image_url, images")
+        .eq("is_active", true)
+        .eq("is_featured", true)
+        .limit(6);
+
+      if (!data) return;
+
+      const mapped = data.map((p: {id:string;name:string;price:number;original_price:number|null;average_rating:number|null;categories:{name:string}|null;image_url?:string|null;images?:string[]|null}) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        original_price: p.original_price ?? undefined,
+        category_name: (p.categories as {name:string}|null)?.name ?? "",
+        average_rating: p.average_rating ?? 0,
+        image_url: p.image_url ?? undefined,
+        images: p.images ?? [],
+      }));
+
+      const productIds = mapped.map((p) => p.id);
+      if (productIds.length === 0) {
+        setProducts(mapped);
+        return;
+      }
+
+      const { data: reviewRows } = await supabase
+        .from("reviews")
+        .select("product_id, rating")
+        .in("product_id", productIds);
+
+      if (!reviewRows) {
+        setProducts(mapped);
+        return;
+      }
+
+      const stats = new Map<string, { sum: number; count: number }>();
+      for (const row of reviewRows as Array<{ product_id: string; rating: number }>) {
+        const current = stats.get(row.product_id) ?? { sum: 0, count: 0 };
+        stats.set(row.product_id, {
+          sum: current.sum + (Number(row.rating) || 0),
+          count: current.count + 1,
+        });
+      }
+
+      setProducts(
+        mapped.map((p) => {
+          const stat = stats.get(p.id);
+          if (!stat || stat.count === 0) return p;
+          return { ...p, average_rating: Number((stat.sum / stat.count).toFixed(1)) };
+        })
+      );
+    };
+
+    void loadHeroProducts();
   }, []);
 
   const socialCounts: SocialCount[] = [
@@ -438,7 +544,10 @@ export const HeroSection = () => {
     },
   ];
 
-  const totalCommunity = socialData.total_community;
+  const totalCommunity =
+    socialData.total_community > 0
+      ? socialData.total_community
+      : socialData.whatsapp + socialData.instagram + socialData.facebook + socialData.tiktok + socialData.site_users;
 
   // Text cycling animation
   const heroTexts = [

@@ -370,6 +370,7 @@ const AddToCartButton = ({ onClick, disabled = false }: { onClick: () => void; d
    ============================================= */
 export default function ProductDetailPage() {
   const params = useParams();
+  const { user, isLoggedIn, displayName } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
@@ -381,6 +382,8 @@ export default function ProductDetailPage() {
   const [showOrder, setShowOrder] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState("");
   const { addToCart, addToWishlist, removeFromWishlist, isWishlisted, setAppliedCoupon, cartItems } = useShop();
 
   useEffect(() => {
@@ -396,10 +399,43 @@ export default function ProductDetailPage() {
         .single();
 
       if (data && !error) {
-        const listing = data as { images?: string[] | null; image_url?: string | null } & Record<string, unknown>;
+        const listing = data as {
+          id: string;
+          name?: string | null;
+          description?: string | null;
+          price?: number | null;
+          original_price?: number | null;
+          category_id?: string | null;
+          category_name?: string | null;
+          active_discount_percent?: number | null;
+          discount_active?: boolean | null;
+          discount_end_date?: string | null;
+          average_rating?: number | null;
+          review_count?: number | null;
+          is_featured?: boolean | null;
+          tags?: string[] | null;
+          stock_quantity?: number | null;
+          image_url?: string | null;
+          images?: string[] | null;
+        };
+
         setProduct({
-          ...(listing as unknown as ProductDetail),
+          id: listing.id,
+          name: listing.name ?? "Product",
+          description: listing.description ?? "Handmade crochet product.",
+          price: listing.price ?? 0,
+          original_price: listing.original_price ?? undefined,
+          category_id: listing.category_id ?? undefined,
+          category_name: (listing.category_name ?? "").trim() || "Uncategorised",
+          discount_percent: listing.active_discount_percent ?? undefined,
+          discount_active: listing.discount_active ?? false,
+          discount_end_date: listing.discount_end_date ?? undefined,
+          average_rating: listing.average_rating ?? 0,
+          review_count: listing.review_count ?? 0,
+          is_featured: listing.is_featured ?? false,
+          tags: listing.tags ?? [],
           images: listing.images?.length ? listing.images : (listing.image_url ? [listing.image_url] : []),
+          stock_quantity: listing.stock_quantity ?? 0,
         } as ProductDetail);
         setPageLoading(false);
         return;
@@ -465,14 +501,31 @@ export default function ProductDetailPage() {
     supabase.from("reviews").select("id, user_name, rating, comment, created_at")
       .eq("product_id", id).order("created_at", { ascending: false })
       .then(({ data }) => {
-        if (data) setReviews(data.map((r: {id:string;user_name:string;rating:number;comment:string;created_at:string}) => ({
+        if (data) {
+          const mappedReviews = data.map((r: {id:string;user_name:string;rating:number;comment:string;created_at:string}) => ({
           id: r.id,
           user_name: r.user_name,
           avatar_emoji: "🌸",
           rating: r.rating,
           comment: r.comment,
           date: new Date(r.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }),
-        })));
+          }));
+
+          setReviews(mappedReviews);
+
+          const count = mappedReviews.length;
+          const sum = mappedReviews.reduce((acc, item) => acc + (Number(item.rating) || 0), 0);
+          const avg = count > 0 ? Number((sum / count).toFixed(1)) : 0;
+
+          setProduct((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              average_rating: avg,
+              review_count: count,
+            };
+          });
+        }
       });
   }, [params.id]);
 
@@ -577,6 +630,88 @@ export default function ProductDetailPage() {
       setCouponMessage("Could not validate coupon right now. Please try again.");
     } finally {
       setCouponLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!product) return;
+
+    if (!isLoggedIn || !user) {
+      setReviewMessage("Please log in to submit your review.");
+      return;
+    }
+
+    const comment = reviewText.trim();
+    if (!comment) {
+      setReviewMessage("Please write a short comment before submitting.");
+      return;
+    }
+
+    setReviewSubmitting(true);
+    setReviewMessage("");
+
+    try {
+      const reviewerName =
+        displayName ||
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email?.split("@")[0] ||
+        "User";
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("reviews")
+        .insert({
+          product_id: product.id,
+          user_id: user.id,
+          user_name: reviewerName,
+          rating: reviewRating,
+          comment,
+        })
+        .select("id, user_name, rating, comment, created_at")
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      if (inserted) {
+        setReviews((prev) => [
+          {
+            id: inserted.id,
+            user_name: inserted.user_name,
+            avatar_emoji: "🌸",
+            rating: inserted.rating,
+            comment: inserted.comment,
+            date: new Date(inserted.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }),
+          },
+          ...prev,
+        ]);
+      }
+
+      const { data: updatedProduct } = await supabase
+        .from("products")
+        .select("average_rating, review_count")
+        .eq("id", product.id)
+        .maybeSingle();
+
+      if (updatedProduct) {
+        setProduct((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            average_rating: updatedProduct.average_rating ?? prev.average_rating,
+            review_count: updatedProduct.review_count ?? prev.review_count,
+          };
+        });
+      }
+
+      setReviewText("");
+      setReviewRating(5);
+      setReviewMessage("Review submitted successfully.");
+    } catch (error) {
+      setReviewMessage(error instanceof Error ? error.message : "Could not submit review right now.");
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -881,9 +1016,14 @@ export default function ProductDetailPage() {
           {/* Write review */}
           <div className="glass rounded-3xl border border-blush/25 p-6">
             <h3 className="font-display text-base font-semibold text-ink-dark mb-4">Write a Review</h3>
+            {!isLoggedIn && (
+              <p className="text-xs font-sans text-ink-light/60 mb-3">
+                Please <Link href="/user/login" className="text-caramel font-semibold hover:text-ink transition-colors">log in</Link> to submit a review.
+              </p>
+            )}
             <div className="flex gap-1 mb-4">
               {[1,2,3,4,5].map((i) => (
-                <button key={i} onClick={() => setReviewRating(i)}>
+                <button key={i} type="button" onClick={() => setReviewRating(i)}>
                   <Star className={cn("w-6 h-6 transition-all duration-200", i <= reviewRating ? "fill-caramel text-caramel scale-110" : "text-caramel/20 hover:text-caramel/50")} />
                 </button>
               ))}
@@ -892,8 +1032,24 @@ export default function ProductDetailPage() {
               placeholder="Share your experience with this product..."
               rows={3}
               className="w-full px-4 py-3 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-blush focus:bg-white focus:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all resize-none mb-3" />
-            <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
-              <Check className="w-4 h-4" /> Submit Review
+            {reviewMessage && (
+              <p className={cn("text-xs font-sans mb-3", reviewMessage.toLowerCase().includes("success") ? "text-green-600" : "text-red-500")}>
+                {reviewMessage}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => { void handleSubmitReview(); }}
+              disabled={!isLoggedIn || reviewSubmitting || !reviewText.trim()}
+              className={cn(
+                "flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-sans font-bold shadow-button transition-all btn-bubble",
+                !isLoggedIn || reviewSubmitting || !reviewText.trim()
+                  ? "bg-ink-light/40 cursor-not-allowed"
+                  : "bg-gradient-to-r from-caramel to-rose hover:shadow-button-hover hover:-translate-y-0.5"
+              )}
+            >
+              {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {isLoggedIn ? (reviewSubmitting ? "Submitting..." : "Submit Review") : "Login To Submit"}
             </button>
           </div>
         </div>

@@ -150,6 +150,7 @@ const ProductModal = ({
   const validate = () => {
     const e: typeof errors = {};
     if (!form.name.trim()) e.name = "Name required";
+    if (!form.category_id) e.category_id = "Category required";
     const p = Number(form.price);
     if (!form.price || isNaN(p) || p < 0) e.price = "Valid price required";
     const op = Number(form.original_price);
@@ -237,9 +238,16 @@ const ProductModal = ({
               <div>
                 <label className="block text-xs font-sans font-semibold text-ink-light/65 uppercase tracking-wider mb-1.5">Category</label>
                 <select value={form.category_id ?? ""} onChange={(e) => set("category_id")(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink outline-none focus:border-caramel transition-all">
+                  className={cn(
+                    "w-full px-3.5 py-2.5 rounded-2xl border bg-cream-50/80 text-sm font-sans text-ink outline-none transition-all",
+                    errors.category_id
+                      ? "border-red-300 focus:border-red-400"
+                      : "border-caramel/20 focus:border-caramel"
+                  )}>
+                  <option value="">Select category</option>
                   {categories.map(c => <option key={c.id || String(c.name)} value={c.id}>{c.name}</option>)}
                 </select>
+                {errors.category_id && <p className="text-[11px] text-red-500 mt-1">{errors.category_id}</p>}
               </div>
               {/* Multi-image upload */}
               <div>
@@ -544,13 +552,18 @@ export default function AdminProductsPage() {
 
   const loadProducts = async () => {
     try {
-      const [productsRes, listingRes] = await Promise.all([
+      const [productsRes, listingRes, categoriesRes] = await Promise.all([
         supabase
           .from("products")
           .select("id, name, description, price, original_price, category_id, stock_quantity, is_featured, is_active, average_rating, review_count, tags, image_url, images, created_at, categories(name)")
           .order("created_at", { ascending: false }),
         supabase.from("product_listing").select("id, active_discount_percent, discount_active"),
+        supabase.from("categories").select("id, name"),
       ]);
+
+      const categoryById = new Map<string, string>(
+        ((categoriesRes.data ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name])
+      );
 
       const discountTypeByProduct = new Map<string, "percent" | "flat">();
       const modernDiscounts = await supabase
@@ -587,9 +600,11 @@ export default function AdminProductsPage() {
       if (productsRes.data) {
         setProducts(productsRes.data.map((p: Record<string, unknown>) => {
           const discountRow = listingMap.get(String(p.id));
+          const categoryId = (p.category_id as string | null) ?? null;
+          const joinedCategory = (p.categories as {name:string}|null)?.name;
           return {
             ...p,
-            category_name: (p.categories as {name:string}|null)?.name ?? "",
+            category_name: joinedCategory ?? (categoryId ? categoryById.get(categoryId) : undefined) ?? "Uncategorised",
             discount_active: Boolean(discountRow?.discount_active),
             discount_type: discountTypeByProduct.get(String(p.id)) ?? "percent",
             discount_percent: discountRow?.active_discount_percent ?? undefined,

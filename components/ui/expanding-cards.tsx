@@ -77,7 +77,13 @@ export const ExpandingCards = React.forwardRef<HTMLUListElement, ExpandingCardsP
             )}
             onMouseEnter={() => handleInteraction(index)}
             onFocus={() => handleInteraction(index)}
-            onClick={() => handleInteraction(index)}
+            onClick={() => {
+              if (activeIndex === index) {
+                window.location.href = item.linkHref;
+                return;
+              }
+              handleInteraction(index);
+            }}
             tabIndex={0}
             data-active={activeIndex === index}
           >

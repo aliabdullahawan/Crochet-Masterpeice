@@ -511,12 +511,54 @@ function ShopContent() {
       .select("id, name, description, price, original_price, category_name, category_id, stock_quantity, is_featured, average_rating, review_count, tags, active_discount_percent, discount_active, image_url, images");
 
     if (data) {
-      setProducts((data as (Product & { active_discount_percent?: number; stock_quantity?: number })[]).map((p) => ({
+      const mapped = (data as (Product & { active_discount_percent?: number; stock_quantity?: number })[]).map((p) => ({
         ...p,
+        category_id: p.category_id ?? "",
         stock_quantity: p.stock_quantity ?? 0,
-        category_name: p.category_name || "Uncategorised",
+        category_name: (p.category_name ?? "").trim() || "Uncategorised",
+        average_rating: p.average_rating ?? 0,
+        review_count: p.review_count ?? 0,
         discount_percent: p.discount_percent ?? p.active_discount_percent,
-      })));
+      }));
+
+      const productIds = mapped.map((p) => p.id);
+      if (productIds.length === 0) {
+        setProducts(mapped);
+        setShopLoading(false);
+        return;
+      }
+
+      const { data: reviewRows } = await supabase
+        .from("reviews")
+        .select("product_id, rating")
+        .in("product_id", productIds);
+
+      if (!reviewRows) {
+        setProducts(mapped);
+        setShopLoading(false);
+        return;
+      }
+
+      const stats = new Map<string, { sum: number; count: number }>();
+      for (const row of reviewRows as Array<{ product_id: string; rating: number }>) {
+        const current = stats.get(row.product_id) ?? { sum: 0, count: 0 };
+        stats.set(row.product_id, {
+          sum: current.sum + (Number(row.rating) || 0),
+          count: current.count + 1,
+        });
+      }
+
+      setProducts(
+        mapped.map((p) => {
+          const stat = stats.get(p.id);
+          if (!stat || stat.count === 0) return p;
+          return {
+            ...p,
+            average_rating: Number((stat.sum / stat.count).toFixed(1)),
+            review_count: stat.count,
+          };
+        })
+      );
     }
     setShopLoading(false);
   }, []);
@@ -557,9 +599,11 @@ function ShopContent() {
     }
     if (cat) {
       const normalized = cat.toLowerCase();
-      const matchesId = p.category_id === cat;
-      const matchesName = p.category_name.toLowerCase() === normalized;
-      const matchesSelected = selectedCategory ? p.category_id === selectedCategory.id : false;
+      const productCategoryId = (p.category_id ?? "").trim();
+      const productCategoryName = (p.category_name ?? "").trim().toLowerCase();
+      const matchesId = productCategoryId === cat;
+      const matchesName = productCategoryName === normalized;
+      const matchesSelected = selectedCategory ? productCategoryId === selectedCategory.id : false;
       if (!matchesId && !matchesName && !matchesSelected) return false;
     }
     if (p.price < price[0] || p.price > price[1]) return false;

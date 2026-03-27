@@ -27,60 +27,33 @@ export function CategoriesSection() {
     <Landmark key="landmark" size={22} />,
   ];
 
-  const fallbackCategories: CardItem[] = [
-    {
-      id: "fallback-bags",
-      title: "Crochet Bags",
-      description: "Everyday totes, mini bags, and statement pieces stitched by hand.",
-      imgSrc: fallbackImages[0],
-      icon: fallbackIcons[0],
-      linkHref: "/user/shop",
-    },
-    {
-      id: "fallback-wear",
-      title: "Wearables",
-      description: "Soft and cozy crochet wearables made for comfort and style.",
-      imgSrc: fallbackImages[1],
-      icon: fallbackIcons[1],
-      linkHref: "/user/shop",
-    },
-    {
-      id: "fallback-decor",
-      title: "Home Decor",
-      description: "Add texture and warmth with handmade crochet decor accents.",
-      imgSrc: fallbackImages[2],
-      icon: fallbackIcons[2],
-      linkHref: "/user/shop",
-    },
-    {
-      id: "fallback-gifts",
-      title: "Gift Ideas",
-      description: "Thoughtful handmade gifts for birthdays, events, and keepsakes.",
-      imgSrc: fallbackImages[3],
-      icon: fallbackIcons[3],
-      linkHref: "/user/shop",
-    },
-    {
-      id: "fallback-custom",
-      title: "Custom Orders",
-      description: "Bring your idea to life with a custom color, size, and pattern.",
-      imgSrc: fallbackImages[4],
-      icon: fallbackIcons[4],
-      linkHref: "/user/custom-order",
-    },
-  ];
-
   const loadCategories = React.useCallback(async () => {
     try {
-      const { data } = await supabase
-        .from("categories")
-        .select("id, name, description, is_active, sort_order")
-        .eq("is_active", true)
-        .order("sort_order");
+      const [catsRes, productsRes] = await Promise.all([
+        supabase
+          .from("categories")
+          .select("id, name, description, sort_order")
+          .eq("is_active", true)
+          .order("sort_order"),
+        supabase
+          .from("products")
+          .select("category_id")
+          .eq("is_active", true),
+      ]);
+
+      const data = (catsRes.data ?? []) as Array<{ id: string; name: string; description: string | null; sort_order: number }>;
+      const productRows = (productsRes.data ?? []) as Array<{ category_id: string | null }>;
+      const usedCategoryIds = new Set(
+        productRows
+          .map((row) => row.category_id)
+          .filter((id): id is string => Boolean(id))
+      );
 
       if (data?.length) {
         setCategories(
-          data.map((cat: { id: string; name: string; description: string | null; sort_order: number }, i: number) => ({
+          data
+            .filter((cat) => usedCategoryIds.has(cat.id))
+            .map((cat, i: number) => ({
             id: cat.id,
             title: cat.name,
             description: cat.description ?? "Handmade crochet pieces in this collection.",
@@ -92,9 +65,9 @@ export function CategoriesSection() {
         return;
       }
 
-      setCategories(fallbackCategories);
+      setCategories([]);
     } catch {
-      setCategories(fallbackCategories);
+      setCategories([]);
     }
   }, []);
 
@@ -136,7 +109,13 @@ export function CategoriesSection() {
           </h2>
         </div>
 
-        <ExpandingCards items={categories} defaultActiveIndex={0} className="max-w-none h-[560px] md:h-[420px]" />
+        {categories.length > 0 ? (
+          <ExpandingCards items={categories} defaultActiveIndex={0} className="max-w-none h-[560px] md:h-[420px]" />
+        ) : (
+          <div className="rounded-3xl border border-caramel/20 bg-white/70 p-10 text-center">
+            <p className="text-sm font-sans text-ink-light/65">No active categories with products available yet.</p>
+          </div>
+        )}
 
         <div className="text-center mt-10">
           <Link

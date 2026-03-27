@@ -23,6 +23,14 @@ interface SocialResult {
   error?: string;
 }
 
+const DEFAULT_COUNTS = {
+  whatsapp: 0,
+  instagram_manual: 0,
+  facebook_manual: 0,
+  tiktok_manual: 0,
+  site_users: 0,
+};
+
 // ─── Instagram via Graph API ───────────────────────────────────────────────
 async function fetchInstagramFollowers(): Promise<SocialResult> {
   const token = process.env.INSTAGRAM_ACCESS_TOKEN;
@@ -72,7 +80,6 @@ async function fetchTikTokFollowers(): Promise<SocialResult> {
   // TikTok Research API requires approved developer account
   // https://developers.tiktok.com/products/research-api/
   const token = process.env.TIKTOK_ACCESS_TOKEN;
-  const username = process.env.TIKTOK_USERNAME ?? "croch_et.masterpiece";
 
   if (!token) {
     return { platform: "tiktok", count: 0, source: "manual", error: "No TikTok API token configured" };
@@ -104,9 +111,11 @@ async function fetchSupabaseData(): Promise<{
 }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const readKey = serviceKey ?? anonKey;
 
-  if (!supabaseUrl || !serviceKey) {
-    return { whatsapp: 2400, instagram_manual: 5800, facebook_manual: 3100, tiktok_manual: 9200, site_users: 1240 };
+  if (!supabaseUrl || !readKey) {
+    return DEFAULT_COUNTS;
   }
 
   try {
@@ -115,48 +124,56 @@ async function fetchSupabaseData(): Promise<{
       `${supabaseUrl}/rest/v1/site_settings?key=in.(whatsapp_count_manual,instagram_count_manual,facebook_count_manual,tiktok_count_manual)&select=key,value`,
       {
         headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
+          apikey: readKey,
+          Authorization: `Bearer ${readKey}`,
         },
         cache: "no-store",
       }
     );
 
-    // Count registered users
-    const usersRes = await fetch(
-      `${supabaseUrl}/rest/v1/users?select=id&is_blocked=eq.false`,
-      {
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-          Prefer: "count=exact",
-          "Range-Unit": "items",
-          Range: "0-0",
-        },
-        cache: "no-store",
-      }
-    );
+    // Count registered users (requires elevated access in many setups).
+    const usersRes = serviceKey
+      ? await fetch(
+          `${supabaseUrl}/rest/v1/users?select=id`,
+          {
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+              Prefer: "count=exact",
+              "Range-Unit": "items",
+              Range: "0-0",
+            },
+            cache: "no-store",
+          }
+        )
+      : null;
 
     const settings: Array<{ key: string; value: string }> = settingsRes.ok
       ? await settingsRes.json()
       : [];
 
-    const get = (key: string) =>
-      parseInt(settings.find((s) => s.key === key)?.value ?? "0", 10) || 0;
+    const getManual = (key: string, fallback: number) => {
+      if (!settingsRes.ok || settings.length === 0) return fallback;
+      const raw = settings.find((s) => s.key === key)?.value;
+      const parsed = parseInt(raw ?? "", 10);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
 
-    // Get user count from Content-Range header
-    const contentRange = usersRes.headers.get("Content-Range") ?? "0-0/0";
-    const siteUsers = parseInt(contentRange.split("/")[1] ?? "0", 10) || 0;
+    // Get user count from Content-Range header; keep fallback if unavailable.
+    const contentRange = usersRes?.ok ? usersRes.headers.get("Content-Range") : null;
+    const siteUsers = contentRange
+      ? parseInt(contentRange.split("/")[1] ?? "", 10)
+      : DEFAULT_COUNTS.site_users;
 
     return {
-      whatsapp: get("whatsapp_count_manual"),
-      instagram_manual: get("instagram_count_manual"),
-      facebook_manual: get("facebook_count_manual"),
-      tiktok_manual: get("tiktok_count_manual"),
-      site_users: siteUsers,
+      whatsapp: getManual("whatsapp_count_manual", DEFAULT_COUNTS.whatsapp),
+      instagram_manual: getManual("instagram_count_manual", DEFAULT_COUNTS.instagram_manual),
+      facebook_manual: getManual("facebook_count_manual", DEFAULT_COUNTS.facebook_manual),
+      tiktok_manual: getManual("tiktok_count_manual", DEFAULT_COUNTS.tiktok_manual),
+      site_users: Number.isFinite(siteUsers) ? siteUsers : DEFAULT_COUNTS.site_users,
     };
   } catch {
-    return { whatsapp: 2400, instagram_manual: 5800, facebook_manual: 3100, tiktok_manual: 9200, site_users: 1240 };
+    return DEFAULT_COUNTS;
   }
 }
 

@@ -362,7 +362,7 @@ export const FeaturedProducts = () => {
       .limit(6);
 
     if (data) {
-      setProducts(data.map((p: {id:string;name:string;price:number;original_price:number|null;stock_quantity:number|null;category_id:string|null;category_name:{name:string}|null;average_rating:number;review_count:number;tags:string[]|null;is_featured:boolean;image_url?:string|null;images?:string[]|null}) => ({
+      const mapped = data.map((p: {id:string;name:string;price:number;original_price:number|null;stock_quantity:number|null;category_id:string|null;category_name:{name:string}|null;average_rating:number|null;review_count:number|null;tags:string[]|null;is_featured:boolean;image_url?:string|null;images?:string[]|null}) => ({
         id: p.id,
         name: p.name,
         price: p.price,
@@ -370,13 +370,50 @@ export const FeaturedProducts = () => {
         stock_quantity: p.stock_quantity ?? 0,
         category_id: p.category_id ?? undefined,
         category_name: (p.category_name as {name:string}|null)?.name ?? "Uncategorised",
-        average_rating: p.average_rating,
-        review_count: p.review_count,
+        average_rating: p.average_rating ?? 0,
+        review_count: p.review_count ?? 0,
         tags: p.tags ?? [],
         is_featured: p.is_featured,
         image_url: p.image_url ?? undefined,
         images: p.images ?? [],
-      })));
+      }));
+
+      const productIds = mapped.map((p) => p.id);
+      if (productIds.length === 0) {
+        setProducts(mapped);
+        return;
+      }
+
+      const { data: reviewRows } = await supabase
+        .from("reviews")
+        .select("product_id, rating")
+        .in("product_id", productIds);
+
+      if (!reviewRows) {
+        setProducts(mapped);
+        return;
+      }
+
+      const stats = new Map<string, { sum: number; count: number }>();
+      for (const row of reviewRows as Array<{ product_id: string; rating: number }>) {
+        const current = stats.get(row.product_id) ?? { sum: 0, count: 0 };
+        stats.set(row.product_id, {
+          sum: current.sum + (Number(row.rating) || 0),
+          count: current.count + 1,
+        });
+      }
+
+      setProducts(
+        mapped.map((p) => {
+          const stat = stats.get(p.id);
+          if (!stat || stat.count === 0) return p;
+          return {
+            ...p,
+            average_rating: Number((stat.sum / stat.count).toFixed(1)),
+            review_count: stat.count,
+          };
+        })
+      );
     }
   }, []);
 

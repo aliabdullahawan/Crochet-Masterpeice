@@ -134,8 +134,54 @@ export const ReviewsSection = () => {
   const inView = useInView(sectionRef, { once: true, margin: "-60px" });
   const [cardSize, setCardSize] = useState(340);
 
-  // Mock reviews — replace with Supabase reviews table query
   const [reviews, setReviews] = useState<Review[]>([]);
+
+  const loadLatestReviews = React.useCallback(async () => {
+    const { data: reviewRows, error } = await supabase
+      .from("reviews")
+      .select("id, user_name, rating, comment, product_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(15);
+
+    if (error || !reviewRows || reviewRows.length === 0) {
+      setReviews([]);
+      return;
+    }
+
+    const productIds = Array.from(new Set(reviewRows.map((r) => r.product_id).filter(Boolean)));
+    const { data: productRows } = await supabase
+      .from("products")
+      .select("id, name")
+      .in("id", productIds);
+
+    const productNames = new Map<string, string>(
+      (productRows ?? []).map((p: { id: string; name: string | null }) => [p.id, p.name ?? "Product"])
+    );
+
+    const avatarBackgrounds = [
+      "bg-gradient-to-br from-blush/30 to-mauve/20",
+      "bg-gradient-to-br from-caramel/20 to-rose/25",
+      "bg-gradient-to-br from-mauve/25 to-cream-100",
+      "bg-gradient-to-br from-rose/20 to-blush/20",
+    ];
+
+    const productEmojis = ["🧶", "🌸", "✨", "🧵", "💝", "🎀"];
+
+    setReviews(
+      reviewRows.map((r, i) => ({
+        id: r.id,
+        user_name: r.user_name || "Customer",
+        avatar_emoji: productEmojis[i % productEmojis.length],
+        avatar_bg: avatarBackgrounds[i % avatarBackgrounds.length],
+        rating: Math.max(1, Math.min(5, Number(r.rating) || 0)),
+        comment: r.comment || "Loved this handmade piece.",
+        product_name: productNames.get(r.product_id) ?? "Crochet Product",
+        product_id: r.product_id,
+        product_emoji: productEmojis[(i + 2) % productEmojis.length],
+        date: new Date(r.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }),
+      }))
+    );
+  }, []);
 
   const move = (steps: number) => {
     const newList = [...reviews];
@@ -160,6 +206,21 @@ export const ReviewsSection = () => {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
+
+  useEffect(() => {
+    void loadLatestReviews();
+
+    const channel = supabase
+      .channel("home-reviews-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "reviews" }, () => {
+        void loadLatestReviews();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadLatestReviews]);
 
   return (
     <section ref={sectionRef} className="relative py-24 overflow-hidden bg-gradient-to-b from-cream-50 to-cream-100">
@@ -203,6 +264,13 @@ export const ReviewsSection = () => {
         className="relative w-full overflow-hidden"
         style={{ height: cardSize + 120 }}
       >
+        {reviews.length === 0 && (
+          <div className="h-full flex items-center justify-center px-4">
+            <p className="text-sm font-sans text-ink-light/60 text-center">
+              No reviews yet. Be the first to share your experience.
+            </p>
+          </div>
+        )}
         {reviews.map((review, index) => {
           const position =
             reviews.length % 2
@@ -224,12 +292,14 @@ export const ReviewsSection = () => {
       <div className="flex items-center justify-center gap-3 mt-4">
         <button
           onClick={() => move(-1)}
+          disabled={reviews.length < 2}
           aria-label="Previous review"
           className={cn(
             "flex items-center justify-center w-12 h-12 rounded-2xl",
             "border-2 border-blush/30 bg-white/70 text-ink-light",
             "hover:bg-gradient-to-br hover:from-blush hover:to-caramel hover:text-white hover:border-transparent",
             "transition-all duration-300 hover:shadow-button hover:-translate-y-0.5",
+            reviews.length < 2 && "opacity-50 cursor-not-allowed",
             "btn-bubble"
           )}
         >
@@ -254,12 +324,14 @@ export const ReviewsSection = () => {
 
         <button
           onClick={() => move(1)}
+          disabled={reviews.length < 2}
           aria-label="Next review"
           className={cn(
             "flex items-center justify-center w-12 h-12 rounded-2xl",
             "border-2 border-blush/30 bg-white/70 text-ink-light",
             "hover:bg-gradient-to-br hover:from-caramel hover:to-rose hover:text-white hover:border-transparent",
             "transition-all duration-300 hover:shadow-button hover:-translate-y-0.5",
+            reviews.length < 2 && "opacity-50 cursor-not-allowed",
             "btn-bubble"
           )}
         >

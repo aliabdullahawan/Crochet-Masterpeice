@@ -7,6 +7,7 @@ import { Mail, Phone, MapPin, Heart, Instagram, Facebook, ExternalLink, ArrowUp 
 import { cn } from "@/lib/utils";
 import { CrochetLogo } from "@/components/ui/CrochetLogo";
 import { AnimatedSocialIcons } from "@/components/ui/AnimatedSocialIcons";
+import { supabase } from "@/lib/supabase";
 
 /* =============================================
    SOCIAL ICON SVGs
@@ -176,14 +177,43 @@ const BackToTop = () => {
 export const Footer = () => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
+  const [categories, setCategories] = useState<Array<{ label: string; href: string }>>([]);
 
-  const categories = [
-    { label: "Cardigans & Tops", href: "/user/shop?category=cardigans" },
-    { label: "Bags & Totes", href: "/user/shop?category=bags" },
-    { label: "Accessories", href: "/user/shop?category=accessories" },
-    { label: "Home Décor", href: "/user/shop?category=home-decor" },
-    { label: "Plushies & Gifts", href: "/user/shop?category=plushies" },
-  ];
+  const loadFooterCategories = React.useCallback(async () => {
+    const [catsRes, productsRes] = await Promise.all([
+      supabase
+        .from("categories")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("sort_order"),
+      supabase
+        .from("products")
+        .select("category_id")
+        .eq("is_active", true),
+    ]);
+
+    const categoryRows = (catsRes.data ?? []) as Array<{ id: string; name: string }>;
+    const productRows = (productsRes.data ?? []) as Array<{ category_id: string | null }>;
+
+    const usedCategoryIds = new Set(
+      productRows
+        .map((row) => row.category_id)
+        .filter((id): id is string => Boolean(id))
+    );
+
+    setCategories(
+      categoryRows
+        .filter((cat) => usedCategoryIds.has(cat.id))
+        .map((cat) => ({
+          label: cat.name,
+          href: `/user/shop?category=${cat.id}`,
+        }))
+    );
+  }, []);
+
+  useEffect(() => {
+    void loadFooterCategories();
+  }, [loadFooterCategories]);
 
   const quickLinks = [
     { label: "Home", href: "/" },
@@ -239,6 +269,9 @@ export const Footer = () => {
               <h4 className="text-sm font-display font-semibold text-white mb-5">Shop by Category</h4>
               <ul className="space-y-2.5">
                 {categories.map((c) => <FooterLink key={c.label} href={c.href} label={c.label} />)}
+                {categories.length === 0 && (
+                  <li className="text-xs font-sans text-white/45">No active categories yet</li>
+                )}
               </ul>
             </motion.div>
 
