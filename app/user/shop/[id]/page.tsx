@@ -509,7 +509,7 @@ export default function ProductDetailPage() {
     const loadReviews = async () => {
       const hiddenReviewIds = await getHiddenReviewIdSet();
 
-      let dataWithModeration: Array<{
+      type ReviewRow = {
         id: string;
         product_id: string;
         user_id?: string | null;
@@ -518,18 +518,23 @@ export default function ProductDetailPage() {
         comment: string;
         admin_reply?: string | null;
         created_at: string;
-      }> | null = null;
+      };
 
-      const withModeration = await supabase
+      let dataWithModeration: ReviewRow[] | null = null;
+
+      const withModeration: { data: ReviewRow[] | null; error: { message: string } | null } = await supabase
         .from("reviews")
         .select("id, product_id, user_id, user_name, rating, comment, admin_reply, created_at")
         .eq("product_id", id)
         .order("created_at", { ascending: false });
 
       if (!withModeration.error) {
-        dataWithModeration = withModeration.data as typeof dataWithModeration;
+        dataWithModeration = withModeration.data ?? [];
       } else {
-        const legacy = await supabase
+        const legacy: {
+          data: Array<Omit<ReviewRow, "admin_reply">> | null;
+          error: { message: string } | null;
+        } = await supabase
           .from("reviews")
           .select("id, product_id, user_id, user_name, rating, comment, created_at")
           .eq("product_id", id)
@@ -731,15 +736,36 @@ export default function ProductDetailPage() {
         user.email?.split("@")[0] ||
         "User";
 
-      const { data: inserted, error: insertError } = await supabase
+      type ReviewInsertPayload = {
+        product_id: string;
+        user_id: string;
+        user_name: string;
+        rating: number;
+        comment: string;
+      };
+
+      type ReviewInsertResult = {
+        id: string;
+        user_name: string;
+        rating: number;
+        comment: string;
+        created_at: string;
+      };
+
+      const reviewPayload: ReviewInsertPayload = {
+        product_id: product.id,
+        user_id: user.id,
+        user_name: reviewerName,
+        rating: reviewRating,
+        comment,
+      };
+
+      const { data: inserted, error: insertError }: {
+        data: ReviewInsertResult | null;
+        error: { message: string } | null;
+      } = await supabase
         .from("reviews")
-        .insert({
-          product_id: product.id,
-          user_id: user.id,
-          user_name: reviewerName,
-          rating: reviewRating,
-          comment,
-        })
+        .insert(reviewPayload as unknown as never)
         .select("id, user_name, rating, comment, created_at")
         .single();
 
@@ -764,7 +790,9 @@ export default function ProductDetailPage() {
         ]);
       }
 
-      const { data: updatedProduct } = await supabase
+      const { data: updatedProduct }: {
+        data: { average_rating: number | null; review_count: number | null } | null;
+      } = await supabase
         .from("products")
         .select("average_rating, review_count")
         .eq("id", product.id)

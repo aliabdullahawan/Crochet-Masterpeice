@@ -387,17 +387,27 @@ export const FeaturedProducts = () => {
 
       const hiddenReviewIds = await getHiddenReviewIdSet();
 
-      let reviewRows: Array<{ id: string; product_id: string; rating: number; admin_reply?: string | null }> | null = null;
+      type ReviewRow = {
+        id: string;
+        product_id: string;
+        rating: number;
+        admin_reply?: string | null;
+      };
 
-      const withModeration = await supabase
+      let reviewRows: ReviewRow[] | null = null;
+
+      const withModeration: { data: ReviewRow[] | null; error: { message: string } | null } = await supabase
         .from("reviews")
         .select("id, product_id, rating, admin_reply")
         .in("product_id", productIds);
 
       if (!withModeration.error) {
-        reviewRows = (withModeration.data ?? []) as typeof reviewRows;
+        reviewRows = withModeration.data ?? [];
       } else {
-        const legacy = await supabase
+        const legacy: {
+          data: Array<Omit<ReviewRow, "admin_reply">> | null;
+          error: { message: string } | null;
+        } = await supabase
           .from("reviews")
           .select("id, product_id, rating")
           .in("product_id", productIds);

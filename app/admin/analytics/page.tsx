@@ -17,6 +17,12 @@ import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 type DatePreset = "daily" | "weekly" | "monthly" | "yearly" | "max" | "custom";
 
+type TopOrderItem = {
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+};
+
 function useAdminAuth() {
   useEffect(() => {
     if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
@@ -285,13 +291,13 @@ export default function AdminAnalyticsPage() {
 
       // Top products by revenue
       const orderIds = (ordersRaw ?? []).map((o:{id:string}) => o.id);
-      let topRaw: Array<{product_name:string;quantity:number;unit_price:number}> | null = null;
+      let topRaw: TopOrderItem[] = [];
       if (orderIds.length > 0) {
-        const { data: topData } = await supabase
+        const { data: topData }: { data: TopOrderItem[] | null } = await supabase
           .from("order_items")
           .select("product_name, quantity, unit_price")
           .in("order_id", orderIds);
-        topRaw = (topData ?? []) as typeof topRaw;
+        topRaw = topData ?? [];
       }
 
       if (topRaw?.length) {

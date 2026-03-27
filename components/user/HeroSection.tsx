@@ -361,7 +361,12 @@ export const HeroSection = () => {
     let active = true;
 
     const loadManualCountsFromSupabase = async () => {
-      const [{ data: settings }, { count: usersCount }] = await Promise.all([
+      type SiteSettingRow = { key: string; value: string | null };
+
+      const [{ data: settings }, { count: usersCount }]: [
+        { data: SiteSettingRow[] | null },
+        { count: number | null }
+      ] = await Promise.all([
         supabase
           .from("site_settings")
           .select("key,value")
@@ -375,7 +380,7 @@ export const HeroSection = () => {
       ]);
 
       const getManual = (key: string) => {
-        const raw = settings?.find((s: { key: string; value: string }) => s.key === key)?.value;
+        const raw = settings?.find((s) => s.key === key)?.value;
         const parsed = parseInt(raw ?? "", 10);
         return Number.isFinite(parsed) ? parsed : 0;
       };
@@ -489,17 +494,27 @@ export const HeroSection = () => {
 
       const hiddenReviewIds = await getHiddenReviewIdSet();
 
-      let reviewRows: Array<{ id: string; product_id: string; rating: number; admin_reply?: string | null }> | null = null;
+      type ReviewRow = {
+        id: string;
+        product_id: string;
+        rating: number;
+        admin_reply?: string | null;
+      };
 
-      const withModeration = await supabase
+      let reviewRows: ReviewRow[] | null = null;
+
+      const withModeration: { data: ReviewRow[] | null; error: { message: string } | null } = await supabase
         .from("reviews")
         .select("id, product_id, rating, admin_reply")
         .in("product_id", productIds);
 
       if (!withModeration.error) {
-        reviewRows = (withModeration.data ?? []) as typeof reviewRows;
+        reviewRows = withModeration.data ?? [];
       } else {
-        const legacy = await supabase
+        const legacy: {
+          data: Array<Omit<ReviewRow, "admin_reply">> | null;
+          error: { message: string } | null;
+        } = await supabase
           .from("reviews")
           .select("id, product_id, rating")
           .in("product_id", productIds);

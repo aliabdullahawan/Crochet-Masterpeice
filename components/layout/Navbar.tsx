@@ -336,7 +336,7 @@ export const Navbar = () => {
       .limit(8);
 
     if (!data) return;
-    const mapped = (data as {
+    const mapped: Notification[] = (data as {
       id: string;
       type: string;
       message: string;
