@@ -349,6 +349,7 @@ const OrderModal = ({
    MAIN CART PAGE
    ============================================= */
 export default function CartPage() {
+  const { isLoggedIn } = useAuth();
   const { cartItems: items, updateQty, removeFromCart, addToCart, clearCart, placeOrder, appliedCoupon, setAppliedCoupon, clearCoupon } = useShop();
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -537,6 +538,31 @@ export default function CartPage() {
     setCartSyncMessage("");
     return true;
   };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-cream-100">
+        <Navbar />
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
+          <div className="glass rounded-3xl border border-blush/25 shadow-card p-8 text-center">
+            <h1 className="font-display text-2xl font-semibold text-ink-dark">Login required</h1>
+            <p className="text-sm text-ink-light/60 font-sans mt-2">
+              Please sign in to view your personal cart.
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="/user/login"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
+              >
+                Go to Login
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream-100">

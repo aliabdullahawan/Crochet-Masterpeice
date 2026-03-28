@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/AuthContext";
 
 /* =============================================
    TYPES
@@ -83,6 +84,9 @@ export const useShop = () => {
    PROVIDER
    ============================================= */
 export const ShopProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   // Always start empty on server, load from localStorage only on client
   // This prevents hydration mismatch between server (count=0) and client (count=N)
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -90,13 +94,38 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
   const [appliedCoupon, setAppliedCouponState] = useState<AppliedCoupon | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // Load from localStorage after hydration (client only)
+  const getStorageKeys = useCallback((id: string) => ({
+    cart: `cm_cart_${id}`,
+    wishlist: `cm_wishlist_${id}`,
+    coupon: `cm_coupon_${id}`,
+  }), []);
+
+  // Remove old shared keys to avoid cross-account leaks from legacy storage.
   useEffect(() => {
-    const hydrate = async () => {
+    if (typeof window === "undefined") return;
+    ["cm_cart", "cm_wishlist", "cm_coupon"].forEach((k) => localStorage.removeItem(k));
+  }, []);
+
+  // Load user-scoped state after auth changes.
+  useEffect(() => {
+    const hydrateForUser = async () => {
+      // Reset immediately to avoid showing previous account state.
+      setHydrated(false);
+      setCartItems([]);
+      setWishlistItems([]);
+      setAppliedCouponState(null);
+
+      if (!userId) {
+        setHydrated(true);
+        return;
+      }
+
+      const keys = getStorageKeys(userId);
+
       try {
-        const cart = JSON.parse(localStorage.getItem("cm_cart") ?? "[]") as CartItem[];
-        const wish = JSON.parse(localStorage.getItem("cm_wishlist") ?? "[]") as WishlistItem[];
-        const coupon = JSON.parse(localStorage.getItem("cm_coupon") ?? "null");
+        const cart = JSON.parse(localStorage.getItem(keys.cart) ?? "[]") as CartItem[];
+        const wish = JSON.parse(localStorage.getItem(keys.wishlist) ?? "[]") as WishlistItem[];
+        const coupon = JSON.parse(localStorage.getItem(keys.coupon) ?? "null");
 
         const missingIds = Array.from(new Set([
           ...cart.filter((i) => !i.category_id).map((i) => i.productId),
@@ -132,7 +161,7 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
             .filter((value): value is string => typeof value === "string" && value.length > 0)));
 
           if (!productIds.length) {
-            localStorage.removeItem("cm_coupon");
+            localStorage.removeItem(keys.coupon);
           } else {
             try {
               const res = await fetch("/api/validate-coupon", {
@@ -150,7 +179,7 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
                   targetId: data.targetId ?? null,
                 } as AppliedCoupon);
               } else {
-                localStorage.removeItem("cm_coupon");
+                localStorage.removeItem(keys.coupon);
               }
             } catch {
               // Keep existing persisted coupon if validation endpoint is temporarily unavailable.
@@ -162,24 +191,27 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
       setHydrated(true);
     };
 
-    void hydrate();
-  }, []);
+    void hydrateForUser();
+  }, [userId, getStorageKeys]);
 
   // Persist to localStorage on change (only after hydration to avoid overwriting)
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem("cm_cart", JSON.stringify(cartItems));
-  }, [cartItems, hydrated]);
+    if (!hydrated || !userId) return;
+    const keys = getStorageKeys(userId);
+    localStorage.setItem(keys.cart, JSON.stringify(cartItems));
+  }, [cartItems, hydrated, userId, getStorageKeys]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem("cm_wishlist", JSON.stringify(wishlistItems));
-  }, [wishlistItems, hydrated]);
+    if (!hydrated || !userId) return;
+    const keys = getStorageKeys(userId);
+    localStorage.setItem(keys.wishlist, JSON.stringify(wishlistItems));
+  }, [wishlistItems, hydrated, userId, getStorageKeys]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem("cm_coupon", JSON.stringify(appliedCoupon));
-  }, [appliedCoupon, hydrated]);
+    if (!hydrated || !userId) return;
+    const keys = getStorageKeys(userId);
+    localStorage.setItem(keys.coupon, JSON.stringify(appliedCoupon));
+  }, [appliedCoupon, hydrated, userId, getStorageKeys]);
 
   // ── CART ────────────────────────────────────────────────
   const addToCart = useCallback((item: Omit<CartItem, "id" | "quantity">, qty = 1) => {

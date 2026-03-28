@@ -571,40 +571,44 @@ export const Navbar = () => {
 
             {/* ── Right icons ── */}
             <div className="flex items-center gap-1">
-              {/* Wishlist — opens drawer */}
-              <IconBtn count={wishlistCount} aria-label="Wishlist" onClick={() => setWishlistOpen(true)}>
-                <Heart className={cn("w-5 h-5 transition-all duration-200",
-                  wishlistCount > 0 ? "fill-blush text-blush" : "")} />
-              </IconBtn>
+              {isLoggedIn && (
+                <>
+                  {/* Wishlist — opens drawer */}
+                  <IconBtn count={wishlistCount} aria-label="Wishlist" onClick={() => setWishlistOpen(true)}>
+                    <Heart className={cn("w-5 h-5 transition-all duration-200",
+                      wishlistCount > 0 ? "fill-blush text-blush" : "")} />
+                  </IconBtn>
 
-              {/* Cart — opens drawer */}
-              <IconBtn count={cartCount} aria-label="Shopping cart" onClick={() => setCartOpen(true)}>
-                <ShoppingCart className="w-5 h-5" />
-              </IconBtn>
+                  {/* Cart — opens drawer */}
+                  <IconBtn count={cartCount} aria-label="Shopping cart" onClick={() => setCartOpen(true)}>
+                    <ShoppingCart className="w-5 h-5" />
+                  </IconBtn>
 
-              {/* Notifications */}
-              <div ref={notifRef} className="relative">
-                <IconBtn
-                  count={unreadCount}
-                  aria-label="Notifications"
-                  active={notifOpen}
-                  onClick={() => { setNotifOpen((o) => !o); setProfileOpen(false); }}
-                >
-                  <Bell className="w-5 h-5" />
-                </IconBtn>
-                {notifOpen && (
-                  <NotificationDropdown
-                    notifications={notifications}
-                    onClose={() => setNotifOpen(false)}
-                    onMarkAllRead={async () => {
-                      setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
-                      if (user) {
-                        await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("user_id", user.id).eq("is_read", false);
-                      }
-                    }}
-                  />
-                )}
-              </div>
+                  {/* Notifications */}
+                  <div ref={notifRef} className="relative">
+                    <IconBtn
+                      count={unreadCount}
+                      aria-label="Notifications"
+                      active={notifOpen}
+                      onClick={() => { setNotifOpen((o) => !o); setProfileOpen(false); }}
+                    >
+                      <Bell className="w-5 h-5" />
+                    </IconBtn>
+                    {notifOpen && (
+                      <NotificationDropdown
+                        notifications={notifications}
+                        onClose={() => setNotifOpen(false)}
+                        onMarkAllRead={async () => {
+                          setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
+                          if (user) {
+                            await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("user_id", user.id).eq("is_read", false);
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Get Started / Profile */}
               <div ref={profileRef} className="relative ml-1">
@@ -689,28 +693,34 @@ export const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            <div className="pt-2 border-t border-blush/20 grid grid-cols-2 gap-2">
-              <button onClick={() => setWishlistOpen(true)}
-                className="flex items-center justify-center gap-2 py-2 rounded-xl bg-blush/10 text-sm font-sans font-semibold text-ink hover:bg-blush/20 transition-colors btn-bubble">
-                <Heart className="w-4 h-4 text-blush" /> Wishlist
-                {wishlistCount > 0 && <span className="w-5 h-5 rounded-full bg-blush text-white text-[10px] font-bold flex items-center justify-center">{wishlistCount}</span>}
-              </button>
-              <button onClick={() => setCartOpen(true)}
-                className="flex items-center justify-center gap-2 py-2 rounded-xl bg-cream-100 text-sm font-sans font-semibold text-ink hover:bg-blush/10 transition-colors btn-bubble">
-                <ShoppingCart className="w-4 h-4 text-caramel" /> Cart
-                {cartCount > 0 && <span className="w-5 h-5 rounded-full bg-caramel text-white text-[10px] font-bold flex items-center justify-center">{cartCount}</span>}
-              </button>
-            </div>
+            {isLoggedIn && (
+              <div className="pt-2 border-t border-blush/20 grid grid-cols-2 gap-2">
+                <button onClick={() => setWishlistOpen(true)}
+                  className="flex items-center justify-center gap-2 py-2 rounded-xl bg-blush/10 text-sm font-sans font-semibold text-ink hover:bg-blush/20 transition-colors btn-bubble">
+                  <Heart className="w-4 h-4 text-blush" /> Wishlist
+                  {wishlistCount > 0 && <span className="w-5 h-5 rounded-full bg-blush text-white text-[10px] font-bold flex items-center justify-center">{wishlistCount}</span>}
+                </button>
+                <button onClick={() => setCartOpen(true)}
+                  className="flex items-center justify-center gap-2 py-2 rounded-xl bg-cream-100 text-sm font-sans font-semibold text-ink hover:bg-blush/10 transition-colors btn-bubble">
+                  <ShoppingCart className="w-4 h-4 text-caramel" /> Cart
+                  {cartCount > 0 && <span className="w-5 h-5 rounded-full bg-caramel text-white text-[10px] font-bold flex items-center justify-center">{cartCount}</span>}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
       {/* Drawers */}
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-      <WishlistDrawer
-        open={wishlistOpen}
-        onClose={() => setWishlistOpen(false)}
-        onOpenCart={() => { setWishlistOpen(false); setCartOpen(true); }}
-      />
+      {isLoggedIn && (
+        <>
+          <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+          <WishlistDrawer
+            open={wishlistOpen}
+            onClose={() => setWishlistOpen(false)}
+            onOpenCart={() => { setWishlistOpen(false); setCartOpen(true); }}
+          />
+        </>
+      )}
     </>
   );
 };
