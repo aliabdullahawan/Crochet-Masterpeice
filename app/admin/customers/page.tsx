@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 interface Customer {
   id: string; name: string; email: string; phone?: string;
@@ -394,44 +395,64 @@ export default function AdminCustomersPage() {
 
             {/* Customer list */}
             <div className="glass rounded-3xl border border-caramel/15 overflow-hidden">
-              <AnimatePresence mode="popLayout">
-                {filtered.map((c, i) => {
-                  const isSelected = selected?.id === c.id;
-                  return (
-                    <motion.div key={c.id} layout
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: i * 0.03 }}
-                      onClick={() => setSelected(isSelected ? null : c)}
-                      className={cn(
-                        "flex items-center gap-4 px-5 py-4 border-b border-caramel/8 last:border-0 cursor-pointer transition-all group",
-                        isSelected ? "bg-caramel/8 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
-                      )}>
-                      {/* Avatar */}
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center flex-shrink-0">
-                        <span className="font-display text-base font-semibold text-caramel/80">{c.name.charAt(0)}</span>
+              {dbLoading ? (
+                <div className="p-4 space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 px-1 py-2 border-b border-caramel/8 last:border-0">
+                      <Skeleton className="w-10 h-10 rounded-xl" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-40 mb-2" />
+                        <Skeleton className="h-3 w-56" />
                       </div>
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-sans text-sm font-semibold text-ink-dark">{c.name}</p>
-                          <span className={cn("text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0",
-                            c.is_active ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-400 border-red-200")}>
-                            {c.is_active ? "Active" : "Inactive"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-ink-light/55 font-sans truncate">{c.email}</p>
+                      <div className="hidden sm:block">
+                        <Skeleton className="h-4 w-20 mb-2" />
+                        <Skeleton className="h-3 w-14" />
                       </div>
-                      {/* Stats */}
-                      <div className="text-right flex-shrink-0 hidden sm:block">
-                        <p className="text-sm font-bold font-sans text-ink-dark">PKR {c.total_spent.toLocaleString()}</p>
-                        <p className="text-[10px] text-ink-light/45 font-sans">{c.total_orders} order{c.total_orders !== 1 ? "s" : ""}</p>
-                      </div>
-                      <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all flex-shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-              {filtered.length === 0 && (
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <AnimatePresence mode="popLayout">
+                    {filtered.map((c, i) => {
+                      const isSelected = selected?.id === c.id;
+                      return (
+                        <motion.div key={c.id} layout
+                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: i * 0.03 }}
+                          onClick={() => setSelected(isSelected ? null : c)}
+                          className={cn(
+                            "flex items-center gap-4 px-5 py-4 border-b border-caramel/8 last:border-0 cursor-pointer transition-all group",
+                            isSelected ? "bg-caramel/8 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
+                          )}>
+                          {/* Avatar */}
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center flex-shrink-0">
+                            <span className="font-display text-base font-semibold text-caramel/80">{c.name.charAt(0)}</span>
+                          </div>
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-sans text-sm font-semibold text-ink-dark">{c.name}</p>
+                              <span className={cn("text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0",
+                                c.is_active ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-400 border-red-200")}>
+                                {c.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-ink-light/55 font-sans truncate">{c.email}</p>
+                          </div>
+                          {/* Stats */}
+                          <div className="text-right flex-shrink-0 hidden sm:block">
+                            <p className="text-sm font-bold font-sans text-ink-dark">PKR {c.total_spent.toLocaleString()}</p>
+                            <p className="text-[10px] text-ink-light/45 font-sans">{c.total_orders} order{c.total_orders !== 1 ? "s" : ""}</p>
+                          </div>
+                          <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all flex-shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </>
+              )}
+              {!dbLoading && filtered.length === 0 && (
                 <div className="flex flex-col items-center py-16 gap-3">
                   <Users className="w-8 h-8 text-caramel/30" />
                   <p className="font-display text-base text-ink-dark">No customers found</p>
