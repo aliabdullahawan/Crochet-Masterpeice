@@ -270,7 +270,7 @@ const ProfileDropdown = ({
 const DiscountBanner = ({
   discounts,
 }: {
-  discounts: Array<{ id?: string; code: string; label: string; percent: number; endsAt?: string }>;
+  discounts: Array<{ id?: string; code: string; label: string; percent: number; endsAt?: string; appliesTo?: "all" | "product" | "category" | "cart" }>;
 }) => {
   if (!discounts.length) return null;
   return (
@@ -285,13 +285,15 @@ const DiscountBanner = ({
             <span className="font-script text-sm">{d.code}</span>
             <span>— {d.percent}% off {d.label}</span>
             {d.endsAt && <span className="opacity-70">· ends {d.endsAt}</span>}
-            <Link
-              href={`/user/shop?discount=${encodeURIComponent(d.code)}`}
-              className="ml-1 px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-bold uppercase tracking-wide hover:bg-white transition shadow-sm"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Shop now
-            </Link>
+            {d.appliesTo !== "cart" && (
+              <Link
+                href={`/user/shop?discount=${encodeURIComponent(d.code)}`}
+                className="ml-1 px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-bold uppercase tracking-wide hover:bg-white transition shadow-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Shop now
+              </Link>
+            )}
             <span className="opacity-40 mx-2">✦</span>
           </span>
         ))}
@@ -389,7 +391,7 @@ export const Navbar = () => {
         try {
           const cached = JSON.parse(cachedRaw) as {
             ts: number;
-            items: Array<{ code: string; label: string; percent: number; endsAt?: string }>;
+            items: Array<{ code: string; label: string; percent: number; endsAt?: string; appliesTo?: "all" | "product" | "category" | "cart" }>;
           };
           if (Array.isArray(cached.items)) {
             setActiveDiscounts(cached.items);
@@ -406,7 +408,7 @@ export const Navbar = () => {
     const [{ data }, hiddenSettings] = await Promise.all([
       supabase
       .from("discounts")
-      .select("id, code, discount_value, end_date")
+      .select("id, code, discount_value, end_date, applies_to, target_id, product_id")
       .eq("active", true)
       .not("code", "is", null),
       supabase
@@ -430,7 +432,15 @@ export const Navbar = () => {
     }
 
     const now = new Date();
-    const rows = (data as Array<{ id?: string; code: string; discount_value: number; end_date: string | null }>).filter((d) => {
+    const rows = (data as Array<{
+      id?: string;
+      code: string;
+      discount_value: number;
+      end_date: string | null;
+      applies_to?: "all" | "product" | "category" | "cart" | null;
+      target_id?: string | null;
+      product_id?: string | null;
+    }>).filter((d) => {
       const notExpired = !d.end_date || new Date(d.end_date) >= now;
       const notHidden = d.id ? !hiddenIds.has(d.id) : true;
       return notExpired && notHidden;
@@ -444,11 +454,18 @@ export const Navbar = () => {
       return;
     }
 
-    const mapped = rows.map((d: { id?: string; code: string; discount_value: number; end_date: string | null }) => ({
+    const mapped = rows.map((d) => ({
         id: d.id,
-        code: d.code,
-        label: "selected products",
+        code: d.code.trim().toUpperCase(),
+        label: (d.applies_to ?? (d.product_id ? "product" : "all")) === "product"
+          ? "selected item"
+          : (d.applies_to ?? (d.product_id ? "product" : "all")) === "category"
+            ? "selected category"
+            : (d.applies_to ?? (d.product_id ? "product" : "all")) === "cart"
+              ? "cart total"
+              : "all products",
         percent: d.discount_value,
+        appliesTo: d.applies_to ?? (d.product_id ? "product" : "all"),
         endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
       }));
 
@@ -551,7 +568,7 @@ export const Navbar = () => {
   ];
 
   // Active discounts from Supabase (empty until discounts are created in admin)
-  const [activeDiscounts, setActiveDiscounts] = useState<{id?:string;code:string;label:string;percent:number;endsAt?:string}[]>([]);
+  const [activeDiscounts, setActiveDiscounts] = useState<{id?:string;code:string;label:string;percent:number;endsAt?:string;appliesTo?:"all"|"product"|"category"|"cart"}[]>([]);
   useEffect(() => {
     let active = true;
     const load = async () => {

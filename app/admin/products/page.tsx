@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /* =============================================
    TYPES
@@ -896,28 +897,46 @@ export default function AdminProductsPage() {
             ))}
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {filtered.map((p) => (
-              <ProductRow key={p.id} product={p}
-                onEdit={() => { setEditing(p); setModal(true); }}
-                onDelete={() => setDelId(p.id)}
-                onToggle={async () => {
-                  const newVal = !p.is_active;
-                  const { error } = await supabase.from("products").update({ is_active: newVal } as unknown as never).eq("id", p.id);
-                  if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_active: newVal } : pr));
-                  else alert("Update failed: " + error.message);
-                }}
-                onToggleFeatured={async () => {
-                  const newVal = !p.is_featured;
-                  const { error } = await supabase.from("products").update({ is_featured: newVal } as unknown as never).eq("id", p.id);
-                  if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_featured: newVal } : pr));
-                  else alert("Update failed: " + error.message);
-                }}
-              />
-            ))}
-          </AnimatePresence>
+          {dbLoading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-[40px_1fr_90px] md:grid-cols-[40px_1fr_120px_80px_100px_130px] gap-3 md:gap-4 items-center px-3 md:px-5 py-3.5 border-b border-caramel/8 last:border-0">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="hidden md:block h-4 w-10" />
+                  <Skeleton className="hidden md:block h-6 w-16 rounded-full" />
+                  <div className="hidden md:flex justify-end gap-2">
+                    <Skeleton className="h-8 w-8 rounded-xl" />
+                    <Skeleton className="h-8 w-8 rounded-xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filtered.map((p) => (
+                <ProductRow key={p.id} product={p}
+                  onEdit={() => { setEditing(p); setModal(true); }}
+                  onDelete={() => setDelId(p.id)}
+                  onToggle={async () => {
+                    const newVal = !p.is_active;
+                    const { error } = await supabase.from("products").update({ is_active: newVal } as unknown as never).eq("id", p.id);
+                    if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_active: newVal } : pr));
+                    else alert("Update failed: " + error.message);
+                  }}
+                  onToggleFeatured={async () => {
+                    const newVal = !p.is_featured;
+                    const { error } = await supabase.from("products").update({ is_featured: newVal } as unknown as never).eq("id", p.id);
+                    if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_featured: newVal } : pr));
+                    else alert("Update failed: " + error.message);
+                  }}
+                />
+              ))}
+            </AnimatePresence>
+          )}
 
-          {filtered.length === 0 && (
+          {!dbLoading && filtered.length === 0 && (
             <div className="flex flex-col items-center py-16 gap-3 text-center">
               <Package className="w-8 h-8 text-caramel/30" />
               <p className="font-display text-base text-ink-dark">No products found</p>

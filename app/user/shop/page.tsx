@@ -482,7 +482,7 @@ function ShopContent() {
   const loadShopDiscounts = React.useCallback(async () => {
     const { data } = await supabase
       .from("discounts")
-      .select("id, code, discount_value, end_date, product_id")
+      .select("id, code, discount_value, end_date, applies_to, target_id, product_id")
       .eq("active", true)
       .not("code", "is", null);
 
@@ -492,17 +492,32 @@ function ShopContent() {
     }
 
     const now = new Date();
-    const rows = (data as Array<{ id: string; code: string; discount_value: number; end_date: string | null; product_id: string | null }>).filter(
-      (d) => !d.end_date || new Date(d.end_date) >= now
-    );
+    const rows = (data as Array<{
+      id: string;
+      code: string;
+      discount_value: number;
+      end_date: string | null;
+      applies_to?: "all" | "product" | "category" | "cart" | null;
+      target_id?: string | null;
+      product_id: string | null;
+    }>).filter((d) => {
+      const appliesTo = d.applies_to ?? (d.product_id ? "product" : "all");
+      return (!d.end_date || new Date(d.end_date) >= now) && appliesTo !== "cart";
+    });
 
     setShopDiscounts(
       rows.map((d) => ({
         id: d.id,
         code: d.code.trim().toUpperCase(),
         percent: d.discount_value,
-        label: d.product_id ? "selected item" : "selected products",
+        label: (d.applies_to ?? (d.product_id ? "product" : "all")) === "category"
+          ? "selected category"
+          : (d.applies_to ?? (d.product_id ? "product" : "all")) === "product"
+            ? "selected item"
+            : "all products",
         endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
+        appliesTo: d.applies_to ?? (d.product_id ? "product" : "all"),
+        targetId: d.target_id ?? d.product_id,
         productId: d.product_id,
       }))
     );
@@ -652,7 +667,7 @@ function ShopContent() {
     if (p.price < price[0] || p.price > price[1]) return false;
     if (featured && !p.is_featured) return false;
     if (discounted && !p.discount_active) return false;
-    if (selectedDiscountCodes.length > 0 && !productMatchesDiscountCodes(p, selectedDiscountCodes)) return false;
+    if (selectedDiscountCodes.length > 0 && !productMatchesDiscountCodes(p, selectedDiscountCodes, shopDiscounts)) return false;
     return true;
   }).sort((a, b) => {
     if (sort === "price_asc") return a.price - b.price;

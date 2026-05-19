@@ -247,7 +247,7 @@ export default function AdminCategoriesPage() {
             {catsLoading ? (
               <div className="p-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="grid grid-cols-[28px_40px_1fr] md:grid-cols-[28px_40px_1fr_80px_120px] gap-3 md:gap-4 items-center px-4 md:px-5 py-3.5 border-b border-caramel/8 last:border-0">
+                  <div key={i} className="grid grid-cols-[28px_40px_1fr] md:grid-cols-[28px_40px_1fr_80px_120px] gap-3 md:gap-4 items-center px-4 md:px-5 py-3.5 border-b border-caramel/8 last:border-0 animate-pulse">
                     <div className="h-6 w-6 rounded-md bg-cream-50/60" />
                     <div className="w-9 h-9 rounded-xl bg-cream-50/60" />
                     <div className="flex-1">

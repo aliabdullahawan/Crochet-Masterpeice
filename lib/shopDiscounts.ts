@@ -4,6 +4,8 @@ export type ShopDiscount = {
   percent: number;
   label: string;
   endsAt?: string;
+  appliesTo?: "all" | "product" | "category" | "cart";
+  targetId?: string | null;
   productId?: string | null;
 };
 
@@ -26,11 +28,24 @@ export function normalizeDiscountCode(code: string) {
 }
 
 export function productMatchesDiscountCodes(
-  product: { discount_code?: string | null; discount_active?: boolean },
-  selectedCodes: string[]
+  product: { id?: string | null; category_id?: string | null; discount_code?: string | null; discount_active?: boolean },
+  selectedCodes: string[],
+  discounts: ShopDiscount[] = []
 ) {
   if (!selectedCodes.length) return true;
+  const discountByCode = new Map(discounts.map((d) => [normalizeDiscountCode(d.code), d]));
+  const productId = String(product.id ?? "");
+  const productCategoryId = String(product.category_id ?? "");
   const productCode = normalizeDiscountCode(String(product.discount_code ?? ""));
-  if (!productCode) return false;
-  return selectedCodes.some((c) => normalizeDiscountCode(c) === productCode);
+  return selectedCodes.some((c) => {
+    const normalizedCode = normalizeDiscountCode(c);
+    const discount = discountByCode.get(normalizedCode);
+    if (discount) {
+      if (discount.appliesTo === "all") return true;
+      if (discount.appliesTo === "product" && discount.targetId && discount.targetId === productId) return true;
+      if (discount.appliesTo === "category" && discount.targetId && discount.targetId === productCategoryId) return true;
+      if (discount.appliesTo === "cart") return false;
+    }
+    return productCode && normalizedCode === productCode;
+  });
 }
