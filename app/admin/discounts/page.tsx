@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /* =============================================
    TYPES
@@ -664,47 +665,66 @@ export default function AdminDiscountsPage() {
               <p key={h} className="text-[10px] font-sans font-bold text-ink-light/50 uppercase tracking-widest">{h}</p>
             ))}
           </div>
-          <AnimatePresence mode="popLayout">
-            {filtered.map(d => (
-              <DiscountRow key={d.id} d={d}
-                onEdit={() => { setEditing(d); setModal(true); }}
-                onDelete={() => setDelId(d.id)}
-                onToggle={async () => {
-                  const isExpired = Boolean(d.end_date && new Date(d.end_date) < new Date());
-                  const shouldActivate = !d.active || isExpired;
-                  const payload = shouldActivate
-                    ? ({ active: true, ...(isExpired ? { end_date: null } : {}) })
-                    : ({ active: false });
+          {dbLoading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-[1fr_80px_70px] md:grid-cols-[1fr_90px_110px_100px_90px_220px] gap-3 md:gap-4 items-center px-3 md:px-5 py-3.5 border-b border-caramel/8 last:border-0">
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-14" />
+                  <Skeleton className="h-4 w-10" />
+                  <Skeleton className="hidden md:block h-4 w-16" />
+                  <Skeleton className="hidden md:block h-6 w-14 rounded-full" />
+                  <div className="hidden md:flex justify-end gap-2">
+                    <Skeleton className="h-8 w-8 rounded-xl" />
+                    <Skeleton className="h-8 w-8 rounded-xl" />
+                    <Skeleton className="h-8 w-8 rounded-xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filtered.map(d => (
+                <DiscountRow key={d.id} d={d}
+                  onEdit={() => { setEditing(d); setModal(true); }}
+                  onDelete={() => setDelId(d.id)}
+                  onToggle={async () => {
+                    const isExpired = Boolean(d.end_date && new Date(d.end_date) < new Date());
+                    const shouldActivate = !d.active || isExpired;
+                    const payload = shouldActivate
+                      ? ({ active: true, ...(isExpired ? { end_date: null } : {}) })
+                      : ({ active: false });
 
-                  await supabase
-                    .from("discounts")
-                    .update(payload as unknown as never)
-                    .eq("id", d.id);
+                    await supabase
+                      .from("discounts")
+                      .update(payload as unknown as never)
+                      .eq("id", d.id);
 
-                  setDiscounts((p) =>
-                    p.map((di) =>
-                      di.id === d.id
-                        ? {
-                            ...di,
-                            active: shouldActivate,
-                            end_date: shouldActivate && isExpired ? null : di.end_date,
-                          }
-                        : di
-                    )
-                  );
-                }}
-                onToggleBanner={async () => {
-                  const ids = await readHiddenBannerIds();
-                  if (d.hidden_from_banner) ids.delete(d.id);
-                  else ids.add(d.id);
-                  await writeHiddenBannerIds(ids);
-                  setDiscounts((p) => p.map((di) => di.id === d.id ? { ...di, hidden_from_banner: !d.hidden_from_banner } : di));
-                }}
-                onCopy={() => d.code && copyCode(d.code)}
-              />
-            ))}
-          </AnimatePresence>
-          {filtered.length === 0 && (
+                    setDiscounts((p) =>
+                      p.map((di) =>
+                        di.id === d.id
+                          ? {
+                              ...di,
+                              active: shouldActivate,
+                              end_date: shouldActivate && isExpired ? null : di.end_date,
+                            }
+                          : di
+                      )
+                    );
+                  }}
+                  onToggleBanner={async () => {
+                    const ids = await readHiddenBannerIds();
+                    if (d.hidden_from_banner) ids.delete(d.id);
+                    else ids.add(d.id);
+                    await writeHiddenBannerIds(ids);
+                    setDiscounts((p) => p.map((di) => di.id === d.id ? { ...di, hidden_from_banner: !d.hidden_from_banner } : di));
+                  }}
+                  onCopy={() => d.code && copyCode(d.code)}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+          {!dbLoading && filtered.length === 0 && (
             <div className="flex flex-col items-center py-16 gap-3">
               <Tag className="w-8 h-8 text-caramel/30" />
               <p className="font-display text-base text-ink-dark">No discounts found</p>
