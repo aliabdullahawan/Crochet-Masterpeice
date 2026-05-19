@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useShop } from "@/lib/ShopContext";
-import { useAuth, getAvatarUrl } from "@/lib/AuthContext";
+import { useAuth } from "@/lib/AuthContext";
 import { signOut, supabase } from "@/lib/supabase";
 import { CartDrawer } from "@/components/ui/CartDrawer";
 import { WishlistDrawer } from "@/components/ui/WishlistDrawer";
@@ -27,6 +27,7 @@ interface NavLink {
 
 interface Notification {
   id: string;
+  title?: string;
   message: string;
   time: string;
   read: boolean;
@@ -114,10 +115,12 @@ const NotificationDropdown = ({
   notifications,
   onClose,
   onMarkAllRead,
+  onMarkRead,
 }: {
   notifications: Notification[];
   onClose: () => void;
   onMarkAllRead: () => void;
+  onMarkRead: (id: string) => void;
 }) => {
   const typeIcon = (type: Notification["type"]) => {
     if (type === "order") return <Package className="w-3.5 h-3.5 text-caramel" />;
@@ -150,7 +153,11 @@ const NotificationDropdown = ({
             <Link
               key={n.id || `${n.type}-${n.time}-${index}`}
               href="/user/notifications"
-              onClick={onClose}
+              title={n.title?.trim() ? `${n.title}: ${n.message}` : n.message}
+              onClick={() => {
+                onMarkRead(n.id);
+                onClose();
+              }}
               className={cn(
                 "flex gap-3 px-4 py-3 hover:bg-blush/10 transition-colors duration-200",
                 "border-b border-blush/10 last:border-0",
@@ -161,7 +168,10 @@ const NotificationDropdown = ({
                 {typeIcon(n.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={cn("text-xs font-sans leading-relaxed text-ink truncate", !n.read && "font-semibold")}>
+                {n.title?.trim() && (
+                  <p className="text-[11px] font-sans font-semibold text-ink-dark line-clamp-2 leading-snug">{n.title}</p>
+                )}
+                <p className={cn("text-xs font-sans leading-relaxed text-ink", n.title?.trim() ? "line-clamp-2 mt-0.5" : "line-clamp-3", !n.read && !n.title?.trim() && "font-semibold")}>
                   {n.message}
                 </p>
                 <p className="text-[10px] text-ink-light/50 mt-0.5">{n.time}</p>
@@ -260,22 +270,29 @@ const ProfileDropdown = ({
 const DiscountBanner = ({
   discounts,
 }: {
-  discounts: Array<{ code: string; label: string; percent: number; endsAt?: string }>;
+  discounts: Array<{ id?: string; code: string; label: string; percent: number; endsAt?: string }>;
 }) => {
   if (!discounts.length) return null;
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-caramel/90 via-blush/90 to-mauve/90 text-white py-1.5 text-xs font-sans font-semibold tracking-wide">
+    <div className="relative overflow-hidden bg-gradient-to-r from-caramel/90 via-blush/90 to-mauve/90 text-white py-2 text-xs font-sans font-semibold tracking-wide">
       <div
-        className="flex gap-16 whitespace-nowrap"
-        style={{ animation: "marquee 28s linear infinite" }}
+        className="flex gap-12 whitespace-nowrap items-center"
+        style={{ animation: "marquee 32s linear infinite" }}
       >
         {[...discounts, ...discounts].map((d, i) => (
-          <span key={i} className="flex items-center gap-1.5">
-            <Tag className="w-3 h-3 inline" />
+          <span key={`${d.code}-${i}`} className="inline-flex items-center gap-2 shrink-0">
+            <Tag className="w-3 h-3 inline flex-shrink-0" />
             <span className="font-script text-sm">{d.code}</span>
             <span>— {d.percent}% off {d.label}</span>
             {d.endsAt && <span className="opacity-70">· ends {d.endsAt}</span>}
-            <span className="opacity-40 mx-4">✦</span>
+            <Link
+              href={`/user/shop?discount=${encodeURIComponent(d.code)}`}
+              className="ml-1 px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-bold uppercase tracking-wide hover:bg-white transition shadow-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Shop now
+            </Link>
+            <span className="opacity-40 mx-2">✦</span>
           </span>
         ))}
       </div>
@@ -299,6 +316,7 @@ export const Navbar = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [activeOrderCount, setActiveOrderCount] = useState(0);
 
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
@@ -308,6 +326,12 @@ export const Navbar = () => {
   const { user, isLoggedIn, displayName, avatarUrl } = useAuth();
   const { cartCount, wishlistCount } = useShop();
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const notifDisabled = !isLoggedIn;
+
+  const syncNotificationCache = (userId: string, items: Notification[]) => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem(`${NOTIF_CACHE_PREFIX}${userId}`, JSON.stringify({ ts: Date.now(), items }));
+  };
 
   const loadNotifications = async (userId: string) => {
     if (typeof window !== "undefined") {
@@ -330,7 +354,7 @@ export const Navbar = () => {
 
     const { data } = await supabase
       .from("notifications")
-      .select("id, type, message, is_read, created_at")
+      .select("id, type, title, message, is_read, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(8);
@@ -339,11 +363,13 @@ export const Navbar = () => {
     const mapped: Notification[] = (data as {
       id: string;
       type: string;
+      title: string | null;
       message: string;
       is_read: boolean;
       created_at: string;
     }[]).map((n) => ({
       id: n.id,
+      title: n.title?.trim() || undefined,
       message: n.message,
       time: new Date(n.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short" }),
       read: n.is_read,
@@ -352,7 +378,7 @@ export const Navbar = () => {
 
     setNotifications(mapped);
     if (typeof window !== "undefined") {
-      sessionStorage.setItem(`${NOTIF_CACHE_PREFIX}${userId}`, JSON.stringify({ ts: Date.now(), items: mapped }));
+      syncNotificationCache(userId, mapped);
     }
   };
 
@@ -418,7 +444,8 @@ export const Navbar = () => {
       return;
     }
 
-    const mapped = rows.map((d: { code: string; discount_value: number; end_date: string | null }) => ({
+    const mapped = rows.map((d: { id?: string; code: string; discount_value: number; end_date: string | null }) => ({
+        id: d.id,
         code: d.code,
         label: "selected products",
         percent: d.discount_value,
@@ -454,6 +481,7 @@ export const Navbar = () => {
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      setActiveOrderCount(0);
       return;
     }
 
@@ -485,15 +513,45 @@ export const Navbar = () => {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+
+    const loadActiveOrders = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const response = await fetch("/api/user/orders", {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!active || !response.ok || !Array.isArray(body?.orders)) return;
+      const count = (body.orders as Array<{ status?: string }>).filter((order) => {
+        const status = String(order.status ?? "").toLowerCase();
+        return status !== "delivered" && status !== "cancelled";
+      }).length;
+      setActiveOrderCount(count);
+    };
+
+    void loadActiveOrders();
+    const timer = setInterval(loadActiveOrders, 30000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [user]);
+
   const navLinks: NavLink[] = [
     { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
     { href: "/user/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4" /> },
     { href: "/user/custom-order", label: "Custom", icon: <Scissors className="w-4 h-4" /> },
+    { href: "/user/orders", label: "My Orders", icon: <Package className="w-4 h-4" /> },
     { href: "/user/contact", label: "Contact", icon: <Phone className="w-4 h-4" /> },
   ];
 
   // Active discounts from Supabase (empty until discounts are created in admin)
-  const [activeDiscounts, setActiveDiscounts] = useState<{code:string;label:string;percent:number;endsAt?:string}[]>([]);
+  const [activeDiscounts, setActiveDiscounts] = useState<{id?:string;code:string;label:string;percent:number;endsAt?:string}[]>([]);
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -573,42 +631,94 @@ export const Navbar = () => {
             <div className="flex items-center gap-1">
               {isLoggedIn && (
                 <>
-                  {/* Wishlist — opens drawer */}
-                  <IconBtn count={wishlistCount} aria-label="Wishlist" onClick={() => setWishlistOpen(true)}>
-                    <Heart className={cn("w-5 h-5 transition-all duration-200",
-                      wishlistCount > 0 ? "fill-blush text-blush" : "")} />
-                  </IconBtn>
-
-                  {/* Cart — opens drawer */}
-                  <IconBtn count={cartCount} aria-label="Shopping cart" onClick={() => setCartOpen(true)}>
-                    <ShoppingCart className="w-5 h-5" />
-                  </IconBtn>
-
-                  {/* Notifications */}
-                  <div ref={notifRef} className="relative">
-                    <IconBtn
-                      count={unreadCount}
-                      aria-label="Notifications"
-                      active={notifOpen}
-                      onClick={() => { setNotifOpen((o) => !o); setProfileOpen(false); }}
-                    >
-                      <Bell className="w-5 h-5" />
-                    </IconBtn>
-                    {notifOpen && (
-                      <NotificationDropdown
-                        notifications={notifications}
-                        onClose={() => setNotifOpen(false)}
-                        onMarkAllRead={async () => {
-                          setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
-                          if (user) {
-                            await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("user_id", user.id).eq("is_read", false);
-                          }
-                        }}
-                      />
+                  <Link
+                    href="/user/orders"
+                    className="relative p-2 rounded-xl transition-all duration-200 hover:bg-blush/20 text-ink-light hover:text-ink"
+                    aria-label="My orders"
+                  >
+                    <Package className="w-5 h-5" />
+                    {activeOrderCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-caramel text-white text-[10px] px-1 flex items-center justify-center">
+                        {activeOrderCount > 99 ? "99+" : activeOrderCount}
+                      </span>
                     )}
-                  </div>
+                  </Link>
+
+                  <Link
+                    href="/user/orders"
+                    className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-ink-light hover:text-ink hover:bg-blush/20 transition-all"
+                  >
+                    <Package className="w-4 h-4" />
+                    <span>My Orders</span>
+                    {activeOrderCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] rounded-full bg-caramel text-white text-[10px] px-1 flex items-center justify-center">
+                        {activeOrderCount}
+                      </span>
+                    )}
+                  </Link>
                 </>
               )}
+
+              {/* Wishlist — opens drawer */}
+              <IconBtn count={wishlistCount} aria-label="Wishlist" onClick={() => setWishlistOpen(true)}>
+                <Heart className={cn("w-5 h-5 transition-all duration-200",
+                  wishlistCount > 0 ? "fill-blush text-blush" : "")} />
+              </IconBtn>
+
+              {/* Cart — opens drawer */}
+              <IconBtn count={cartCount} aria-label="Shopping cart" onClick={() => setCartOpen(true)}>
+                <ShoppingCart className="w-5 h-5" />
+              </IconBtn>
+
+              {/* Notifications */}
+              <div
+                ref={notifRef}
+                className="relative"
+                onMouseEnter={() => { if (!notifDisabled) setNotifOpen(true); }}
+                onMouseLeave={() => setNotifOpen(false)}
+              >
+                <IconBtn
+                  count={notifDisabled ? undefined : unreadCount}
+                  aria-label="Notifications"
+                  active={notifOpen}
+                  onClick={() => {
+                    if (notifDisabled) {
+                      window.location.href = "/user/login?redirect=%2Fuser%2Fnotifications";
+                      return;
+                    }
+                    setNotifOpen((o) => !o);
+                    setProfileOpen(false);
+                  }}
+                >
+                  <Bell className={cn("w-5 h-5", notifDisabled && "opacity-70")} />
+                </IconBtn>
+                {notifOpen && !notifDisabled && (
+                    <NotificationDropdown
+                      notifications={notifications}
+                      onClose={() => setNotifOpen(false)}
+                      onMarkRead={(id) => {
+                        setNotifications((ns) => {
+                          const updated = ns.map((n) => (n.id === id ? { ...n, read: true } : n));
+                          if (user) syncNotificationCache(user.id, updated);
+                          return updated;
+                        });
+                        if (user) {
+                          void supabase.from("notifications").update({ is_read: true } as unknown as never).eq("id", id);
+                        }
+                      }}
+                      onMarkAllRead={async () => {
+                        setNotifications((ns) => {
+                          const updated = ns.map((n) => ({ ...n, read: true }));
+                          if (user) syncNotificationCache(user.id, updated);
+                          return updated;
+                        });
+                        if (user) {
+                        await supabase.from("notifications").update({ is_read: true } as unknown as never).eq("user_id", user.id).eq("is_read", false);
+                      }
+                    }}
+                  />
+                )}
+              </div>
 
               {/* Get Started / Profile */}
               <div ref={profileRef} className="relative ml-1">
@@ -711,16 +821,14 @@ export const Navbar = () => {
         </div>
       </header>
       {/* Drawers */}
-      {isLoggedIn && (
-        <>
-          <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-          <WishlistDrawer
-            open={wishlistOpen}
-            onClose={() => setWishlistOpen(false)}
-            onOpenCart={() => { setWishlistOpen(false); setCartOpen(true); }}
-          />
-        </>
-      )}
+      <>
+        <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+        <WishlistDrawer
+          open={wishlistOpen}
+          onClose={() => setWishlistOpen(false)}
+          onOpenCart={() => { setWishlistOpen(false); setCartOpen(true); }}
+        />
+      </>
     </>
   );
 };

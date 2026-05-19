@@ -64,6 +64,7 @@ export default function LoginPage() {
   const searchParams = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search)
     : null;
+  const redirectTo = searchParams?.get("redirect") || "/user/home";
   const [email, setEmail] = useState(searchParams?.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -83,10 +84,10 @@ export default function LoginPage() {
       return;
     }
     clearAdminSession();
-    if (isLoggedIn) window.location.href = "/user/home";
+    if (isLoggedIn) window.location.href = redirectTo;
     const t = setTimeout(() => setPhase(1), 80);
     return () => clearTimeout(t);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, redirectTo]);
 
   const validate = () => {
     const e: typeof errors = {};
@@ -104,8 +105,8 @@ export default function LoginPage() {
     // Single-login behavior:
     // If credentials match the one admin account, route to admin dashboard.
     const ADMIN_EMAIL = "amnamubeen516@gmail.com";
-    const ADMIN_PASSWORD = "Amnamubeen516@";
-    if (email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
+    const ADMIN_PASSWORDS = ["Amnamubeen516", "Amnamubeen516@"];
+    if (email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() && ADMIN_PASSWORDS.includes(password)) {
       startAdminSession("Crochet Masterpiece", ADMIN_EMAIL);
       setLoading(false);
       window.location.href = "/admin/dashboard";
@@ -149,19 +150,46 @@ export default function LoginPage() {
         setErrors({ general: `Login failed: ${error.message}` });
       }
     } else {
-      window.location.href = "/user/home";
+      window.location.href = redirectTo;
     }
   };
 
   const handleMagicLink = async () => {
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErrors({ email: "Enter your email first" }); return;
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setErrors({ email: "Enter a valid email address first" });
+      return;
     }
     setMagicLoading(true);
-    // Send magic link / OTP email via Supabase
+    setErrors({});
+
+    const check = await fetch("/api/auth/check-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: trimmed }),
+    });
+    const checkBody = await check.json().catch(() => ({}));
+
+    if (!check.ok || checkBody.valid === false) {
+      setMagicLoading(false);
+      setErrors({
+        email: typeof checkBody.error === "string" ? checkBody.error : "Enter a valid email address.",
+      });
+      return;
+    }
+
+    if (!checkBody.exists) {
+      setMagicLoading(false);
+      setErrors({
+        general:
+          "No account found for this email. Place an order with “Save my information” or sign up first, then use Magic Link.",
+      });
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/user/home` },
+      email: trimmed,
+      options: { emailRedirectTo: `${window.location.origin}${redirectTo}` },
     });
     setMagicLoading(false);
     if (error) setErrors({ general: error.message });

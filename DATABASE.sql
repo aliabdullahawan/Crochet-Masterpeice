@@ -84,7 +84,9 @@ CREATE TABLE products (
   average_rating NUMERIC(3,2) DEFAULT 0,
   review_count   INT DEFAULT 0,
   created_at     TIMESTAMPTZ DEFAULT NOW(),
-  updated_at     TIMESTAMPTZ DEFAULT NOW()
+  updated_at     TIMESTAMPTZ DEFAULT NOW(),
+  low_stock_notified_at TIMESTAMPTZ,
+  out_of_stock_notified_at TIMESTAMPTZ
 );
 CREATE INDEX idx_products_name_trgm ON products USING GIN (name gin_trgm_ops);
 CREATE INDEX idx_products_category ON products(category_id);
@@ -215,6 +217,19 @@ CREATE TABLE notifications (
 );
 CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 
+-- ADMIN NOTIFICATIONS
+CREATE TABLE admin_notifications (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  type       TEXT NOT NULL DEFAULT 'system',
+  title      TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  link       TEXT,
+  meta       TEXT,
+  is_read    BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_admin_notifications_read ON admin_notifications(is_read, created_at DESC);
+
 -- TRIGGERS: updated_at
 CREATE OR REPLACE FUNCTION update_updated_at() RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $$ LANGUAGE plpgsql;
@@ -315,7 +330,7 @@ CREATE POLICY "categories_pub" ON categories    FOR SELECT USING (is_active = TR
 -- 4. Add to .env.local:
 --    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 --    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
---    SUPABASE_SERVICE_ROLE_KEY=eyJ...
+--    SUPABASE_SERVICE_ROLE_KEY=eyJ...   (required for admin_notifications API + low-stock job; never expose to the client)
 --    NEXT_PUBLIC_WHATSAPP_NUMBER=923001234567
 --    NEXT_PUBLIC_GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
 --    INSTAGRAM_ACCESS_TOKEN=...

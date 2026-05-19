@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { clearAdminSession, isAdminSessionValid } from "@/lib/adminSession";
 
 export default function AdminSecurityGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    setReady(false);
+    if (pathname === "/admin/login") {
+      setReady(true);
+      return;
+    }
+
     const verify = () => {
       if (!isAdminSessionValid()) {
         clearAdminSession();
@@ -31,7 +39,7 @@ export default function AdminSecurityGate({ children }: { children: React.ReactN
       clearInterval(timer);
       window.removeEventListener("storage", onStorage);
     };
-  }, []);
+  }, [pathname]);
 
   if (!ready) return null;
   return <>{children}</>;

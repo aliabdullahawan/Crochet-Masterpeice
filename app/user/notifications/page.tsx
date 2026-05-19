@@ -79,7 +79,7 @@ const NotifCard = ({
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-ink-light/40 font-sans">{notif.time}</span>
             {notif.link && (
-              <Link href={notif.link} onClick={(e) => e.stopPropagation()}
+              <Link href={notif.link}
                 className="flex items-center gap-1 text-[10px] text-caramel hover:text-ink font-sans font-semibold transition-colors group/link">
                 View <ArrowRight className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5" />
               </Link>
@@ -193,9 +193,9 @@ export default function NotificationsPage() {
             </div>
             <div>
               <h1 className="font-display text-2xl font-semibold text-ink-dark">Notifications</h1>
-              {unreadCount > 0 && (
-                <p className="text-xs text-caramel font-sans font-semibold">{unreadCount} unread</p>
-              )}
+              <p className="text-xs text-ink-light/60 font-sans">
+                {unreadCount} unread · {notifs.length} total
+              </p>
             </div>
           </div>
           <div className="flex gap-2">

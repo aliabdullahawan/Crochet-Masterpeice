@@ -13,6 +13,7 @@ type OrderRow = {
   created_at: string;
   note: string | null;
   address: string | null;
+  return_status: string | null;
 };
 
 type ItemRow = {
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
 
     const { data: ordersData, error: ordersError } = await service
       .from("orders")
-      .select("id, user_id, customer_name, customer_email, customer_phone, total_amount, status, source, created_at, note, address")
+      .select("id, user_id, customer_name, customer_email, customer_phone, total_amount, status, source, created_at, note, address, return_status")
       .eq("user_id", auth.user.id)
       .order("created_at", { ascending: false });
 
@@ -102,6 +103,7 @@ export async function GET(req: Request) {
       created_at: order.created_at,
       note: order.note ?? "",
       address: order.address ?? "",
+      return_status: order.return_status ?? "none",
       items: (itemsByOrder.get(order.id) ?? []).map((item) => ({
         product_id: item.product_id,
         product_name: item.product_name,

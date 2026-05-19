@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { EyeOff, Eye, Trash2, RefreshCw, Star, ExternalLink } from "lucide-react";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
 type ReviewRow = {
@@ -106,8 +107,22 @@ export default function AdminReviewsPage() {
 
         <div className="glass rounded-3xl border border-caramel/15 overflow-hidden">
           {loading ? (
-            <div className="py-20 flex justify-center">
-              <div className="w-8 h-8 rounded-full border-2 border-caramel border-t-transparent animate-spin" />
+            <div>
+              <Skeleton className="h-6 w-40 mx-4 my-3" />
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-48 mb-2" />
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                      <Skeleton className="h-8 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : rows.length === 0 ? (
             <div className="py-16 text-center text-ink-light/55 font-sans">No reviews found.</div>

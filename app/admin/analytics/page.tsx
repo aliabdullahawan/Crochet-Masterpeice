@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { netOrderRevenue } from "@/lib/returns";
 
 type DatePreset = "daily" | "weekly" | "monthly" | "yearly" | "max" | "custom";
 
@@ -230,7 +231,7 @@ export default function AdminAnalyticsPage() {
       // Aggregate monthly from orders
       let ordersQuery = supabase
         .from("orders")
-        .select("id, total_amount, created_at, updated_at, user_id, customer_email, customer_phone")
+        .select("id, total_amount, created_at, updated_at, user_id, customer_email, customer_phone, return_status")
         .eq("status", "delivered");
 
       if (range.start) ordersQuery = ordersQuery.gte("created_at", range.start);
@@ -243,11 +244,11 @@ export default function AdminAnalyticsPage() {
         const customerOrders = new Map<string, number>();
         const fulfillmentDays: number[] = [];
         const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        ordersRaw.forEach((o:{total_amount:number;created_at:string;updated_at:string;user_id:string|null;customer_email:string|null;customer_phone:string|null}) => {
+        ordersRaw.forEach((o:{total_amount:number;created_at:string;updated_at:string;user_id:string|null;customer_email:string|null;customer_phone:string|null;return_status?:string|null}) => {
           const d = new Date(o.created_at);
           const key = MONTHS[d.getMonth()];
           if (!monthMap[key]) monthMap[key] = { revenue: 0, orders: 0, customers: new Set() };
-          monthMap[key].revenue += o.total_amount;
+          monthMap[key].revenue += netOrderRevenue(o.total_amount, o.return_status);
           monthMap[key].orders += 1;
 
           const customerKey = (o.user_id || o.customer_email || o.customer_phone || "").trim().toLowerCase();

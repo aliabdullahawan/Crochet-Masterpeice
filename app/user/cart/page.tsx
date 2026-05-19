@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useShop } from "@/lib/ShopContext";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, X, MessageCircle, Sparkles } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -181,7 +181,7 @@ const RemoveCouponModal = ({ onCancel, onConfirm, totalWithoutCoupon }: { onCanc
    ORDER MODAL
    ============================================= */
 const OrderModal = ({
-  items, subtotal, discountAmount, total, coupon, lineDiscountByItem, onClose, onOrderPlaced,
+  items, subtotal, discountAmount, total, coupon, lineDiscountByItem, onClose,
 }: {
   items: CartItem[];
   subtotal: number;
@@ -190,97 +190,17 @@ const OrderModal = ({
   coupon: string;
   lineDiscountByItem: Record<string, number>;
   onClose: () => void;
-  onOrderPlaced: () => void;
 }) => {
-  const { user, isLoggedIn } = useAuth();
-  const [queryLoading, setQueryLoading] = useState(false);
-  const [queryMsg, setQueryMsg] = useState("");
-
-  const itemLines = items
-    .map((i) => {
-      const lineSubtotal = i.price * i.quantity;
-      const lineDiscount = lineDiscountByItem[i.productId] ?? 0;
-      const lineTotal = Math.max(0, lineSubtotal - lineDiscount);
-      return `  • ${i.name} × ${i.quantity} = PKR ${lineTotal.toLocaleString()}`;
-    })
-    .join("\n");
-
-  const createOrderAndNotify = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const activeUser = authData.user;
-
-    const res = await fetch("/api/orders/query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: activeUser?.id ?? null,
-        customerName: activeUser?.user_metadata?.full_name ?? activeUser?.user_metadata?.name ?? activeUser?.email ?? "Guest",
-        customerEmail: activeUser?.email ?? "",
-        customerPhone: activeUser?.user_metadata?.phone ?? "",
-        source: "website",
-        items: items.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-        })),
-        totalAmount: total,
-        discountAmount,
-        couponCode: coupon || null,
-        note: "Customer sent a website order query.",
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(typeof data?.error === "string" ? data.error : "Order create failed");
-    }
-
-    return data;
-  };
-  const msg = encodeURIComponent(
-    ` *Cart Order — Crochet Masterpiece*\n\n${itemLines}\n\n *Subtotal:* PKR ${subtotal.toLocaleString()}${discountAmount > 0 ? `\n *Discount:* -PKR ${discountAmount.toLocaleString()}` : ""}\n *Total:* PKR ${total.toLocaleString()}${coupon ? `\n *Coupon:* ${coupon}` : ""}\n\n_Sent from website_ `
-  );
-  const whatsappUrl = `https://wa.me/923159202186?text=${msg}`;
-
-  const sendQueryAndContinueWhatsApp = async () => {
-    if (!isLoggedIn || !user) {
-      setQueryMsg("Please log in to send a website query.");
-      return;
-    }
-    setQueryLoading(true);
-    setQueryMsg("");
-    try {
-      await createOrderAndNotify();
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      setQueryMsg("Query sent to admin and WhatsApp opened.");
-      onOrderPlaced();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not send query right now. Please try again.";
-      setQueryMsg(message);
-    } finally {
-      setQueryLoading(false);
-    }
-  };
-
-  const handleWhatsAppOnly = () => {
-    if (!isLoggedIn || !user) {
-      window.alert("No query will be sent. Send Query is available only after login.");
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    const alsoSendQuery = window.confirm(
-      "No query will be sent to the website if you continue with WhatsApp only. If you want admin to see your order in site, click OK to send query now."
-    );
-
-    if (alsoSendQuery) {
-      void sendQueryAndContinueWhatsApp();
-      return;
-    }
-
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-  };
+  const checkoutHref = `/user/checkout?source=website&items=${encodeURIComponent(
+    JSON.stringify(
+      items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      }))
+    )
+  )}`;
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-sm"
@@ -313,32 +233,18 @@ const OrderModal = ({
           </div>
         </div>
         <div className="space-y-2.5">
-          <button
-            onClick={() => { void sendQueryAndContinueWhatsApp(); }}
-            disabled={queryLoading}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-blush/25 bg-blush/8 hover:bg-blush/15 transition-all btn-bubble text-left disabled:opacity-70"
-          >
-            <MessageCircle className="w-5 h-5 text-mauve flex-shrink-0" />
-            <div>
-              <p className="text-sm font-sans font-semibold text-ink-dark">Query to admin</p>
-              <p className="text-[11px] text-ink-light/55">{queryLoading ? "Sending query..." : "Needs account login"}</p>
-            </div>
-          </button>
-          {queryMsg && (
-            <p className={cn("text-xs font-sans", queryMsg.includes("sent") ? "text-green-600" : "text-red-500")}>{queryMsg}</p>
-          )}
-          <button
-            type="button"
-            onClick={handleWhatsAppOnly}
+          <Link
+            href={checkoutHref}
+            onClick={onClose}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.799 9.799 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
             </svg>
             <div>
-              <p className="text-sm font-sans font-bold">Order via WhatsApp</p>
-              <p className="text-[11px] text-white/70">Full order message pre-written </p>
+              <p className="text-sm font-sans font-bold">Continue to WhatsApp Checkout</p>
+              <p className="text-[11px] text-white/70">No login required</p>
             </div>
-          </button>
+          </Link>
         </div>
       </motion.div>
     </motion.div>
@@ -350,7 +256,7 @@ const OrderModal = ({
    ============================================= */
 export default function CartPage() {
   const { isLoggedIn } = useAuth();
-  const { cartItems: items, updateQty, removeFromCart, addToCart, clearCart, placeOrder, appliedCoupon, setAppliedCoupon, clearCoupon } = useShop();
+  const { cartItems: items, updateQty, removeFromCart, addToCart, clearCart, appliedCoupon, setAppliedCoupon, clearCoupon } = useShop();
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponMessage, setCouponMessage] = useState("");
@@ -675,7 +581,7 @@ export default function CartPage() {
                 </button>
 
                 <p className="text-[10px] text-center text-ink-light/40 font-sans">
-                  Choose WhatsApp or website query at checkout
+                  Checkout continues with WhatsApp confirmation only
                 </p>
               </div>
             </div>
@@ -693,13 +599,6 @@ export default function CartPage() {
             coupon={appliedCoupon?.code ?? coupon}
             lineDiscountByItem={Object.fromEntries(lineDiscountByItem)}
             onClose={() => setShowOrder(false)}
-            onOrderPlaced={() => {
-              placeOrder();
-              setCoupon("");
-              setCouponApplied(false);
-              setCouponMessage("Coupon used and order recorded.");
-              setShowOrder(false);
-            }}
           />
         )}
       </AnimatePresence>

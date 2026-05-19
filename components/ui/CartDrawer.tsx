@@ -1,12 +1,11 @@
 "use client";
 
-import { useAuth } from "@/lib/AuthContext";
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Plus, Minus, Trash2, ShoppingBag, Tag, Check,
-  MessageCircle, ArrowRight, ShoppingCart,
+  ArrowRight, ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useShop } from "@/lib/ShopContext";
@@ -30,98 +29,23 @@ const isCouponApplicableToItem = (
    ORDER POPUP inside drawer
    ============================================= */
 const DrawerOrderPopup = ({
-  onClose, isLoggedIn, total, itemCount, discountAmount, couponCode, onOrderPlaced,
+  onClose, total, itemCount,
 }: {
   onClose: () => void;
-  isLoggedIn: boolean;
   total: number;
   itemCount: number;
-  discountAmount: number;
-  couponCode: string | null;
-  onOrderPlaced: () => void;
 }) => {
   const { cartItems } = useShop();
-  const [queryLoading, setQueryLoading] = useState(false);
-  const [queryMsg, setQueryMsg] = useState("");
-
-  const createOrderAndNotify = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const activeUser = authData.user;
-
-    const res = await fetch("/api/orders/query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: activeUser?.id ?? null,
-        customerName: activeUser?.user_metadata?.full_name ?? activeUser?.user_metadata?.name ?? activeUser?.email ?? "Guest",
-        customerEmail: activeUser?.email ?? "",
-        customerPhone: activeUser?.user_metadata?.phone ?? "",
-        source: "website",
-        items: cartItems.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-        })),
-        totalAmount: total,
-        discountAmount,
-        couponCode,
-        note: "Customer sent a website order query.",
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(typeof data?.error === "string" ? data.error : "Order create failed");
-    }
-
-    return data;
-  };
-  const msg = encodeURIComponent(
-    ` *Cart Order — Crochet Masterpiece*\n\n` +
-    cartItems.map((i) => `  • ${i.name} × ${i.quantity} = PKR ${(i.price * i.quantity).toLocaleString()}`).join("\n") +
-    `\n\n *Total:* PKR ${total.toLocaleString()}\n\n_Sent from website_ `
-  );
-  const whatsappUrl = `https://wa.me/923159202186?text=${msg}`;
-
-  const sendQueryAndContinueWhatsApp = async () => {
-    if (!isLoggedIn) {
-      setQueryMsg("Please log in to send a website query.");
-      return;
-    }
-    setQueryLoading(true);
-    setQueryMsg("");
-    try {
-      await createOrderAndNotify();
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      setQueryMsg("Query sent to admin and WhatsApp opened.");
-      onOrderPlaced();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not send query right now. Please try again.";
-      setQueryMsg(message);
-    } finally {
-      setQueryLoading(false);
-    }
-  };
-
-  const handleWhatsAppOnly = () => {
-    if (!isLoggedIn) {
-      window.alert("No query will be sent. Send Query is available only after login.");
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    const alsoSendQuery = window.confirm(
-      "No query will be sent to the website if you continue with WhatsApp only. If you want admin to see your order in site, click OK to send query now."
-    );
-
-    if (alsoSendQuery) {
-      void sendQueryAndContinueWhatsApp();
-      return;
-    }
-
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-  };
+  const checkoutHref = `/user/checkout?source=website&items=${encodeURIComponent(
+    JSON.stringify(
+      cartItems.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      }))
+    )
+  )}`;
 
   return (
     <motion.div
@@ -150,51 +74,11 @@ const DrawerOrderPopup = ({
         </div>
 
         <div className="space-y-2.5">
-          {/* Guest notice — amber warning */}
-          {!isLoggedIn && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 flex gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <MessageCircle className="w-3.5 h-3.5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xs font-sans font-semibold text-amber-800">Ordering as guest</p>
-                <p className="text-[11px] text-amber-700/90 leading-snug mt-0.5">
-                  Only WhatsApp ordering is available. No query will be sent to the website unless you{" "}
-                  <Link href="/user/login" onClick={onClose} className="underline font-bold hover:text-amber-900">log in</Link>.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Logged-in website query */}
-          {isLoggedIn && (
-            <div className="rounded-2xl border border-blush/30 bg-blush/8 p-3.5">
-              <div className="flex gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blush to-mauve flex items-center justify-center text-white flex-shrink-0 mt-0.5">
-                  <MessageCircle className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-sans font-semibold text-ink-dark mb-1">Send query to admin</p>
-                  <p className="text-[11px] text-ink-light/55 mb-2">Your order will be tracked on your account.</p>
-                  <button
-                    onClick={() => { void sendQueryAndContinueWhatsApp(); }}
-                    disabled={queryLoading}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blush to-mauve text-white text-[11px] font-sans font-bold btn-bubble shadow-button disabled:opacity-70"
-                  >
-                    <Check className="w-3 h-3" /> Confirm & Send Query
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {queryMsg && (
-            <p className={cn("text-xs font-sans", queryMsg.includes("sent") ? "text-green-600" : "text-red-500")}>{queryMsg}</p>
-          )}
-
-          {/* WhatsApp — always */}
-          <button
-            type="button"
-            onClick={handleWhatsAppOnly}
+            <Link
+              href={checkoutHref}
+              onClick={() => {
+                onClose();
+              }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
@@ -202,10 +86,10 @@ const DrawerOrderPopup = ({
               <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 0 1-5.003-1.374l-.36-.213-3.74.981 1-3.648-.236-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
             </svg>
             <div>
-              <p className="text-xs font-sans font-bold">{isLoggedIn ? "Order via WhatsApp" : "Continue on WhatsApp"}</p>
-              <p className="text-[10px] text-white/70">Full order message pre-written </p>
+              <p className="text-xs font-sans font-bold">Continue to WhatsApp Checkout</p>
+              <p className="text-[10px] text-white/70">Fill details, then send via WhatsApp</p>
             </div>
-          </button>
+          </Link>
         </div>
       </motion.div>
     </motion.div>
@@ -221,14 +105,13 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
-  const { cartItems, updateQty, removeFromCart, addToCart, clearCart, cartCount, appliedCoupon, setAppliedCoupon, clearCoupon, placeOrder } = useShop();
+  const { cartItems, updateQty, removeFromCart, addToCart, clearCart, cartCount, appliedCoupon, setAppliedCoupon, clearCoupon } = useShop();
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponMessage, setCouponMessage] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [cartSyncMessage, setCartSyncMessage] = useState("");
-  const { isLoggedIn } = useAuth();
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
   const savings  = cartItems.reduce((s, i) => s + ((i.original_price ?? i.price) - i.price) * i.quantity, 0);
@@ -399,18 +282,8 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                 {showCheckout && (
                   <DrawerOrderPopup
                     onClose={() => setShowCheckout(false)}
-                    isLoggedIn={isLoggedIn}
                     total={total}
                     itemCount={cartCount}
-                    discountAmount={discountAmount}
-                    couponCode={appliedCoupon?.code ?? null}
-                    onOrderPlaced={() => {
-                      placeOrder();
-                      setCoupon("");
-                      setCouponApplied(false);
-                      setCouponMessage("Order recorded successfully.");
-                      setShowCheckout(false);
-                    }}
                   />
                 )}
               </AnimatePresence>

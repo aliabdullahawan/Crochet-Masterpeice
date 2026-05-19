@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Search, ShoppingBag, MessageCircle, Mail,
-  Star, ChevronRight, ArrowLeft, Package, Calendar,
+  Star, ChevronRight, ArrowLeft, Package, Calendar, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
@@ -17,6 +17,105 @@ interface Customer {
 }
 
 const MOCK_CUSTOMERS: Customer[] = []; // Replace: await supabase.from("users").select("*").order("created_at", { ascending: false }) = []
+
+const BulkEmailModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const [subject, setSubject] = useState("");
+  const [html, setHtml] = useState("");
+  const [onlySubscribed, setOnlySubscribed] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
+
+  if (!open) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] bg-ink-dark/40 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 20, scale: 0.96 }}
+          animate={{ y: 0, scale: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          className="w-full max-w-2xl glass rounded-3xl border border-caramel/20 p-5 sm:p-6"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display text-lg font-semibold text-ink-dark">Send Email To Users</h3>
+            <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-caramel/10 text-ink-light">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <input
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              placeholder="Subject"
+              className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 text-sm outline-none focus:border-caramel"
+            />
+            <textarea
+              value={html}
+              onChange={(event) => setHtml(event.target.value)}
+              placeholder="Email body (HTML is supported)"
+              rows={8}
+              className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 text-sm outline-none focus:border-caramel resize-y"
+            />
+            <label className="flex items-center gap-2 text-sm text-ink-light/70 font-sans">
+              <input
+                type="checkbox"
+                checked={onlySubscribed}
+                onChange={(event) => setOnlySubscribed(event.target.checked)}
+              />
+              Send only to users opted in for updates
+            </label>
+            {resultMessage && <p className="text-xs text-ink-light/65">{resultMessage}</p>}
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl border border-caramel/20 text-sm font-semibold text-ink hover:bg-caramel/8"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={sending}
+                onClick={async () => {
+                  setSending(true);
+                  setResultMessage("");
+                  const response = await fetch("/api/admin/email/bulk", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ subject, html, onlySubscribed }),
+                  });
+                  const body = await response.json().catch(() => ({}));
+                  if (!response.ok) {
+                    setResultMessage(String(body?.error ?? "Could not send emails."));
+                    setSending(false);
+                    return;
+                  }
+                  setResultMessage(`Sent to ${Number(body?.sent ?? 0).toLocaleString()} users.`);
+                  setSending(false);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-bold shadow-button disabled:opacity-60"
+              >
+                {sending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 function useAdminAuth() {
   useEffect(() => {
@@ -185,6 +284,7 @@ export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [dbLoading, setDbLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -277,6 +377,12 @@ export default function AdminCustomersPage() {
                   {customers.length} registered · PKR {customers.reduce((s, c) => s + c.total_spent, 0).toLocaleString()} total revenue
                 </p>
               </div>
+              <button
+                onClick={() => setShowBulkEmail(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-bold shadow-button hover:shadow-button-hover transition-all"
+              >
+                <Mail className="w-3.5 h-3.5" /> Send Email to All Users
+              </button>
             </div>
 
             {/* Search */}
@@ -358,6 +464,7 @@ export default function AdminCustomersPage() {
           )}
         </AnimatePresence>
       </div>
+      <BulkEmailModal open={showBulkEmail} onClose={() => setShowBulkEmail(false)} />
     </div>
   );
 }

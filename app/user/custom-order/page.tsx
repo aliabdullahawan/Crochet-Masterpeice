@@ -2,12 +2,11 @@
 
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
-  MessageCircle, ArrowRight, Scissors, Clock, Palette,
-  User, Phone, Mail, MapPin, ChevronDown, Plus, X,
-  Sparkles, Heart, CheckCircle2,
+  ArrowRight, Scissors, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
@@ -17,10 +16,6 @@ import { Footer } from "@/components/layout/Footer";
    TYPES
    ============================================= */
 interface FormData {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
   category: string;
   customCategory: string;
   description: string;
@@ -48,6 +43,31 @@ const TIMEFRAMES = [
   { value: "1-2m", label: "1–2 months" },
   { value: "no-rush", label: "No rush — take your time!" },
 ];
+
+const CATEGORY_ESTIMATES: Array<{ test: RegExp; min: number; max: number }> = [
+  { test: /cardigan|top/, min: 3500, max: 7500 },
+  { test: /bag|tote/, min: 2500, max: 5500 },
+  { test: /accessor|headband|clip|jewel/, min: 800, max: 2500 },
+  { test: /home|decor|coaster|runner|wall/, min: 1200, max: 3500 },
+  { test: /plush|gift|toy/, min: 1800, max: 4500 },
+];
+
+const DEFAULT_ESTIMATE = { min: 1500, max: 4000 };
+
+const TIMEFRAME_FACTOR: Record<string, number> = {
+  "1-2w": 1.15,
+  "3-4w": 1.05,
+  "1-2m": 1,
+  "no-rush": 0.9,
+};
+
+const parseBudget = (value: string) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+};
+
+const normalizeLabel = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 /* ============================================
    CATEGORY SELECTOR (visual grid)
@@ -149,80 +169,12 @@ const FloatInput = ({
   );
 };
 
-/* ============================================
-   WHATSAPP MESSAGE BUILDER
-   ============================================= */
-function buildCustomOrderMessage(form: FormData, categories: {value:string;label:string;img:string}[]): string {
-  const cat = categories.find((c) => c.value === form.category);
-  const catLabel = form.category === "other" ? form.customCategory : cat?.label ?? form.category;
-  const lines = [
-    ` *Custom Order Request — Crochet Masterpiece*`,
-    ``,
-    ` *Name:* ${form.name}`,
-    ` *Email:* ${form.email}`,
-    ` *WhatsApp:* ${form.phone}`,
-    ` *Address:* ${form.address}`,
-    ``,
-    ` *Category:* ${catLabel}`,
-    ``,
-    ` *Description:*`,
-    form.description,
-    ``,
-    form.priceMin || form.priceMax
-      ? ` *Budget:* PKR ${form.priceMin || "?"} – PKR ${form.priceMax || "?"}`
-      : null,
-    form.timeframe
-      ? `⏰ *Needed by:* ${TIMEFRAMES.find((t) => t.value === form.timeframe)?.label ?? form.timeframe}`
-      : null,
-    ``,
-    `_Sent from Crochet Masterpiece website_ `,
-  ].filter((l) => l !== null);
-  return encodeURIComponent(lines.join("\n"));
-}
-
-/* ============================================
-   SUCCESS STATE
-   ============================================= */
-const SuccessState = ({ name, onReset }: { name: string; onReset: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ type: "spring", stiffness: 200 }}
-    className="text-center py-16 px-8 space-y-6"
-  >
-    <motion.div
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-      className="w-20 h-20 rounded-full bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-4xl mx-auto"
-    >
-      
-    </motion.div>
-    <div>
-      <h3 className="font-display text-2xl font-semibold text-ink-dark mb-2">
-        Your message is on its way, {name.split(" ")[0]}!
-      </h3>
-      <p className="text-sm text-ink-light/70 font-sans leading-relaxed max-w-sm mx-auto">
-        WhatsApp should have opened with your order details already filled in.
-        Just hit send — I personally read every message and usually reply within a few hours.
-      </p>
-    </div>
-    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-      <button onClick={onReset}
-        className="px-6 py-3 rounded-2xl border border-caramel/25 text-caramel text-sm font-sans font-semibold hover:bg-caramel/8 transition-all btn-bubble">
-        Place another order
-      </button>
-      <a href="/" className="px-6 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover transition-all btn-bubble">
-        Back to home
-      </a>
-    </div>
-  </motion.div>
-);
 
 /* ============================================
    MAIN PAGE
    ============================================= */
 export default function CustomOrderPage() {
+  const router = useRouter();
   const [categories, setCategories] = useState<CatOption[]>([]);
   useEffect(() => {
     supabase.from("categories").select("id, name").eq("is_active", true).order("sort_order")
@@ -239,21 +191,15 @@ export default function CustomOrderPage() {
   const heroInView = useInView(heroRef, { once: true });
   const formInView = useInView(formRef, { once: true, margin: "-60px" });
 
-  // Pre-fill from logged-in user session — replace with real Supabase auth context
-  // When connected: const { user } = useSupabaseUser();
-  // Then: name: user?.name ?? "", email: user?.email ?? "", etc.
-  const LOGGED_IN_USER = null as null | { name: string; email: string; phone: string; address: string };
-
   const [form, setForm] = useState<FormData>({
-    name: LOGGED_IN_USER?.name ?? "",
-    email: LOGGED_IN_USER?.email ?? "",
-    phone: LOGGED_IN_USER?.phone ?? "",
-    address: LOGGED_IN_USER?.address ?? "",
-    category: "", customCategory: "", description: "",
-    priceMin: "", priceMax: "", timeframe: "",
+    category: "",
+    customCategory: "",
+    description: "",
+    priceMin: "",
+    priceMax: "",
+    timeframe: "",
   });
   const [errors, setErrors] = useState<Partial<FormData>>({});
-  const [submitted, setSubmitted] = useState(false);
   const [charCount, setCharCount] = useState(0);
 
   const set = (field: keyof FormData) => (val: string) => {
@@ -264,28 +210,53 @@ export default function CustomOrderPage() {
 
   const validate = () => {
     const e: Partial<FormData> = {};
-    if (!form.name.trim()) e.name = "We'd love to know your name";
-    if (!form.phone.trim()) e.phone = "We need this for WhatsApp";
     if (!form.category) e.category = "Pick a category";
+    if (form.category === "other" && !form.customCategory.trim()) e.customCategory = "Tell us what you want";
     if (!form.description.trim() || form.description.length < 20)
       e.description = "Give us a bit more detail — even a few sentences helps a lot!";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
+  const selectedCategoryLabel = useMemo(() => {
+    if (!form.category) return "";
+    if (form.category === "other") return form.customCategory.trim();
+    return categories.find((cat) => cat.value === form.category)?.label ?? "";
+  }, [categories, form.category, form.customCategory]);
+
+  const estimatedPriceLabel = useMemo(() => {
+    const minBudget = parseBudget(form.priceMin);
+    const maxBudget = parseBudget(form.priceMax);
+    if (minBudget || maxBudget) {
+      const minText = minBudget ? minBudget.toLocaleString() : "?";
+      const maxText = maxBudget ? maxBudget.toLocaleString() : "?";
+      return `PKR ${minText} - ${maxText}`;
+    }
+    if (!selectedCategoryLabel) return "";
+
+    const normalized = normalizeLabel(selectedCategoryLabel);
+    const match = CATEGORY_ESTIMATES.find((entry) => entry.test.test(normalized));
+    const base = match ?? DEFAULT_ESTIMATE;
+    const factor = TIMEFRAME_FACTOR[form.timeframe] ?? 1;
+    const min = Math.round(base.min * factor);
+    const max = Math.round(base.max * factor);
+    return `PKR ${min.toLocaleString()} - ${max.toLocaleString()}`;
+  }, [form.priceMin, form.priceMax, form.timeframe, selectedCategoryLabel]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    const msg = buildCustomOrderMessage(form, categories);
-    window.open(`https://wa.me/923159202186?text=${msg}`, "_blank");
-    setSubmitted(true);
-  };
-
-  const reset = () => {
-    setForm({ name: "", email: "", phone: "", address: "", category: "", customCategory: "", description: "", priceMin: "", priceMax: "", timeframe: "" });
-    setSubmitted(false);
-    setErrors({});
-    setCharCount(0);
+    const selectedCategory = selectedCategoryLabel || form.category;
+    const estimateText = estimatedPriceLabel;
+    const customPayload = encodeURIComponent(
+      JSON.stringify({
+        category: selectedCategory,
+        description: form.description.trim(),
+        timeframe: TIMEFRAMES.find((time) => time.value === form.timeframe)?.label ?? form.timeframe,
+        estimatedPrice: estimateText,
+      })
+    );
+    router.push(`/user/checkout?source=custom&custom=${customPayload}`);
   };
 
   return (
@@ -368,193 +339,155 @@ export default function CustomOrderPage() {
 
       {/* ── Form ── */}
       <section ref={formRef} className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
-        <AnimatePresence mode="wait">
-          {submitted ? (
-            <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="glass rounded-3xl border border-blush/25 shadow-card">
-                <SuccessState name={form.name || "friend"} onReset={reset} />
+        <motion.form
+          key="form"
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 30 }}
+          animate={formInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="glass rounded-3xl border border-blush/25 shadow-card overflow-hidden"
+        >
+          {/* Form header */}
+          <div className="bg-gradient-to-r from-blush/20 via-cream-50 to-mauve/15 px-8 py-6 border-b border-blush/15">
+            <h2 className="font-display text-xl font-semibold text-ink-dark">Your custom order request</h2>
+            <p className="text-xs text-ink-light/55 font-sans mt-1">
+              Share the item details here. We will collect contact info on the next step.
+            </p>
+          </div>
+
+          <div className="px-8 py-7 space-y-7">
+
+            {/* ── Section 1: The order ── */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blush to-mauve text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</div>
+                <h3 className="font-sans font-semibold text-sm text-ink-dark">What are you after?</h3>
               </div>
-            </motion.div>
-          ) : (
-            <motion.form
-              key="form"
-              onSubmit={handleSubmit}
-              initial={{ opacity: 0, y: 30 }}
-              animate={formInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="glass rounded-3xl border border-blush/25 shadow-card overflow-hidden"
-            >
-              {/* Form header */}
-              <div className="bg-gradient-to-r from-blush/20 via-cream-50 to-mauve/15 px-8 py-6 border-b border-blush/15">
-                <h2 className="font-display text-xl font-semibold text-ink-dark">Your custom order request</h2>
-                <p className="text-xs text-ink-light/55 font-sans mt-1">
-                  Fill in what you can — we&apos;ll sort everything else on WhatsApp 
-                </p>
+
+              <div>
+                <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-widest mb-3">Pick a category *</p>
+                <CategorySelector value={form.category} onChange={set("category")} categories={categories} />
+                {errors.category && <p className="text-xs text-rose/80 font-sans mt-1 pl-1">{errors.category}</p>}
               </div>
 
-              <div className="px-8 py-7 space-y-7">
+              {/* Custom category if "other" */}
+              <AnimatePresence>
+                {form.category === "other" && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}>
+                    <FloatInput label="What is it exactly?" value={form.customCategory} onChange={set("customCategory")}
+                      placeholder="e.g. a wall hanging, plant hanger, phone pouch..." icon={<Sparkles className="w-4 h-4" />} />
+                    {errors.customCategory && <p className="text-xs text-rose/80 font-sans mt-1 pl-1">{errors.customCategory}</p>}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                {/* ── Section 1: About you ── */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-caramel to-rose text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</div>
-                    <h3 className="font-sans font-semibold text-sm text-ink-dark">A little about you</h3>
+              {/* Description */}
+              <div>
+                <div className="relative rounded-2xl border border-caramel/20 bg-white/70 hover:border-blush/40 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all duration-300 overflow-hidden">
+                  <div className="px-4 pt-3.5 pb-1">
+                    <p className="text-[10px] font-sans font-semibold tracking-widest uppercase text-caramel/70 mb-1">Describe your idea *</p>
+                    <textarea
+                      value={form.description}
+                      onChange={(e) => { set("description")(e.target.value); }}
+                      placeholder="Be as specific or as vague as you like! Colours, textures, who it's for, any inspo you've seen... I love all the details "
+                      rows={5}
+                      maxLength={800}
+                      className="w-full bg-transparent pb-3 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none resize-none"
+                    />
                   </div>
-
-                  <FloatInput label="Your name" value={form.name} onChange={set("name")}
-                    placeholder="e.g. Sana" icon={<User className="w-4 h-4" />} required
-                    hint="Just your first name is totally fine!" />
-                  {errors.name && <p className="text-xs text-rose/80 font-sans -mt-2 pl-1">{errors.name}</p>}
-
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <FloatInput label="WhatsApp number" value={form.phone} onChange={set("phone")}
-                        type="tel" placeholder="+92 300 0000000" icon={<Phone className="w-4 h-4" />} required
-                        hint="This is where I'll reply to you" />
-                      {errors.phone && <p className="text-xs text-rose/80 font-sans mt-0.5 pl-1">{errors.phone}</p>}
-                    </div>
-                    <FloatInput label="Email (optional)" value={form.email} onChange={set("email")}
-                      type="email" placeholder="yourname@email.com" icon={<Mail className="w-4 h-4" />}
-                      hint="In case WhatsApp is unavailable" />
-                  </div>
-
-                  <div className="relative flex items-start rounded-2xl border border-caramel/20 bg-white/70 hover:border-blush/40 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all duration-300">
-                    <div className="pl-4 pt-3.5 text-ink-light/40 flex-shrink-0"><MapPin className="w-4 h-4" /></div>
-                    <textarea value={form.address} onChange={(e) => set("address")(e.target.value)}
-                      placeholder="Delivery address (optional — can share later)"
-                      rows={2}
-                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none resize-none" />
+                  <div className="flex items-center justify-between px-4 py-2 bg-cream-50/60 border-t border-caramel/10">
+                    <span className="text-[10px] text-ink-light/40 font-sans">The more detail, the better I can match your vision</span>
+                    <span className={cn("text-[10px] font-sans font-semibold", charCount > 750 ? "text-rose/70" : "text-ink-light/35")}>
+                      {charCount}/800
+                    </span>
                   </div>
                 </div>
+                {errors.description && <p className="text-xs text-rose/80 font-sans mt-1 pl-1">{errors.description}</p>}
+              </div>
+            </div>
 
-                {/* Divider */}
-                <div className="yarn-divider" />
+            {/* Divider */}
+            <div className="yarn-divider" />
 
-                {/* ── Section 2: The order ── */}
-                <div className="space-y-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blush to-mauve text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</div>
-                    <h3 className="font-sans font-semibold text-sm text-ink-dark">What are you after?</h3>
-                  </div>
+            {/* ── Section 2: Budget & timing ── */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-mauve to-blush text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</div>
+                <h3 className="font-sans font-semibold text-sm text-ink-dark">Budget & timing <span className="text-ink-light/40 font-normal">(totally optional)</span></h3>
+              </div>
 
-                  <div>
-                    <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-widest mb-3">Pick a category *</p>
-                    <CategorySelector value={form.category} onChange={set("category")} categories={categories} />
-                    {errors.category && <p className="text-xs text-rose/80 font-sans mt-1 pl-1">{errors.category}</p>}
-                  </div>
-
-                  {/* Custom category if "other" */}
-                  <AnimatePresence>
-                    {form.category === "other" && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}>
-                        <FloatInput label="What is it exactly?" value={form.customCategory} onChange={set("customCategory")}
-                          placeholder="e.g. a wall hanging, plant hanger, phone pouch..." icon={<Sparkles className="w-4 h-4" />} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Description */}
-                  <div>
-                    <div className="relative rounded-2xl border border-caramel/20 bg-white/70 hover:border-blush/40 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all duration-300 overflow-hidden">
-                      <div className="px-4 pt-3.5 pb-1">
-                        <p className="text-[10px] font-sans font-semibold tracking-widest uppercase text-caramel/70 mb-1">Describe your idea *</p>
-                        <textarea
-                          value={form.description}
-                          onChange={(e) => { set("description")(e.target.value); }}
-                          placeholder="Be as specific or as vague as you like! Colours, textures, who it's for, any inspo you've seen... I love all the details "
-                          rows={5}
-                          maxLength={800}
-                          className="w-full bg-transparent pb-3 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none resize-none"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between px-4 py-2 bg-cream-50/60 border-t border-caramel/10">
-                        <span className="text-[10px] text-ink-light/40 font-sans">The more detail, the better I can match your vision</span>
-                        <span className={cn("text-[10px] font-sans font-semibold", charCount > 750 ? "text-rose/70" : "text-ink-light/35")}>
-                          {charCount}/800
-                        </span>
-                      </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-wider">Budget range (PKR)</p>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 flex items-center rounded-2xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
+                      <span className="pl-3 text-xs text-ink-light/50 font-sans flex-shrink-0">Min</span>
+                      <input type="number" value={form.priceMin} onChange={(e) => set("priceMin")(e.target.value)}
+                        placeholder="e.g. 1500"
+                        className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-none w-full" />
                     </div>
-                    {errors.description && <p className="text-xs text-rose/80 font-sans mt-1 pl-1">{errors.description}</p>}
+                    <span className="text-ink-light/30 text-xs">—</span>
+                    <div className="relative flex-1 flex items-center rounded-2xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
+                      <span className="pl-3 text-xs text-ink-light/50 font-sans flex-shrink-0">Max</span>
+                      <input type="number" value={form.priceMax} onChange={(e) => set("priceMax")(e.target.value)}
+                        placeholder="e.g. 3000"
+                        className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-none w-full" />
+                    </div>
                   </div>
+                  <p className="text-[10px] text-ink-light/40 font-sans pl-1">Not sure? Leave blank — we&apos;ll discuss on WhatsApp</p>
                 </div>
 
-                {/* Divider */}
-                <div className="yarn-divider" />
-
-                {/* ── Section 3: Budget & timing ── */}
-                <div className="space-y-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-mauve to-blush text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</div>
-                    <h3 className="font-sans font-semibold text-sm text-ink-dark">Budget & timing <span className="text-ink-light/40 font-normal">(totally optional)</span></h3>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-wider">When do you need it?</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {TIMEFRAMES.map((tf) => (
+                      <button key={tf.value} type="button" onClick={() => set("timeframe")(tf.value)}
+                        className={cn(
+                          "py-2 px-2 rounded-xl border text-[11px] font-sans font-semibold text-center transition-all btn-bubble",
+                          form.timeframe === tf.value
+                            ? "border-caramel/40 bg-caramel/10 text-caramel"
+                            : "border-caramel/15 bg-white/60 text-ink/60 hover:border-blush/40"
+                        )}>
+                        {tf.label}
+                      </button>
+                    ))}
                   </div>
-
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-wider">Budget range (PKR)</p>
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-1 flex items-center rounded-2xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
-                          <span className="pl-3 text-xs text-ink-light/50 font-sans flex-shrink-0">Min</span>
-                          <input type="number" value={form.priceMin} onChange={(e) => set("priceMin")(e.target.value)}
-                            placeholder="e.g. 1500"
-                            className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-none w-full" />
-                        </div>
-                        <span className="text-ink-light/30 text-xs">—</span>
-                        <div className="relative flex-1 flex items-center rounded-2xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
-                          <span className="pl-3 text-xs text-ink-light/50 font-sans flex-shrink-0">Max</span>
-                          <input type="number" value={form.priceMax} onChange={(e) => set("priceMax")(e.target.value)}
-                            placeholder="e.g. 3000"
-                            className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-none w-full" />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-ink-light/40 font-sans pl-1">Not sure? Leave blank — we&apos;ll discuss on WhatsApp</p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-wider">When do you need it?</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {TIMEFRAMES.map((tf) => (
-                          <button key={tf.value} type="button" onClick={() => set("timeframe")(tf.value)}
-                            className={cn(
-                              "py-2 px-2 rounded-xl border text-[11px] font-sans font-semibold text-center transition-all btn-bubble",
-                              form.timeframe === tf.value
-                                ? "border-caramel/40 bg-caramel/10 text-caramel"
-                                : "border-caramel/15 bg-white/60 text-ink/60 hover:border-blush/40"
-                            )}>
-                            {tf.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── Submit ── */}
-                <div className="pt-2 space-y-3">
-                  <button type="submit"
-                    className={cn(
-                      "w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl",
-                      "bg-[#25D366] text-white text-sm font-sans font-bold",
-                      "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
-                      "transition-all duration-300 btn-bubble relative overflow-hidden group"
-                    )}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.799 9.799 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
-                    </svg>
-                    Send my order request on WhatsApp
-                    <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-                  </button>
-
-                  <p className="text-center text-[11px] text-ink-light/40 font-sans">
-                    This opens WhatsApp with your details already typed out — just hit send!
-                    No account needed. 
-                  </p>
                 </div>
               </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
+
+              {estimatedPriceLabel && (
+                <div className="rounded-2xl border border-caramel/15 bg-cream-50/70 px-4 py-3 text-xs font-sans text-ink">
+                  <p className="font-semibold text-ink-dark">Estimated price range</p>
+                  <p className="text-caramel font-bold">{estimatedPriceLabel}</p>
+                  <p className="text-[10px] text-ink-light/50 mt-1">Estimate only - final price confirmed on WhatsApp.</p>
+                </div>
+              )}
+            </div>
+
+            {/* ── Submit ── */}
+            <div className="pt-2 space-y-3">
+              <button type="submit"
+                className={cn(
+                  "w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl",
+                  "bg-[#25D366] text-white text-sm font-sans font-bold",
+                  "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
+                  "transition-all duration-300 btn-bubble relative overflow-hidden group"
+                )}>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.799 9.799 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+                </svg>
+                Continue to confirmation
+                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </button>
+
+              <p className="text-center text-[11px] text-ink-light/40 font-sans">
+                Next step: add your contact details and send via WhatsApp.
+              </p>
+            </div>
+          </div>
+        </motion.form>
       </section>
 
       <Footer />

@@ -8,7 +8,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, ShoppingCart, Star, ChevronLeft, ChevronRight,
-  Plus, Minus, Tag, MessageCircle, Package, ArrowRight,
+  Plus, Minus, Tag, Package, ArrowRight,
   X, Check, ShoppingBag, Loader2, Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -160,104 +160,17 @@ const OrderPopup = ({
   coupon: string;
   onClose: () => void;
 }) => {
-  const { isLoggedIn } = useAuth();
-  const [queryLoading, setQueryLoading] = useState(false);
-  const [queryMsg, setQueryMsg] = useState("");
   const total = product.price * quantity;
-  const whatsappMsg = encodeURIComponent(
-    `🧶 *New Order — Crochet Masterpiece*\n\n` +
-    `📦 *Product:* ${product.name}\n` +
-    `🔢 *Quantity:* ${quantity}\n` +
-    `💰 *Price:* PKR ${total.toLocaleString()}\n` +
-    (coupon ? `🎟 *Coupon:* ${coupon}\n` : "") +
-    `\n_Sent from Crochet Masterpiece website_ ✨`
-  );
-  const waNumber = "923159202186"; // replace from env
-  const whatsappUrl = `https://wa.me/${waNumber}?text=${whatsappMsg}`;
-
-  const formatOrderId = (id: string) => `#${id.slice(0, 6).toUpperCase()}`;
-
-  const createOrderAndNotify = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const activeUser = authData.user;
-    if (!activeUser) throw new Error("Login required");
-
-    const res = await fetch("/api/orders/query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: activeUser.id,
-        customerName: activeUser.user_metadata?.full_name ?? activeUser.user_metadata?.name ?? activeUser.email ?? "User",
-        customerEmail: activeUser.email ?? "",
-        customerPhone: activeUser.user_metadata?.phone ?? "",
-        source: "website",
-        items: [
-          {
-            productId: product.id,
-            name: product.name,
-            quantity,
-            unitPrice: product.price,
-          },
-        ],
-        totalAmount: total,
-        discountAmount: 0,
-        couponCode: coupon || null,
-        note: "Customer sent a website order query and continued on WhatsApp.",
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(typeof data?.error === "string" ? data.error : "Order create failed");
-    }
-
-    if (typeof data?.orderId === "string") {
-      const orderId = data.orderId;
-      return formatOrderId(orderId);
-    }
-    return null;
-  };
-
-  const sendQueryAndContinueWhatsApp = async () => {
-    if (!isLoggedIn) {
-      setQueryMsg("Please log in to send a query.");
-      return;
-    }
-
-    setQueryLoading(true);
-    setQueryMsg("");
-    try {
-      await createOrderAndNotify();
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      setQueryMsg("Query sent and WhatsApp opened.");
-      onClose();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not send query right now. Please try again.";
-      setQueryMsg(message);
-    } finally {
-      setQueryLoading(false);
-    }
-  };
-
-  const handleWhatsAppOnly = () => {
-    if (!isLoggedIn) {
-      window.alert("No query will be sent. Send Query is available only after login.");
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    const alsoSendQuery = window.confirm(
-      "No query will be sent to the website if you continue with WhatsApp only. If you want admin to see your order in site, click OK to send query now."
-    );
-
-    if (alsoSendQuery) {
-      void sendQueryAndContinueWhatsApp();
-      return;
-    }
-
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    onClose();
-  };
+  const checkoutHref = `/user/checkout?source=website&items=${encodeURIComponent(
+    JSON.stringify([
+      {
+        productId: product.id,
+        name: product.name,
+        quantity,
+        unitPrice: product.price,
+      },
+    ])
+  )}`;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -278,39 +191,9 @@ const OrderPopup = ({
         </div>
 
         <div className="space-y-3">
-          {/* Website query */}
-          {isLoggedIn ? (
-            <button
-              onClick={() => { void sendQueryAndContinueWhatsApp(); }}
-              disabled={queryLoading}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-blush/25",
-                "bg-gradient-to-r from-blush/10 to-mauve/10 text-ink",
-                "hover:border-caramel/40 hover:bg-blush/15 transition-all duration-200 btn-bubble text-left disabled:opacity-70"
-              )}
-            >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blush to-mauve flex items-center justify-center text-white flex-shrink-0">
-                <MessageCircle className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-sm font-sans font-semibold text-ink-dark">Send Query to Admin</p>
-                <p className="text-[11px] text-ink-light/60">Confirm order, then WhatsApp opens automatically</p>
-              </div>
-            </button>
-          ) : (
-            <div className="w-full rounded-2xl border border-caramel/20 bg-cream-50/70 px-4 py-3 text-left">
-              <p className="text-sm font-sans font-semibold text-ink-dark">Send Query to Admin</p>
-              <p className="text-[11px] text-ink-light/60">Unavailable for guest users. Please log in first.</p>
-            </div>
-          )}
-          {queryMsg && (
-            <p className={cn("text-xs font-sans", queryMsg.includes("sent") ? "text-green-600" : "text-red-500")}>{queryMsg}</p>
-          )}
-
-          {/* WhatsApp */}
-          <button
-            type="button"
-            onClick={handleWhatsAppOnly}
+          <Link
+            href={checkoutHref}
+            onClick={onClose}
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl",
               "bg-[#25D366] text-white",
@@ -322,10 +205,10 @@ const OrderPopup = ({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-sans font-bold">Order via WhatsApp</p>
-              <p className="text-[11px] text-white/70">Message opens pre-filled ✓</p>
+              <p className="text-sm font-sans font-bold">Continue to WhatsApp Checkout</p>
+              <p className="text-[11px] text-white/70">No login required</p>
             </div>
-          </button>
+          </Link>
         </div>
 
         {coupon && (

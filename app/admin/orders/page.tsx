@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, Search, X, Eye, Check, Clock, Truck, Star,
@@ -9,8 +10,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import OrdersListSkeleton from "@/components/ui/OrdersListSkeleton";
+import {
+  normalizeReturnStatus,
+  RETURN_STATUS_LABEL,
+  returnStatusBadgeClass,
+  type ReturnStatus,
+} from "@/lib/returns";
 
-type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
 type OrderSource = "whatsapp" | "website" | "custom";
 
 interface OrderItem { name: string; qty: number; price: number; product_id?: string | null; }
@@ -19,6 +27,7 @@ interface Order {
   id: string; customer_name: string; customer_email?: string; customer_phone: string;
   items: OrderItem[]; total: number; status: OrderStatus; source: OrderSource;
   date: string; note?: string; address?: string;
+  return_status: ReturnStatus;
 }
 
 const formatOrderId = (id: string) => `#${id.slice(0, 6).toUpperCase()}`;
@@ -27,7 +36,8 @@ const MOCK_ORDERS: Order[] = []; // Data loaded from Supabase on mount
 
 const STATUS_CFG: Record<OrderStatus, { label: string; color: string; icon: React.ReactNode; next?: OrderStatus }> = {
   pending:   { label: "Pending",   color: "bg-amber-50 text-amber-600 border-amber-200",   icon: <Clock className="w-3 h-3" />,   next: "confirmed" },
-  confirmed: { label: "Confirmed", color: "bg-blue-50 text-blue-600 border-blue-200",     icon: <Check className="w-3 h-3" />,   next: "shipped" },
+  confirmed: { label: "Confirmed", color: "bg-blue-50 text-blue-600 border-blue-200",     icon: <Check className="w-3 h-3" />,   next: "processing" },
+  processing:{ label: "Processing",color: "bg-indigo-50 text-indigo-600 border-indigo-200", icon: <Clock className="w-3 h-3" />, next: "shipped" },
   shipped:   { label: "Shipped",   color: "bg-purple-50 text-purple-600 border-purple-200", icon: <Truck className="w-3 h-3" />, next: "delivered" },
   delivered: { label: "Delivered", color: "bg-green-50 text-green-600 border-green-200",   icon: <Star className="w-3 h-3" /> },
   cancelled: { label: "Cancelled", color: "bg-red-50 text-red-400 border-red-200",         icon: <X className="w-3 h-3" /> },
@@ -49,16 +59,20 @@ function useAdminAuth() {
 /* =============================================
    ORDER DETAIL — slide panel content
    ============================================= */
-const OrderDetailPanel = ({ order, onClose, onStatusChange, onSendUserMessage, onDeleteOrder }: {
+const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSendUserMessage, onDeleteOrder }: {
   order: Order;
   onClose: () => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
+  onReturnChange: (id: string, returnStatus: ReturnStatus) => Promise<void>;
   onSendUserMessage: (id: string, message: string) => Promise<void>;
   onDeleteOrder: (id: string) => Promise<void>;
 }) => {
   const s = STATUS_CFG[order.status];
+  const ret = normalizeReturnStatus(order.return_status);
+  const orderTypeLabel = order.source === "custom" ? "Custom" : "Normal";
   const [adminMsg, setAdminMsg] = useState("");
   const [msgSending, setMsgSending] = useState(false);
+  const [returnSaving, setReturnSaving] = useState(false);
   const waMsg = encodeURIComponent(`Hi ${order.customer_name}! This is Crochet Masterpiece. Your order ${formatOrderId(order.id)} is now *${s.label}*. ${adminMsg}`);
 
   return (
@@ -71,7 +85,7 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onSendUserMessage, o
         </button>
         <div>
           <h2 className="font-display text-lg font-semibold text-ink-dark">Order {formatOrderId(order.id)}</h2>
-          <p className="text-xs text-ink-light/55 font-sans">{order.date} · {SRC_CFG[order.source].label}</p>
+          <p className="text-xs text-ink-light/55 font-sans">{order.date} · {SRC_CFG[order.source].label} · {orderTypeLabel}</p>
         </div>
         <span className={cn("ml-auto text-[10px] font-sans font-bold px-2.5 py-1 rounded-full border flex items-center gap-1", s.color)}>
           {s.icon} {s.label}
@@ -123,6 +137,43 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onSendUserMessage, o
               <span className="text-sm font-sans font-bold text-ink-dark">Total</span>
               <span className="text-sm font-bold font-sans text-caramel">PKR {order.total.toLocaleString()}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Return */}
+        <div className="rounded-2xl border border-caramel/15 bg-cream-50/60 p-4">
+          <p className="text-[10px] font-sans font-bold text-ink-light/50 uppercase tracking-widest mb-3">Return</p>
+          {ret !== "none" && (
+            <span className={cn("inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full border mb-3", returnStatusBadgeClass(ret))}>
+              {RETURN_STATUS_LABEL[ret]}
+            </span>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            {(["none", "pending", "confirmed"] as ReturnStatus[]).map((st) => (
+              <button
+                key={st}
+                type="button"
+                disabled={returnSaving}
+                onClick={async () => {
+                  setReturnSaving(true);
+                  try {
+                    await onReturnChange(order.id, st);
+                  } finally {
+                    setReturnSaving(false);
+                  }
+                }}
+                className={cn(
+                  "px-2 py-2 rounded-xl border text-[10px] font-sans font-semibold transition-all btn-bubble disabled:opacity-60",
+                  ret === st
+                    ? st === "none"
+                      ? "border-caramel/30 bg-white text-ink"
+                      : returnStatusBadgeClass(st) + " border"
+                    : "border-caramel/15 text-ink-light/60 hover:border-caramel/35 bg-white/60"
+                )}
+              >
+                {RETURN_STATUS_LABEL[st]}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -221,6 +272,7 @@ export default function AdminOrdersPage() {
           created_at: string;
           note: string;
           address: string;
+          return_status?: string;
           items: Array<{
             product_id: string | null;
             product_name: string;
@@ -245,6 +297,7 @@ export default function AdminOrdersPage() {
           date: new Date(o.created_at).toISOString().split("T")[0],
           note: o.note || undefined,
           address: o.address || undefined,
+          return_status: normalizeReturnStatus(o.return_status),
         })));
       } catch(e) { console.error(e); }
       finally { setDbLoading(false); }
@@ -253,6 +306,7 @@ export default function AdminOrdersPage() {
   }, []);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "all">("all");
+  const [viewMode, setViewMode] = useState<"all" | "returns">("all");
   const [selected, setSelected] = useState<Order | null>(null);
 
   useEffect(() => {
@@ -330,6 +384,25 @@ export default function AdminOrdersPage() {
     const { error } = await supabase.from("orders").update({ status } as unknown as never).eq("id", id);
     if (error) { alert("Status update failed: " + error.message); return; }
 
+    const timestampColumnByStatus: Partial<Record<OrderStatus, string>> = {
+      confirmed: "confirmed_at",
+      processing: "processing_at",
+      shipped: "shipped_at",
+      delivered: "delivered_at",
+      cancelled: "cancelled_at",
+    };
+    const timestampColumn = timestampColumnByStatus[status];
+    if (timestampColumn) {
+      await supabase.from("orders").update({ [timestampColumn]: new Date().toISOString() } as unknown as never).eq("id", id);
+    }
+
+    await supabase.from("order_status_history").insert({
+      order_id: id,
+      from_status: current.status,
+      to_status: status,
+      changed_by: "admin",
+    } as unknown as never);
+
     const notifyUserId = await resolveOrderUserId(current);
     if (notifyUserId) {
       await fetch("/api/admin/notifications", {
@@ -340,7 +413,7 @@ export default function AdminOrdersPage() {
           type: "order_update",
           title: `Order ${STATUS_CFG[status].label}`,
           message: `Your order ${formatOrderId(id)} is now ${STATUS_CFG[status].label.toLowerCase()}.`,
-          link: "/user/profile",
+          link: `/user/orders/${id}`,
           meta: formatOrderId(id),
         }),
       });
@@ -408,7 +481,7 @@ export default function AdminOrdersPage() {
         type: "admin_message",
         title: "Message from admin",
         message,
-        link: "/user/profile",
+        link: `/user/orders/${id}`,
         meta: formatOrderId(id),
       }),
     });
@@ -419,6 +492,22 @@ export default function AdminOrdersPage() {
     }
 
     alert("In-app notification sent to user.");
+  };
+
+  const updateReturn = async (id: string, returnStatus: ReturnStatus) => {
+    const res = await fetch("/api/admin/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, return_status: returnStatus }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert("Return update failed: " + (body?.error || "Unknown error"));
+      return;
+    }
+    const next = normalizeReturnStatus(body?.return_status ?? returnStatus);
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, return_status: next } : o)));
+    setSelected((prev) => (prev?.id === id ? { ...prev, return_status: next } : prev));
   };
 
   const deleteOrder = async (id: string) => {
@@ -443,8 +532,11 @@ export default function AdminOrdersPage() {
       && !o.id.toLowerCase().includes(q)
       && !formatOrderId(o.id).toLowerCase().includes(q)) return false;
     if (filterStatus !== "all" && o.status !== filterStatus) return false;
+    if (viewMode === "returns" && normalizeReturnStatus(o.return_status) === "none") return false;
     return true;
   });
+
+  const returnCount = orders.filter((o) => normalizeReturnStatus(o.return_status) !== "none").length;
 
   const counts = (Object.keys(STATUS_CFG) as OrderStatus[]).reduce((acc, s) => {
     acc[s] = orders.filter(o => o.status === s).length;
@@ -466,9 +558,37 @@ export default function AdminOrdersPage() {
         >
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
             {/* Header */}
-            <div className="mb-5">
-              <h1 className="font-display text-2xl font-semibold text-ink-dark">Orders</h1>
-              <p className="text-sm text-ink-light/55 font-sans mt-0.5">{orders.length} total · {counts.pending ?? 0} pending</p>
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h1 className="font-display text-2xl font-semibold text-ink-dark">Orders</h1>
+                <p className="text-sm text-ink-light/55 font-sans mt-0.5">{orders.length} total · {counts.pending ?? 0} pending · {returnCount} returns</p>
+              </div>
+              <Link href="/admin/custom-orders" className="text-xs font-bold text-caramel bg-caramel/10 px-3 py-2 rounded-xl hover:bg-caramel/15">
+                Custom pricing queue
+              </Link>
+            </div>
+
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setViewMode("all")}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-sans font-semibold border transition-all",
+                  viewMode === "all" ? "bg-caramel/15 border-caramel/40 text-caramel" : "border-caramel/15 text-ink-light/60"
+                )}
+              >
+                All orders
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("returns")}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-sans font-semibold border transition-all",
+                  viewMode === "returns" ? "bg-orange-50 border-orange-200 text-orange-700" : "border-caramel/15 text-ink-light/60"
+                )}
+              >
+                Returns ({returnCount})
+              </button>
             </div>
 
             {/* Status pills */}
@@ -497,10 +617,15 @@ export default function AdminOrdersPage() {
 
             {/* Orders list */}
             <div className="glass rounded-3xl border border-caramel/15 overflow-hidden">
-              <AnimatePresence mode="popLayout">
+              {dbLoading ? (
+                <OrdersListSkeleton rows={7} />
+              ) : (
+                <AnimatePresence mode="popLayout">
                 {filtered.map((order) => {
                   const s = STATUS_CFG[order.status];
                   const src = SRC_CFG[order.source];
+                  const ret = normalizeReturnStatus(order.return_status);
+                  const typeLabel = order.source === "custom" ? "Custom" : "Normal";
                   const isSelected = selected?.id === order.id;
                   return (
                     <motion.div key={order.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -524,9 +649,15 @@ export default function AdminOrdersPage() {
                       {/* Right side */}
                       <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                         <span className="text-sm font-bold font-sans text-ink-dark">PKR {order.total.toLocaleString()}</span>
-                        <div className="flex gap-1.5">
+                        <div className="flex flex-wrap gap-1.5 justify-end">
                           <span className={cn("text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border flex items-center gap-0.5", s.color)}>{s.icon} {s.label}</span>
                           <span className={cn("text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border hidden lg:flex", src.color)}>{src.label}</span>
+                          <span className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border border-caramel/25 text-ink-light/70 hidden sm:inline">{typeLabel}</span>
+                          {ret !== "none" && (
+                            <span className={cn("text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border", returnStatusBadgeClass(ret))}>
+                              {RETURN_STATUS_LABEL[ret]}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all flex-shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
@@ -534,6 +665,7 @@ export default function AdminOrdersPage() {
                   );
                 })}
               </AnimatePresence>
+              )}
               {filtered.length === 0 && (
                 <div className="flex flex-col items-center py-16 gap-3">
                   <ShoppingBag className="w-8 h-8 text-caramel/30" />
@@ -560,6 +692,7 @@ export default function AdminOrdersPage() {
                   order={selected}
                   onClose={() => setSelected(null)}
                   onStatusChange={updateStatus}
+                  onReturnChange={updateReturn}
                   onSendUserMessage={sendUserMessage}
                   onDeleteOrder={deleteOrder}
                 />

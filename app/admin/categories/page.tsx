@@ -244,7 +244,20 @@ export default function AdminCategoriesPage() {
             <div />
           </div>
           <AnimatePresence mode="popLayout">
-            {cats.map((cat, i) => (
+            {catsLoading ? (
+              <div className="p-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="grid grid-cols-[28px_40px_1fr] md:grid-cols-[28px_40px_1fr_80px_120px] gap-3 md:gap-4 items-center px-4 md:px-5 py-3.5 border-b border-caramel/8 last:border-0">
+                    <div className="h-6 w-6 rounded-md bg-cream-50/60" />
+                    <div className="w-9 h-9 rounded-xl bg-cream-50/60" />
+                    <div className="flex-1">
+                      <div className="h-4 w-1/3 mb-2 bg-cream-50/60" />
+                      <div className="h-3 w-1/2 bg-cream-50/60" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : cats.map((cat, i) => (
               <motion.div key={cat.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.22 }}
                 className="grid grid-cols-[28px_40px_1fr] md:grid-cols-[28px_40px_1fr_80px_120px] gap-3 md:gap-4 items-center px-4 md:px-5 py-3.5 hover:bg-caramel/4 transition-colors border-b border-caramel/8 last:border-0 group">
                 {/* Sort */}

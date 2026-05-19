@@ -30,6 +30,19 @@ export function createServiceClient() {
   );
 }
 
+/**
+ * Supabase client that **only** uses the service role key (never anon).
+ * Use for tables that must bypass RLS and are not exposed to `anon`, e.g. `admin_notifications`.
+ * Returns `null` when `SUPABASE_SERVICE_ROLE_KEY` is not set.
+ */
+export function getServiceRoleSupabase() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!key) return null;
+  return createClient(SUPABASE_URL, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 const SITE_URL = () =>
   typeof window !== "undefined"
     ? window.location.origin
@@ -97,6 +110,14 @@ export async function updatePassword(newPassword: string) {
 }
 
 // ── Sign out ──────────────────────────────────────────────────
+/** Magic link / OTP — only works if the email already has a Supabase Auth account. */
+export async function signInWithMagicLink(email: string, redirectTo = "/user/home") {
+  return supabase.auth.signInWithOtp({
+    email: email.trim().toLowerCase(),
+    options: { emailRedirectTo: `${SITE_URL()}${redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`}` },
+  });
+}
+
 export async function signOut() {
   await supabase.auth.signOut();
   if (typeof window !== "undefined") {

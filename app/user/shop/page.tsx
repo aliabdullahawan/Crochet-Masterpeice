@@ -1,7 +1,6 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/AuthContext";
 import React, { useState, useRef, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -9,13 +8,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, ShoppingCart, Star, SlidersHorizontal, X,
   ChevronDown, Tag, Sparkles, ArrowUpDown,
-  Check, Grid3X3, LayoutList, Search, MessageCircle,
+  Check, Grid3X3, LayoutList, Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useShop } from "@/lib/ShopContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
+import { parseDiscountCodesFromSearch, productMatchesDiscountCodes, type ShopDiscount } from "@/lib/shopDiscounts";
+import { ShopHeroBanner } from "@/components/shop/ShopHeroBanner";
+import { ShopGridSkeleton } from "@/components/ui/Skeleton";
+import { useRouter } from "next/navigation";
 
 /* =============================================
    TYPES
@@ -26,6 +29,7 @@ interface Product {
   stock_quantity: number;
   average_rating: number; review_count: number;
   discount_percent?: number; discount_active?: boolean;
+  discount_code?: string | null;
   is_featured?: boolean; tags?: string[];
   image_url?: string; images?: string[];
 }
@@ -40,95 +44,17 @@ const PRODUCTS: Product[] = [];
 /* =============================================
    ORDER POPUP — login aware
    ============================================= */
-const OrderPopup = ({ product, onClose, isLoggedIn }: { product: Product; onClose: () => void; isLoggedIn: boolean }) => {
-  const [queryLoading, setQueryLoading] = useState(false);
-  const [queryMsg, setQueryMsg] = useState("");
-  const msg = encodeURIComponent(` *Order — Crochet Masterpiece*\n\n *Product:* ${product.name}\n *Price:* PKR ${product.price.toLocaleString()}\n\n_Sent from website_ `);
-  const whatsappUrl = `https://wa.me/923159202186?text=${msg}`;
-
-  const formatOrderId = (id: string) => `#${id.slice(0, 6).toUpperCase()}`;
-
-  const createOrderAndNotify = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const activeUser = authData.user;
-    if (!activeUser) throw new Error("Login required");
-
-    const res = await fetch("/api/orders/query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: activeUser.id,
-        customerName: activeUser.user_metadata?.full_name ?? activeUser.user_metadata?.name ?? activeUser.email ?? "User",
-        customerEmail: activeUser.email ?? "",
-        customerPhone: activeUser.user_metadata?.phone ?? "",
-        source: "website",
-        items: [
-          {
-            productId: product.id,
-            name: product.name,
-            quantity: 1,
-            unitPrice: product.price,
-          },
-        ],
-        totalAmount: product.price,
-        discountAmount: 0,
-        couponCode: null,
-        note: "Customer sent a website order query and continued on WhatsApp.",
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(typeof data?.error === "string" ? data.error : "Order create failed");
-    }
-
-    if (typeof data?.orderId === "string") {
-      const orderId = data.orderId;
-      return formatOrderId(orderId);
-    }
-    return null;
-  };
-
-  const sendQueryAndContinueWhatsApp = async () => {
-    if (!isLoggedIn) {
-      setQueryMsg("Please log in to send a query.");
-      return;
-    }
-
-    setQueryLoading(true);
-    setQueryMsg("");
-    try {
-      await createOrderAndNotify();
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      setQueryMsg("Query sent and WhatsApp opened.");
-      onClose();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not send query right now. Please try again.";
-      setQueryMsg(message);
-    } finally {
-      setQueryLoading(false);
-    }
-  };
-
-  const handleWhatsAppOnly = () => {
-    if (!isLoggedIn) {
-      window.alert("No query will be sent. Send Query is available only after login.");
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    const alsoSendQuery = window.confirm(
-      "No query will be sent to the website if you continue with WhatsApp only. If you want admin to see your order in site, click OK to send query now."
-    );
-
-    if (alsoSendQuery) {
-      void sendQueryAndContinueWhatsApp();
-      return;
-    }
-
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    onClose();
-  };
+const OrderPopup = ({ product, onClose }: { product: Product; onClose: () => void }) => {
+  const checkoutHref = `/user/checkout?source=website&items=${encodeURIComponent(
+    JSON.stringify([
+      {
+        productId: product.id,
+        name: product.name,
+        quantity: 1,
+        unitPrice: product.price,
+      },
+    ])
+  )}`;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -147,46 +73,11 @@ const OrderPopup = ({ product, onClose, isLoggedIn }: { product: Product; onClos
           <p className="text-sm font-bold text-caramel">PKR {product.price.toLocaleString()}</p>
         </div>
         <div className="space-y-3">
-          {/* Website query */}
-          <div className={cn("rounded-2xl border p-4", isLoggedIn ? "border-blush/30 bg-blush/8" : "border-caramel/15 bg-cream-50/50")}>
-            <div className="flex gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blush to-mauve flex items-center justify-center text-white flex-shrink-0">
-                <MessageCircle className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                {isLoggedIn ? (
-                  <>
-                    <p className="text-sm font-sans font-semibold text-ink-dark">Send query to admin</p>
-                    <p className="text-[11px] text-ink-light/55 mb-2">Your order will be tracked on the website.</p>
-                    <button
-                      onClick={() => { void sendQueryAndContinueWhatsApp(); }}
-                      disabled={queryLoading}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blush to-mauve text-white text-xs font-sans font-bold btn-bubble shadow-button disabled:opacity-70"
-                    >
-                      <Check className="w-3 h-3" /> Confirm & Send
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-sans font-semibold text-ink-dark">Send query via website</p>
-                    <p className="text-[11px] text-ink-light/55 mb-2">
-                      You&apos;re not logged in — your query will reach the admin but you won&apos;t be able to track it.
-                    </p>
-                    <Link href="/user/login" onClick={onClose}
-                      className="text-xs font-sans font-semibold text-caramel underline decoration-blush/50 hover:text-ink transition-colors">
-                      Log in to track your order →
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          {queryMsg && (
-            <p className={cn("text-xs font-sans", queryMsg.includes("sent") ? "text-green-600" : "text-red-500")}>{queryMsg}</p>
-          )}
-          {/* WhatsApp — always available */}
-          <button type="button" onClick={handleWhatsAppOnly}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button">
+          <Link
+            href={checkoutHref}
+            onClick={onClose}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button"
+          >
             <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
@@ -194,10 +85,10 @@ const OrderPopup = ({ product, onClose, isLoggedIn }: { product: Product; onClos
               </svg>
             </div>
             <div>
-              <p className="text-sm font-sans font-bold">{isLoggedIn ? "Order via WhatsApp" : "Continue on WhatsApp"}</p>
-              <p className="text-[11px] text-white/70">{isLoggedIn ? "Message pre-filled " : "No login needed"}</p>
+              <p className="text-sm font-sans font-bold">Continue to WhatsApp Checkout</p>
+              <p className="text-[11px] text-white/70">No login required</p>
             </div>
-          </button>
+          </Link>
         </div>
       </motion.div>
     </motion.div>
@@ -213,7 +104,6 @@ const ShopCard = ({ product }: { product: Product }) => {
   const [hover, setHover] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [showOrder, setShowOrder] = useState(false);
-  const { isLoggedIn } = useAuth();
   const inCartQty = cartItems.find((i) => i.productId === product.id)?.quantity ?? 0;
   const remainingStock = Math.max(0, product.stock_quantity - inCartQty);
   const outOfStock = product.stock_quantity <= 0 || remainingStock <= 0;
@@ -351,7 +241,7 @@ const ShopCard = ({ product }: { product: Product }) => {
       </motion.div>
 
       <AnimatePresence>
-        {showOrder && <OrderPopup product={product} onClose={() => setShowOrder(false)} isLoggedIn={isLoggedIn} />}
+        {showOrder && <OrderPopup product={product} onClose={() => setShowOrder(false)} />}
       </AnimatePresence>
     </>
   );
@@ -365,6 +255,9 @@ const FilterPanel = ({
   priceRange, onPriceRange,
   showFeatured, onFeatured,
   showDiscounted, onDiscounted,
+  shopDiscounts,
+  selectedDiscountCodes,
+  onDiscountCodesChange,
   onClear,
 }: {
   categories: Category[];
@@ -372,10 +265,23 @@ const FilterPanel = ({
   priceRange: [number, number]; onPriceRange: (r: [number, number]) => void;
   showFeatured: boolean; onFeatured: (v: boolean) => void;
   showDiscounted: boolean; onDiscounted: (v: boolean) => void;
+  shopDiscounts: ShopDiscount[];
+  selectedDiscountCodes: string[];
+  onDiscountCodesChange: (codes: string[]) => void;
   onClear: () => void;
 }) => {
   const MAX = 10000;
   const [showAll, setShowAll] = React.useState(false);
+  const [discountsOpen, setDiscountsOpen] = React.useState(true);
+
+  const toggleDiscountCode = (code: string) => {
+    const normalized = code.trim().toUpperCase();
+    if (selectedDiscountCodes.includes(normalized)) {
+      onDiscountCodesChange(selectedDiscountCodes.filter((c) => c !== normalized));
+    } else {
+      onDiscountCodesChange([...selectedDiscountCodes, normalized]);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -400,6 +306,43 @@ const FilterPanel = ({
           </button>
         ))}
       </div>
+      {/* Discount codes — multi-select */}
+      {shopDiscounts.length > 0 && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setDiscountsOpen((o) => !o)}
+            className="w-full flex items-center justify-between text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest"
+          >
+            <span className="flex items-center gap-1.5"><Tag className="w-3 h-3 text-caramel" /> Discount offers</span>
+            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", discountsOpen && "rotate-180")} />
+          </button>
+          {discountsOpen && (
+            <div className="space-y-1 max-h-44 overflow-y-auto pr-1">
+              {shopDiscounts.map((d) => {
+                const selected = selectedDiscountCodes.includes(d.code);
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => toggleDiscountCode(d.code)}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-sans font-semibold transition-all btn-bubble text-left",
+                      selected ? "bg-caramel/10 border-caramel/30 text-caramel" : "border-caramel/15 bg-white/60 text-ink-light hover:border-blush/40"
+                    )}
+                  >
+                    <div className={cn("w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0", selected ? "bg-gradient-to-br from-caramel to-rose border-transparent" : "border-caramel/25")}>
+                      {selected && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className="flex-1 min-w-0 truncate">{d.code}</span>
+                    <span className="text-[10px] text-caramel/80">-{d.percent}%</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
       {/* Categories */}
       <div className="space-y-1">
         <p className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest">Category</p>
@@ -485,23 +428,85 @@ const SortDropdown = ({ value, onChange }: { value: SortOption; onChange: (v: So
    ============================================= */
 function ShopContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("newest");
   const [cat, setCat] = useState(searchParams.get("category") ?? "");
   const [price, setPrice] = useState<[number, number]>([0, 10000]);
   const [featured, setFeatured] = useState(searchParams.get("filter") === "featured");
   const [discounted, setDiscounted] = useState(false);
+  const [selectedDiscountCodes, setSelectedDiscountCodes] = useState<string[]>(() =>
+    parseDiscountCodesFromSearch({
+      discount: searchParams.get("discount"),
+      discounts: searchParams.get("discounts"),
+    })
+  );
   const [filterOpen, setFilterOpen] = useState(false);
   const [grid, setGrid] = useState(true);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [shopLoading, setShopLoading] = useState(true);
   const [cats, setCats] = useState<Category[]>([]);
+  const [shopDiscounts, setShopDiscounts] = useState<ShopDiscount[]>([]);
+
+  const syncDiscountUrl = React.useCallback(
+    (codes: string[]) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("discount");
+      params.delete("discounts");
+      if (codes.length) params.set("discounts", codes.join(","));
+      const qs = params.toString();
+      router.replace(qs ? `/user/shop?${qs}` : "/user/shop", { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  const handleDiscountCodesChange = React.useCallback(
+    (codes: string[]) => {
+      setSelectedDiscountCodes(codes);
+      syncDiscountUrl(codes);
+    },
+    [syncDiscountUrl]
+  );
 
   useEffect(() => {
     setCat(searchParams.get("category") ?? "");
     setFeatured(searchParams.get("filter") === "featured");
+    const codes = parseDiscountCodesFromSearch({
+      discount: searchParams.get("discount"),
+      discounts: searchParams.get("discounts"),
+    });
+    setSelectedDiscountCodes(codes);
   }, [searchParams]);
+
+  const loadShopDiscounts = React.useCallback(async () => {
+    const { data } = await supabase
+      .from("discounts")
+      .select("id, code, discount_value, end_date, product_id")
+      .eq("active", true)
+      .not("code", "is", null);
+
+    if (!data?.length) {
+      setShopDiscounts([]);
+      return;
+    }
+
+    const now = new Date();
+    const rows = (data as Array<{ id: string; code: string; discount_value: number; end_date: string | null; product_id: string | null }>).filter(
+      (d) => !d.end_date || new Date(d.end_date) >= now
+    );
+
+    setShopDiscounts(
+      rows.map((d) => ({
+        id: d.id,
+        code: d.code.trim().toUpperCase(),
+        percent: d.discount_value,
+        label: d.product_id ? "selected item" : "selected products",
+        endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
+        productId: d.product_id,
+      }))
+    );
+  }, []);
 
   const loadCategories = React.useCallback(async () => {
     const { data } = await supabase
@@ -515,7 +520,7 @@ function ShopContent() {
   const loadProducts = React.useCallback(async () => {
     const { data } = await supabase
       .from("product_listing")
-      .select("id, name, description, price, original_price, category_name, category_id, stock_quantity, is_featured, average_rating, review_count, tags, active_discount_percent, discount_active, image_url, images");
+      .select("id, name, description, price, original_price, category_name, category_id, stock_quantity, is_featured, average_rating, review_count, tags, active_discount_percent, discount_active, discount_code, image_url, images");
 
     if (data) {
       const mapped = (data as (Product & { active_discount_percent?: number; stock_quantity?: number })[]).map((p) => ({
@@ -602,12 +607,14 @@ function ShopContent() {
   useEffect(() => {
     loadCategories();
     loadProducts();
-  }, [loadCategories, loadProducts]);
+    loadShopDiscounts();
+  }, [loadCategories, loadProducts, loadShopDiscounts]);
 
   useEffect(() => {
     const refresh = () => {
       loadCategories();
       loadProducts();
+      loadShopDiscounts();
     };
 
     const timer = setInterval(refresh, 60000);
@@ -645,6 +652,7 @@ function ShopContent() {
     if (p.price < price[0] || p.price > price[1]) return false;
     if (featured && !p.is_featured) return false;
     if (discounted && !p.discount_active) return false;
+    if (selectedDiscountCodes.length > 0 && !productMatchesDiscountCodes(p, selectedDiscountCodes)) return false;
     return true;
   }).sort((a, b) => {
     if (sort === "price_asc") return a.price - b.price;
@@ -655,12 +663,23 @@ function ShopContent() {
     return 0;
   });
 
-  const clear = () => { setCat(""); setPrice([0, 10000]); setFeatured(false); setDiscounted(false); };
-  const activeCount = [!!cat, featured, discounted, price[0] > 0 || price[1] < 10000].filter(Boolean).length;
+  const clear = () => {
+    setCat("");
+    setPrice([0, 10000]);
+    setFeatured(false);
+    setDiscounted(false);
+    handleDiscountCodesChange([]);
+  };
+  const activeCount = [!!cat, featured, discounted, selectedDiscountCodes.length > 0, price[0] > 0 || price[1] < 10000].filter(Boolean).length;
+
+  const appliedDiscountLabels = selectedDiscountCodes.map(
+    (code) => shopDiscounts.find((d) => d.code === code)?.code ?? code
+  );
 
   return (
     <div className="min-h-screen bg-cream-100">
       <Navbar />
+      <ShopHeroBanner />
       <div className="relative pt-20 pb-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Real crochet photo backgrounds */}
         <div className="absolute inset-0 pointer-events-none">
@@ -679,14 +698,25 @@ function ShopContent() {
             </div>
           </motion.div>
           <AnimatePresence>
-            {(featured || discounted || cat) && (
+            {(featured || discounted || cat || selectedDiscountCodes.length > 0) && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-wrap justify-center gap-2 mt-4">
                 {featured && <span className="flex items-center gap-1.5 bg-mauve/15 border border-mauve/25 text-mauve px-3 py-1 rounded-full text-xs font-sans font-semibold"><Sparkles className="w-3 h-3" /> Featured <button onClick={() => setFeatured(false)}><X className="w-3 h-3" /></button></span>}
                 {discounted && <span className="flex items-center gap-1.5 bg-caramel/12 border border-caramel/25 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold"><Tag className="w-3 h-3" /> On Sale <button onClick={() => setDiscounted(false)}><X className="w-3 h-3" /></button></span>}
+                {appliedDiscountLabels.map((code) => (
+                  <span key={code} className="flex items-center gap-1.5 bg-caramel/12 border border-caramel/25 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold">
+                    <Tag className="w-3 h-3" /> {code}
+                    <button type="button" onClick={() => handleDiscountCodesChange(selectedDiscountCodes.filter((c) => c !== code))}><X className="w-3 h-3" /></button>
+                  </span>
+                ))}
                 {cat && <span className="flex items-center gap-1.5 bg-blush/15 border border-blush/30 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold">{selectedCategory?.name ?? cat} <button onClick={() => setCat("")}><X className="w-3 h-3" /></button></span>}
               </motion.div>
             )}
           </AnimatePresence>
+          {selectedDiscountCodes.length > 0 && (
+            <p className="mt-3 text-xs text-caramel font-sans font-semibold">
+              Showing products with {selectedDiscountCodes.length === 1 ? "discount" : "discounts"}: {selectedDiscountCodes.join(", ")}
+            </p>
+          )}
         </div>
       </div>
 
@@ -695,7 +725,7 @@ function ShopContent() {
           {/* Sidebar */}
           <aside className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-28 glass rounded-3xl border border-blush/25 p-5">
-              <FilterPanel categories={cats} selectedCategory={cat} onCategory={setCat} priceRange={price} onPriceRange={setPrice} showFeatured={featured} onFeatured={setFeatured} showDiscounted={discounted} onDiscounted={setDiscounted} onClear={clear} />
+              <FilterPanel categories={cats} selectedCategory={cat} onCategory={setCat} priceRange={price} onPriceRange={setPrice} showFeatured={featured} onFeatured={setFeatured} showDiscounted={discounted} onDiscounted={setDiscounted} shopDiscounts={shopDiscounts} selectedDiscountCodes={selectedDiscountCodes} onDiscountCodesChange={handleDiscountCodesChange} onClear={clear} />
             </div>
           </aside>
 
@@ -717,7 +747,9 @@ function ShopContent() {
             </div>
 
             <AnimatePresence mode="popLayout">
-              {results.length === 0 ? (
+              {shopLoading ? (
+                <ShopGridSkeleton count={6} />
+              ) : results.length === 0 ? (
                 <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-24 text-center gap-4">
                   <div className="text-6xl"></div>
                   <p className="font-display text-xl text-ink-dark">No products found</p>
@@ -743,7 +775,7 @@ function ShopContent() {
                 <h2 className="font-display text-lg font-semibold text-ink-dark">Filters</h2>
                 <button onClick={() => setFilterOpen(false)} className="p-2 rounded-xl hover:bg-blush/10 text-ink-light"><X className="w-5 h-5" /></button>
               </div>
-              <FilterPanel categories={cats} selectedCategory={cat} onCategory={(id) => { setCat(id); setFilterOpen(false); }} priceRange={price} onPriceRange={setPrice} showFeatured={featured} onFeatured={setFeatured} showDiscounted={discounted} onDiscounted={setDiscounted} onClear={clear} />
+              <FilterPanel categories={cats} selectedCategory={cat} onCategory={(id) => { setCat(id); setFilterOpen(false); }} priceRange={price} onPriceRange={setPrice} showFeatured={featured} onFeatured={setFeatured} showDiscounted={discounted} onDiscounted={setDiscounted} shopDiscounts={shopDiscounts} selectedDiscountCodes={selectedDiscountCodes} onDiscountCodesChange={handleDiscountCodesChange} onClear={clear} />
             </motion.div>
           </>
         )}
@@ -755,7 +787,15 @@ function ShopContent() {
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-cream-100 flex items-center justify-center"><div className="text-5xl animate-float"></div></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-cream-100">
+        <Navbar />
+        <ShopHeroBanner />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ShopGridSkeleton count={6} />
+        </div>
+      </div>
+    }>
       <ShopContent />
     </Suspense>
   );

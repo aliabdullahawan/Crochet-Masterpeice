@@ -86,6 +86,7 @@ export const useShop = () => {
 export const ShopProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const storageOwnerId = userId ?? "guest";
 
   // Always start empty on server, load from localStorage only on client
   // This prevents hydration mismatch between server (count=0) and client (count=N)
@@ -115,12 +116,9 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
       setWishlistItems([]);
       setAppliedCouponState(null);
 
-      if (!userId) {
-        setHydrated(true);
-        return;
-      }
+      if (typeof window === "undefined") return;
 
-      const keys = getStorageKeys(userId);
+      const keys = getStorageKeys(storageOwnerId);
 
       try {
         const cart = JSON.parse(localStorage.getItem(keys.cart) ?? "[]") as CartItem[];
@@ -192,26 +190,26 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
     };
 
     void hydrateForUser();
-  }, [userId, getStorageKeys]);
+  }, [storageOwnerId, getStorageKeys]);
 
   // Persist to localStorage on change (only after hydration to avoid overwriting)
   useEffect(() => {
-    if (!hydrated || !userId) return;
-    const keys = getStorageKeys(userId);
+    if (!hydrated || typeof window === "undefined") return;
+    const keys = getStorageKeys(storageOwnerId);
     localStorage.setItem(keys.cart, JSON.stringify(cartItems));
-  }, [cartItems, hydrated, userId, getStorageKeys]);
+  }, [cartItems, hydrated, storageOwnerId, getStorageKeys]);
 
   useEffect(() => {
-    if (!hydrated || !userId) return;
-    const keys = getStorageKeys(userId);
+    if (!hydrated || typeof window === "undefined") return;
+    const keys = getStorageKeys(storageOwnerId);
     localStorage.setItem(keys.wishlist, JSON.stringify(wishlistItems));
-  }, [wishlistItems, hydrated, userId, getStorageKeys]);
+  }, [wishlistItems, hydrated, storageOwnerId, getStorageKeys]);
 
   useEffect(() => {
-    if (!hydrated || !userId) return;
-    const keys = getStorageKeys(userId);
+    if (!hydrated || typeof window === "undefined") return;
+    const keys = getStorageKeys(storageOwnerId);
     localStorage.setItem(keys.coupon, JSON.stringify(appliedCoupon));
-  }, [appliedCoupon, hydrated, userId, getStorageKeys]);
+  }, [appliedCoupon, hydrated, storageOwnerId, getStorageKeys]);
 
   // ── CART ────────────────────────────────────────────────
   const addToCart = useCallback((item: Omit<CartItem, "id" | "quantity">, qty = 1) => {

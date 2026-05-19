@@ -6,27 +6,53 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Grid3X3, BarChart3,
-  ShoppingBag, Users, Tag, Bell, User, LogOut, Star,
-  ChevronDown, Menu, X, ExternalLink,
+  ShoppingBag, Users, Tag, Bell, User, LogOut, Star, Scissors,
+  ChevronDown, Menu, X, ExternalLink, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearAdminSession } from "@/lib/adminSession";
 
 interface AdminNotification {
   id: string;
+  title: string;
   message: string;
   time: string;
   read: boolean;
-  type: "order" | "user" | "system";
+  link?: string;
+  type: "order" | "user" | "system" | "inventory";
 }
 
 const MOCK_ADMIN_NOTIFS: AdminNotification[] = [];
+const PK_TIMEZONE = "Asia/Karachi";
+const LOW_STOCK_CHECK_PREFIX = "cm_low_stock_check_";
+
+const getPkClock = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: PK_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const map = new Map(parts.map((p) => [p.type, p.value]));
+  const year = map.get("year") ?? "0000";
+  const month = map.get("month") ?? "00";
+  const day = map.get("day") ?? "00";
+  const hour = Number(map.get("hour") ?? "0");
+  return {
+    dateKey: `${year}-${month}-${day}`,
+    hour: Number.isFinite(hour) ? hour : 0,
+  };
+};
 
 const navLinks = [
   { href: "/admin/dashboard",  label: "Dashboard",  icon: <LayoutDashboard className="w-4 h-4" /> },
   { href: "/admin/products",   label: "Products",   icon: <Package className="w-4 h-4" /> },
   { href: "/admin/categories", label: "Categories", icon: <Grid3X3 className="w-4 h-4" /> },
   { href: "/admin/orders",     label: "Orders",     icon: <ShoppingBag className="w-4 h-4" /> },
+  { href: "/admin/custom-orders", label: "Custom pricing", icon: <Scissors className="w-4 h-4" /> },
   { href: "/admin/discounts",  label: "Discounts",  icon: <Tag className="w-4 h-4" /> },
   { href: "/admin/analytics",  label: "Analytics",  icon: <BarChart3 className="w-4 h-4" /> },
   { href: "/admin/reviews",    label: "Reviews",    icon: <Star className="w-4 h-4" /> },
@@ -58,41 +84,80 @@ const AdminNavLink = ({ href, label, icon, active }: { href: string; label: stri
 /* =============================================
    NOTIFICATION DROPDOWN
    ============================================= */
+const rowTypeIcon = (t: AdminNotification["type"]) => {
+  if (t === "inventory") return <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden />;
+  if (t === "order") return <ShoppingBag className="w-3.5 h-3.5 text-caramel flex-shrink-0 mt-0.5" aria-hidden />;
+  if (t === "user") return <User className="w-3.5 h-3.5 text-ink-light flex-shrink-0 mt-0.5" aria-hidden />;
+  return <Bell className="w-3.5 h-3.5 text-caramel/70 flex-shrink-0 mt-0.5" aria-hidden />;
+};
+
 const AdminNotifDropdown = ({
-  notifs, onClose, onMarkAll,
-}: { notifs: AdminNotification[]; onClose: () => void; onMarkAll: () => void }) => (
-  <div className="absolute right-0 top-full mt-3 w-72 glass rounded-2xl shadow-card border border-caramel/20 overflow-hidden z-50 animate-slide-down">
+  notifs,
+  setupHint,
+  onClose,
+  onMarkAll,
+  onMarkRead,
+}: {
+  notifs: AdminNotification[];
+  setupHint: string | null;
+  onClose: () => void;
+  onMarkAll: () => void;
+  onMarkRead: (id: string) => void;
+}) => (
+  <div className="absolute right-0 top-full mt-3 w-80 glass rounded-2xl shadow-card border border-caramel/20 overflow-hidden z-50 animate-slide-down">
     <div className="flex items-center justify-between px-4 py-3 border-b border-caramel/10">
       <span className="font-display text-sm font-semibold text-ink-dark">Notifications</span>
-      <button onClick={onMarkAll} className="text-[10px] text-caramel hover:text-ink font-sans font-semibold transition-colors btn-bubble">Mark all read</button>
+      <button type="button" onClick={onMarkAll} className="text-[10px] text-caramel hover:text-ink font-sans font-semibold transition-colors btn-bubble">Mark all read</button>
     </div>
     <div className="max-h-64 overflow-y-auto divide-y divide-caramel/8">
       {notifs.length === 0 ? (
-        <div className="flex flex-col items-center py-8 gap-2">
+        <div className="flex flex-col items-center py-8 gap-2 px-3">
           <Bell className="w-6 h-6 text-caramel/30" />
-          <p className="text-xs text-ink-light/50 font-sans">No notifications</p>
+          <p className="text-xs text-ink-light/50 font-sans text-center">No notifications</p>
+          {setupHint && (
+            <p className="text-[10px] text-amber-900/90 bg-amber-50 border border-amber-200/80 rounded-lg px-2.5 py-2 font-sans leading-snug text-left w-full">
+              {setupHint}
+            </p>
+          )}
         </div>
-      ) : notifs.map((n) => (
-        <Link
-          key={n.id}
-          href="/admin/notifications"
-          onClick={onClose}
-          className={cn("block px-4 py-3 hover:bg-caramel/5 transition-colors cursor-pointer", !n.read && "bg-cream-50")}
-        >
-          <div className="flex items-start gap-2">
-            <div className={cn("w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0", n.read ? "bg-transparent" : "bg-caramel")} />
-            <div>
-              <p className="text-xs font-sans text-ink/80 leading-snug">{n.message}</p>
-              <p className="text-[10px] text-ink-light/40 mt-0.5">{n.time}</p>
+      ) : (
+        notifs.map((n) => (
+          <Link
+            key={n.id}
+            href="/admin/notifications"
+            title={`${n.title}: ${n.message}`}
+            onClick={() => {
+              onMarkRead(n.id);
+              onClose();
+            }}
+            className={cn("block px-4 py-3 hover:bg-caramel/5 transition-colors cursor-pointer", !n.read && "bg-cream-50")}
+          >
+            <div className="flex items-start gap-2.5">
+              {rowTypeIcon(n.type)}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-1.5">
+                  <div className={cn("w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0", n.read ? "bg-transparent" : "bg-caramel")} />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-sans font-semibold text-ink-dark leading-snug line-clamp-2">{n.title}</p>
+                    <p className="text-xs font-sans text-ink/70 leading-snug line-clamp-2 mt-0.5">{n.message}</p>
+                    <p className="text-[10px] text-ink-light/40 mt-0.5">{n.time}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        ))
+      )}
     </div>
+    {setupHint && notifs.length > 0 && (
+      <div className="px-3 py-2 border-t border-amber-200/60 bg-amber-50/90">
+        <p className="text-[10px] text-amber-900/90 font-sans leading-snug">{setupHint}</p>
+      </div>
+    )}
     <div className="border-t border-caramel/10 px-4 py-2.5">
       <Link href="/admin/notifications" onClick={onClose}
         className="text-[11px] text-caramel hover:text-ink font-sans font-semibold transition-colors block text-center">
-        View all notifications →
+        Open notification center →
       </Link>
     </div>
   </div>
@@ -108,6 +173,7 @@ export const AdminNavbar = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifs, setNotifs] = useState<AdminNotification[]>(MOCK_ADMIN_NOTIFS);
+  const [adminNotifSetupHint, setAdminNotifSetupHint] = useState<string | null>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const unread = notifs.filter((n) => !n.read).length;
@@ -138,29 +204,84 @@ export const AdminNavbar = () => {
   useEffect(() => {
     let mounted = true;
 
-    const loadOrderNotifs = async () => {
-      const res = await fetch("/api/admin/orders?limit=20", { cache: "no-store" });
+    const loadAdminNotifs = async () => {
+      const res = await fetch("/api/admin/admin-notifications?limit=8", { cache: "no-store" });
       const body = await res.json().catch(() => ({}));
-      if (!mounted || !res.ok || !Array.isArray(body?.orders)) return;
+      if (!mounted) return;
+      if (!res.ok) {
+        setAdminNotifSetupHint(null);
+        return;
+      }
 
-      const mapped = (body.orders as { id: string; customer_name: string; status: string; created_at: string }[])
-        .filter((o) => o.status === "pending" || o.status === "confirmed")
-        .slice(0, 10)
-        .map((o) => ({
-        id: o.id,
-        message: `Order #${o.id.slice(0, 6).toUpperCase()} from ${o.customer_name} is ${o.status}.`,
-        time: new Date(o.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short" }),
-        read: false,
-        type: "order" as const,
+      const hint = typeof body.setup_hint === "string" && body.setup_hint.trim() ? body.setup_hint.trim() : null;
+      setAdminNotifSetupHint(hint);
+
+      if (!Array.isArray(body?.notifications)) return;
+
+      const mapType = (raw: string): AdminNotification["type"] => {
+        const t = String(raw ?? "").toLowerCase();
+        if (t === "low_stock" || t === "out_of_stock") return "inventory";
+        if (t.includes("order")) return "order";
+        if (t.includes("user")) return "user";
+        return "system";
+      };
+
+      const mapped = (body.notifications as {
+        id: string;
+        type: string;
+        title: string;
+        message: string;
+        link: string | null;
+        is_read: boolean;
+        created_at: string;
+      }[]).map((n) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        time: new Date(n.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short" }),
+        read: n.is_read,
+        link: n.link ?? undefined,
+        type: mapType(n.type),
       }));
+
       setNotifs(mapped);
     };
 
-    loadOrderNotifs();
-    const timer = setInterval(loadOrderNotifs, 30000);
+    loadAdminNotifs();
+    const timer = setInterval(loadAdminNotifs, 30000);
+    const onFocus = () => loadAdminNotifs();
+    window.addEventListener("focus", onFocus);
     return () => {
       mounted = false;
       clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const shouldRunLowStock = () => {
+      const { dateKey, hour } = getPkClock();
+      if (hour < 6) return false;
+      const key = `${LOW_STOCK_CHECK_PREFIX}${dateKey}`;
+      if (localStorage.getItem(key)) return false;
+      localStorage.setItem(key, String(Date.now()));
+      return true;
+    };
+
+    const runLowStockCheck = async () => {
+      if (!shouldRunLowStock()) return;
+      await fetch("/api/admin/low-stock", { method: "POST" });
+    };
+
+    runLowStockCheck();
+    const timer = setInterval(runLowStockCheck, 10 * 60 * 1000);
+    const onFocus = () => runLowStockCheck();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
@@ -202,7 +323,12 @@ export const AdminNavbar = () => {
               </Link>
 
               {/* Notifications */}
-              <div ref={notifRef} className="relative">
+              <div
+                ref={notifRef}
+                className="relative"
+                onMouseEnter={() => setNotifOpen(true)}
+                onMouseLeave={() => setNotifOpen(false)}
+              >
                 <button
                   onClick={() => { setNotifOpen((o) => !o); setProfileOpen(false); }}
                   className={cn("relative p-2 rounded-xl transition-all hover:bg-caramel/10 btn-bubble",
@@ -218,8 +344,24 @@ export const AdminNavbar = () => {
                 {notifOpen && (
                   <AdminNotifDropdown
                     notifs={notifs}
+                    setupHint={adminNotifSetupHint}
                     onClose={() => setNotifOpen(false)}
-                    onMarkAll={() => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })))}
+                    onMarkRead={(id) => {
+                      setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+                      void fetch("/api/admin/admin-notifications", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "mark_read", id }),
+                      });
+                    }}
+                    onMarkAll={() => {
+                      setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
+                      void fetch("/api/admin/admin-notifications", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "mark_all_read" }),
+                      });
+                    }}
                   />
                 )}
               </div>
