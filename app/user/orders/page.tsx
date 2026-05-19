@@ -132,6 +132,23 @@ export default function UserOrdersPage() {
       return true;
     });
   }, [orders, statusFilter, typeFilter, returnFilter, dateFrom, dateTo, minPrice, maxPrice]);
+
+  const orderStats = {
+    total: orders.length,
+    active: orders.filter((o) => !["delivered", "cancelled"].includes(o.status)).length,
+    delivered: orders.filter((o) => o.status === "delivered").length,
+    returns: orders.filter((o) => o.returnStatus !== "none").length,
+  };
+
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setReturnFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    setMinPrice("");
+    setMaxPrice("");
+  };
   
     // Render full page and use LoadingWrapper for the orders list area
   
@@ -145,35 +162,67 @@ export default function UserOrdersPage() {
           <p className="text-sm text-ink-light/60 font-sans">Track status, delivery progress, cancellations, and details.</p>
         </div>
 
-        <div className="glass rounded-3xl border border-caramel/15 p-4 mb-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm">
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm">
-            <option value="all">All Types</option>
-            <option value="website">Regular Orders</option>
-            <option value="custom">Custom Orders</option>
-            <option value="whatsapp">WhatsApp Orders</option>
-          </select>
-          <select value={returnFilter} onChange={(e) => setReturnFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm">
-            <option value="all">All returns</option>
-            <option value="none">No return</option>
-            <option value="pending">Return pending</option>
-            <option value="confirmed">Return confirmed</option>
-          </select>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
-          <input value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Min PKR" className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
-          <input value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Max PKR" className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {[
+            { label: "Total orders", value: orderStats.total },
+            { label: "In progress", value: orderStats.active },
+            { label: "Delivered", value: orderStats.delivered },
+            { label: "Returns", value: orderStats.returns },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl border border-caramel/15 bg-white/70 p-3">
+              <p className="text-[10px] text-ink-light/50 font-sans uppercase tracking-widest">{s.label}</p>
+              <p className="text-lg font-display font-semibold text-ink-dark">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="glass rounded-3xl border border-caramel/15 p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] text-ink-light/50 font-sans uppercase tracking-widest">Filters</p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-[11px] font-sans font-semibold text-caramel hover:text-ink transition-colors"
+            >
+              Clear filters
+            </button>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm">
+              <option value="all">All Types</option>
+              <option value="website">Regular Orders</option>
+              <option value="custom">Custom Orders</option>
+              <option value="whatsapp">WhatsApp Orders</option>
+            </select>
+            <select value={returnFilter} onChange={(e) => setReturnFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm">
+              <option value="all">All returns</option>
+              <option value="none">No return</option>
+              <option value="pending">Return pending</option>
+              <option value="confirmed">Return confirmed</option>
+            </select>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
+            <input value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Min PKR" className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
+            <input value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Max PKR" className="px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm" />
+          </div>
         </div>
 
         <div className="glass rounded-3xl border border-caramel/15 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-caramel/10 bg-caramel/5">
+            <p className="text-xs font-sans text-ink-light/60">
+              Showing <span className="font-semibold text-ink-dark">{filteredOrders.length}</span> of {orders.length}
+            </p>
+            <p className="text-[10px] text-ink-light/50 font-sans">Tap an order to view details</p>
+          </div>
           <LoadingWrapper loading={loading || pageLoading} skeleton={<OrdersListSkeleton rows={5} />}>
             {filteredOrders.map((order) => (
               <Link key={order.id} href={`/user/orders/${order.id}`} className="flex items-center gap-3 px-5 py-4 border-b border-caramel/10 last:border-0 hover:bg-caramel/5 transition-colors">

@@ -192,8 +192,16 @@ export default function LoginPage() {
       options: { emailRedirectTo: `${window.location.origin}${redirectTo}` },
     });
     setMagicLoading(false);
-    if (error) setErrors({ general: error.message });
-    else setMagicSent(true);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("error sending magic link") || msg.includes("smtp") || msg.includes("email")) {
+        setErrors({
+          general: "Magic link could not be sent. Check Supabase Auth → Providers → Email is enabled, SMTP is configured, and your site URL is allowed.",
+        });
+      } else {
+        setErrors({ general: error.message });
+      }
+    } else setMagicSent(true);
   };
 
   const handleGoogle = async () => {

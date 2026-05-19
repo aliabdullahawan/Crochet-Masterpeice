@@ -320,22 +320,35 @@ const FilterPanel = ({
           {discountsOpen && (
             <div className="space-y-1 max-h-44 overflow-y-auto pr-1">
               {shopDiscounts.map((d) => {
-                const selected = selectedDiscountCodes.includes(d.code);
+                const isCartOnly = d.appliesTo === "cart";
+                const selected = !isCartOnly && selectedDiscountCodes.includes(d.code);
+                const valueLabel = d.discountType === "flat"
+                  ? `PKR ${d.percent.toLocaleString()}`
+                  : `-${d.percent}%`;
                 return (
                   <button
                     key={d.id}
                     type="button"
-                    onClick={() => toggleDiscountCode(d.code)}
+                    disabled={isCartOnly}
+                    onClick={() => { if (!isCartOnly) toggleDiscountCode(d.code); }}
                     className={cn(
                       "w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-sans font-semibold transition-all btn-bubble text-left",
-                      selected ? "bg-caramel/10 border-caramel/30 text-caramel" : "border-caramel/15 bg-white/60 text-ink-light hover:border-blush/40"
+                      selected ? "bg-caramel/10 border-caramel/30 text-caramel" : "border-caramel/15 bg-white/60 text-ink-light hover:border-blush/40",
+                      isCartOnly && "opacity-60 cursor-not-allowed"
                     )}
                   >
                     <div className={cn("w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0", selected ? "bg-gradient-to-br from-caramel to-rose border-transparent" : "border-caramel/25")}>
                       {selected && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    <span className="flex-1 min-w-0 truncate">{d.code}</span>
-                    <span className="text-[10px] text-caramel/80">-{d.percent}%</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="block truncate">{d.code}</span>
+                      <span className="block text-[10px] text-ink-light/45 truncate">{d.label}</span>
+                    </div>
+                    {isCartOnly ? (
+                      <span className="text-[10px] text-ink-light/45">Cart only · {valueLabel}</span>
+                    ) : (
+                      <span className="text-[10px] text-caramel/80">{valueLabel}</span>
+                    )}
                   </button>
                 );
               })}
@@ -482,7 +495,7 @@ function ShopContent() {
   const loadShopDiscounts = React.useCallback(async () => {
     const { data } = await supabase
       .from("discounts")
-      .select("id, code, discount_value, end_date, product_id")
+      .select("id, code, discount_value, discount_type, end_date, applies_to, target_id, product_id")
       .eq("active", true)
       .not("code", "is", null);
 
@@ -492,19 +505,66 @@ function ShopContent() {
     }
 
     const now = new Date();
-    const rows = (data as Array<{ id: string; code: string; discount_value: number; end_date: string | null; product_id: string | null }>).filter(
-      (d) => !d.end_date || new Date(d.end_date) >= now
-    );
+    const rows = (data as Array<{
+      id: string;
+      code: string;
+      discount_value: number;
+      discount_type: "percent" | "flat" | null;
+      end_date: string | null;
+      applies_to?: "all" | "product" | "category" | "cart" | null;
+      target_id?: string | null;
+      product_id?: string | null;
+    }>).filter((d) => !d.end_date || new Date(d.end_date) >= now);
+
+    const productIds = rows
+      .filter((d) => (d.applies_to ?? (d.product_id ? "product" : "all")) === "product")
+      .map((d) => d.target_id ?? d.product_id)
+      .filter((id): id is string => Boolean(id));
+
+    const categoryIds = rows
+      .filter((d) => (d.applies_to ?? (d.product_id ? "product" : "all")) === "category")
+      .map((d) => d.target_id)
+      .filter((id): id is string => Boolean(id));
+
+    const [productsRes, categoriesRes] = await Promise.all([
+      productIds.length
+        ? supabase.from("products").select("id, name").in("id", productIds)
+        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+      categoryIds.length
+        ? supabase.from("categories").select("id, name").in("id", categoryIds)
+        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    ]);
+
+    const productMap = new Map((productsRes.data ?? []).map((p: { id: string; name: string }) => [p.id, p.name]));
+    const categoryMap = new Map((categoriesRes.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name]));
 
     setShopDiscounts(
-      rows.map((d) => ({
-        id: d.id,
-        code: d.code.trim().toUpperCase(),
-        percent: d.discount_value,
-        label: d.product_id ? "selected item" : "selected products",
-        endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
-        productId: d.product_id,
-      }))
+      rows.map((d) => {
+        const appliesTo = d.applies_to ?? (d.product_id ? "product" : "all");
+        const targetId = d.target_id ?? d.product_id ?? null;
+        const targetName = appliesTo === "product"
+          ? (targetId ? productMap.get(targetId) : undefined)
+          : appliesTo === "category"
+            ? (targetId ? categoryMap.get(targetId) : undefined)
+            : undefined;
+        const label = appliesTo === "all"
+          ? "All products"
+          : appliesTo === "cart"
+            ? "Cart total"
+            : targetName ?? (appliesTo === "product" ? "Selected product" : "Selected category");
+
+        return {
+          id: d.id,
+          code: d.code.trim().toUpperCase(),
+          percent: d.discount_value,
+          discountType: d.discount_type ?? "percent",
+          label,
+          endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
+          appliesTo,
+          targetId,
+          targetName,
+        };
+      })
     );
   }, []);
 
@@ -652,7 +712,7 @@ function ShopContent() {
     if (p.price < price[0] || p.price > price[1]) return false;
     if (featured && !p.is_featured) return false;
     if (discounted && !p.discount_active) return false;
-    if (selectedDiscountCodes.length > 0 && !productMatchesDiscountCodes(p, selectedDiscountCodes)) return false;
+    if (selectedDiscountCodes.length > 0 && !productMatchesDiscountCodes(p, selectedDiscountCodes, shopDiscounts)) return false;
     return true;
   }).sort((a, b) => {
     if (sort === "price_asc") return a.price - b.price;
@@ -697,6 +757,36 @@ function ShopContent() {
               {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg text-ink-light/40 hover:text-caramel transition-colors"><X className="w-4 h-4" /></button>}
             </div>
           </motion.div>
+          {cats.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="mt-5 flex flex-wrap justify-center gap-2"
+            >
+              <button
+                onClick={() => setCat("")}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border transition-all",
+                  !cat ? "bg-caramel/15 border-caramel/30 text-caramel" : "border-caramel/15 text-ink-light/70 hover:border-caramel/40"
+                )}
+              >
+                All categories
+              </button>
+              {cats.slice(0, 8).map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setCat(c.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border transition-all",
+                    cat === c.id ? "bg-blush/20 border-blush/30 text-ink" : "border-caramel/15 text-ink-light/70 hover:border-blush/40"
+                  )}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </motion.div>
+          )}
           <AnimatePresence>
             {(featured || discounted || cat || selectedDiscountCodes.length > 0) && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-wrap justify-center gap-2 mt-4">

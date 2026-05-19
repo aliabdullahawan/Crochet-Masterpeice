@@ -153,6 +153,19 @@ export default function AdminDashboardPage() {
 
   const totalCommunity = Object.values(socialCounts).reduce((a, b) => a + b, 0) + stats.users;
 
+  const highlightChips = [
+    { label: "Orders", value: stats.orders.toLocaleString(), tone: "bg-white/80 border-caramel/20 text-ink" },
+    { label: "Revenue", value: `PKR ${stats.revenue.toLocaleString()}`, tone: "bg-green-50/80 border-green-200/60 text-green-700" },
+    { label: "Live Discounts", value: stats.activeDiscounts.toLocaleString(), tone: "bg-blush/20 border-blush/30 text-caramel" },
+  ];
+
+  const quickActions = [
+    { href: "/admin/products",   icon: <Package className="w-4 h-4" />,     label: "Manage Products", desc: "Stock, images, featured" },
+    { href: "/admin/orders",     icon: <ShoppingBag className="w-4 h-4" />, label: "View Orders", desc: "Update status fast" },
+    { href: "/admin/discounts",  icon: <Tag className="w-4 h-4" />,         label: "Create Discount", desc: "Promo or cart offers" },
+    { href: "/admin/analytics",  icon: <TrendingUp className="w-4 h-4" />,  label: "View Analytics", desc: "Revenue + trends" },
+  ];
+
   const statCards = [
     { icon: <ShoppingBag className="w-5 h-5 text-caramel" />,   label: "Total Orders",     value: stats.orders,          bg: "admin-card-caramel", delay: 0 },
     { icon: <Package className="w-5 h-5 text-caramel/70" />,    label: "Active Products",  value: stats.products,        bg: "admin-card-blush",   delay: 0.07 },
@@ -168,19 +181,41 @@ export default function AdminDashboardPage() {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 space-y-8">
 
         {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-semibold text-ink-dark">
-              Good day, {adminName.split(" ")[0]}
-            </h1>
-            <p className="text-sm text-ink-light/55 font-sans mt-0.5">
-              {loading ? "Loading your dashboard…" : "Here's what's happening with Crochet Masterpiece today."}
-            </p>
+        <div className="relative overflow-hidden rounded-3xl border border-caramel/15 bg-gradient-to-br from-cream-50 via-blush/10 to-mauve/10 p-6">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-caramel/15 blur-3xl" />
+            <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-mauve/10 blur-3xl" />
           </div>
-          <Link href="/admin/products"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
-            <Plus className="w-4 h-4" /> Add Product
-          </Link>
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-6">
+            <div className="flex-1">
+              <p className="text-[11px] font-sans font-semibold text-ink-light/60 uppercase tracking-widest mb-2">
+                Admin Overview
+              </p>
+              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink-dark">
+                Welcome back, {adminName.split(" ")[0]}
+              </h1>
+              <p className="text-sm text-ink-light/60 font-sans mt-1">
+                {loading ? "Loading your dashboard…" : "Track orders, revenue, and what to focus on next."}
+              </p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {highlightChips.map((chip) => (
+                  <div key={chip.label} className={cn("px-3 py-1.5 rounded-full border text-xs font-sans font-semibold", chip.tone)}>
+                    {chip.label}: {chip.value}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/admin/products"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+                <Plus className="w-4 h-4" /> Add Product
+              </Link>
+              <Link href="/admin/discounts"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-caramel text-sm font-sans font-bold hover:bg-caramel/10 transition-all btn-bubble">
+                <Tag className="w-4 h-4" /> New Discount
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Stats grid */}
@@ -214,19 +249,18 @@ export default function AdminDashboardPage() {
           {/* Quick actions */}
           <div className="glass rounded-3xl border border-caramel/15 p-5">
             <h2 className="font-display text-base font-semibold text-ink-dark mb-4">Quick Actions</h2>
-            <div className="space-y-2">
-              {[
-                { href: "/admin/products",   icon: <Package className="w-4 h-4" />,     label: "Manage Products" },
-                { href: "/admin/orders",     icon: <ShoppingBag className="w-4 h-4" />, label: "View Orders" },
-                { href: "/admin/discounts",  icon: <Tag className="w-4 h-4" />,         label: "Create Discount" },
-                { href: "/admin/analytics",  icon: <TrendingUp className="w-4 h-4" />,  label: "View Analytics" },
-                { href: "/admin/profile",    icon: <Users className="w-4 h-4" />,       label: "Update Follower Counts" },
-              ].map((a) => (
+            <div className="grid grid-cols-2 gap-2">
+              {quickActions.map((a) => (
                 <Link key={a.href} href={a.href}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-2xl hover:bg-caramel/8 transition-all group">
-                  <span className="text-caramel/60 group-hover:text-caramel transition-colors">{a.icon}</span>
-                  <span className="text-sm font-sans text-ink-light/70 group-hover:text-ink transition-colors">{a.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-ink-light/25 ml-auto group-hover:text-caramel group-hover:translate-x-1 transition-all" />
+                  className="group rounded-2xl border border-caramel/15 bg-white/70 p-3 hover:bg-caramel/10 transition-all">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-caramel/10 text-caramel flex items-center justify-center group-hover:bg-caramel/20 transition-colors">
+                      {a.icon}
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 text-ink-light/30 ml-auto group-hover:text-caramel group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <p className="text-sm font-sans font-semibold text-ink-dark mt-2">{a.label}</p>
+                  <p className="text-[10px] text-ink-light/50 font-sans">{a.desc}</p>
                 </Link>
               ))}
             </div>

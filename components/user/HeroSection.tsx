@@ -637,105 +637,143 @@ export const HeroSection = () => {
         style={{ opacity, scale }}
         className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8"
       >
-        {/* Tag line */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="flex justify-center mb-6"
-        >
-          <div className="flex items-center gap-2 bg-blush/20 border border-blush/40 rounded-full px-4 py-1.5">
-            <span className="text-xs font-sans font-semibold text-caramel tracking-widest uppercase">New Collection</span>
-            <span className="w-1 h-1 rounded-full bg-caramel/50" />
-            <span className="text-xs font-sans text-ink-light/70">Summer 2025</span>
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
+          {/* Left: story + CTA */}
+          <div className="text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="inline-flex items-center gap-2 bg-blush/20 border border-blush/40 rounded-full px-4 py-1.5 mb-6"
+            >
+              <span className="text-xs font-sans font-semibold text-caramel tracking-widest uppercase">Atelier Drop</span>
+              <span className="w-1 h-1 rounded-full bg-caramel/50" />
+              <span className="text-xs font-sans text-ink-light/70">Handmade originals</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-ink-dark leading-tight mb-5"
+            >
+              Crochet that feels
+              <span className="block text-gradient-blush">like a warm hug.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.35 }}
+              className="text-base sm:text-lg text-ink-light/80 font-sans max-w-xl mx-auto lg:mx-0 mb-6 leading-relaxed"
+            >
+              I craft every piece slowly and carefully, with yarn I love and patterns I test by hand.
+              <span className="font-script text-caramel text-lg"> Just a girl who loves crochet.</span>
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-8"
+            >
+              {[
+                "Pakistan-wide delivery",
+                "Custom orders welcome",
+                "Limited weekly batches",
+              ].map((label) => (
+                <span key={label} className="px-3 py-1.5 rounded-full border border-caramel/20 bg-white/70 text-[11px] font-sans font-semibold text-ink-light/70">
+                  {label}
+                </span>
+              ))}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.45 }}
+              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
+            >
+              <Link
+                href="/user/shop"
+                className={cn(
+                  "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
+                  "bg-gradient-to-r from-caramel via-rose to-blush",
+                  "text-white text-sm font-sans font-bold tracking-wide",
+                  "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
+                  "transition-all duration-300 btn-bubble relative overflow-hidden group"
+                )}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <ShoppingBag className="w-4 h-4" />
+                Shop Bestsellers
+                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </Link>
+
+              <Link
+                href="/user/custom-order"
+                className={cn(
+                  "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
+                  "bg-white/70 border border-caramel/20",
+                  "text-ink text-sm font-sans font-semibold",
+                  "hover:bg-white hover:border-blush/40 hover:-translate-y-0.5",
+                  "transition-all duration-300 btn-bubble"
+                )}
+              >
+                <span className="text-base">✂️</span>
+                Start Custom Order
+              </Link>
+            </motion.div>
           </div>
-        </motion.div>
 
-        {/* Headline */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-center mb-4"
-        >
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-ink-dark leading-tight">
-            <span className="block">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={textIndex}
-                  className="inline-block text-gradient-blush"
-                  initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -20, filter: "blur(8px)" }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  {heroTexts[textIndex]}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-          </h1>
-        </motion.div>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.35 }}
-          className="text-center text-base sm:text-lg text-ink-light/80 font-sans max-w-xl mx-auto mb-8 leading-relaxed"
-        >
-          I make every piece by hand — slowly, carefully, the way it should be done.
-          <span className="font-script text-caramel text-lg"> Just a girl who loves crochet.</span>
-        </motion.p>
-
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.45 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12"
-        >
-          <Link
-            href="/user/shop"
-            className={cn(
-              "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
-              "bg-gradient-to-r from-caramel via-rose to-blush",
-              "text-white text-sm font-sans font-bold tracking-wide",
-              "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
-              "transition-all duration-300 btn-bubble relative overflow-hidden group"
-            )}
+          {/* Right: collage + rotating line */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.25 }}
+            className="relative w-full max-w-md mx-auto"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            <ShoppingBag className="w-4 h-4" />
-            Shop Now
-            <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </Link>
+            <div className="relative rounded-[32px] border border-white/60 bg-white/70 backdrop-blur-sm p-4 shadow-card">
+              <div className="relative rounded-3xl overflow-hidden aspect-[4/5]">
+                <img src="/images/crochet-6.jpg" alt="Crochet bestseller" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink-dark/40 via-transparent to-transparent" />
+              </div>
 
-          <Link
-            href="/user/custom-order"
-            className={cn(
-              "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
-              "bg-white/70 border border-caramel/20",
-              "text-ink text-sm font-sans font-semibold",
-              "hover:bg-white hover:border-blush/40 hover:-translate-y-0.5",
-              "transition-all duration-300 btn-bubble"
-            )}
-          >
-            <span className="text-base">✂️</span>
-            Custom Order
-          </Link>
-        </motion.div>
+              <div className="absolute -bottom-8 -left-6 w-36 rounded-2xl border border-blush/30 bg-white/90 p-3 shadow-button">
+                <p className="text-[10px] text-ink-light/60 font-sans uppercase tracking-widest">Spotlight</p>
+                <p className="text-sm font-display font-semibold text-ink-dark">Crochet Bloom Set</p>
+                <p className="text-xs font-sans text-caramel font-semibold">PKR 2,900</p>
+              </div>
 
-        {/* Social stats — moved BELOW product carousel via lower z-index + margin */}
+              <div className="absolute -top-6 -right-6 w-32 rounded-2xl bg-cream-50/95 border border-caramel/20 p-3 shadow-card">
+                <p className="text-[10px] text-ink-light/55 font-sans uppercase tracking-widest">Signature line</p>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={textIndex}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-xs font-sans font-semibold text-ink-dark"
+                  >
+                    {heroTexts[textIndex]}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Social stats */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.1 }}
-          className="flex flex-wrap justify-center gap-3 mt-4 pb-2"
+          className="flex flex-wrap justify-center lg:justify-start gap-3 mt-10"
         >
           {socialCounts.map((s) => (
             <SocialCard key={s.platform} {...s} />
           ))}
-          {/* Total community */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass border border-caramel/20">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blush to-mauve flex items-center justify-center text-white text-sm font-bold font-display">
               C

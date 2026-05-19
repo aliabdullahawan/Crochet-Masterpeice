@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { TableSkeleton } from "@/components/ui/PageSkeletons";
 
 /* =============================================
    TYPES
@@ -896,28 +897,32 @@ export default function AdminProductsPage() {
             ))}
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {filtered.map((p) => (
-              <ProductRow key={p.id} product={p}
-                onEdit={() => { setEditing(p); setModal(true); }}
-                onDelete={() => setDelId(p.id)}
-                onToggle={async () => {
-                  const newVal = !p.is_active;
-                  const { error } = await supabase.from("products").update({ is_active: newVal } as unknown as never).eq("id", p.id);
-                  if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_active: newVal } : pr));
-                  else alert("Update failed: " + error.message);
-                }}
-                onToggleFeatured={async () => {
-                  const newVal = !p.is_featured;
-                  const { error } = await supabase.from("products").update({ is_featured: newVal } as unknown as never).eq("id", p.id);
-                  if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_featured: newVal } : pr));
-                  else alert("Update failed: " + error.message);
-                }}
-              />
-            ))}
-          </AnimatePresence>
+          {dbLoading ? (
+            <TableSkeleton rows={7} />
+          ) : (
+            <>
+              <AnimatePresence mode="popLayout">
+                {filtered.map((p) => (
+                  <ProductRow key={p.id} product={p}
+                    onEdit={() => { setEditing(p); setModal(true); }}
+                    onDelete={() => setDelId(p.id)}
+                    onToggle={async () => {
+                      const newVal = !p.is_active;
+                      const { error } = await supabase.from("products").update({ is_active: newVal } as unknown as never).eq("id", p.id);
+                      if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_active: newVal } : pr));
+                      else alert("Update failed: " + error.message);
+                    }}
+                    onToggleFeatured={async () => {
+                      const newVal = !p.is_featured;
+                      const { error } = await supabase.from("products").update({ is_featured: newVal } as unknown as never).eq("id", p.id);
+                      if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_featured: newVal } : pr));
+                      else alert("Update failed: " + error.message);
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
 
-          {filtered.length === 0 && (
+              {filtered.length === 0 && (
             <div className="flex flex-col items-center py-16 gap-3 text-center">
               <Package className="w-8 h-8 text-caramel/30" />
               <p className="font-display text-base text-ink-dark">No products found</p>
@@ -926,6 +931,8 @@ export default function AdminProductsPage() {
                 Clear filters
               </button>
             </div>
+              )}
+            </>
           )}
         </div>
       </main>

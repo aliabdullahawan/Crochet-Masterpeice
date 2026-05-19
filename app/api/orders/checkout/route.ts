@@ -337,6 +337,21 @@ export async function POST(req: Request) {
       );
     }
 
+    if (linkedUserId) {
+      try {
+        await service.from("notifications").insert({
+          user_id: linkedUserId,
+          type: "order_update",
+          title: "Order pending",
+          message: `Your order ${readableOrder} is pending. We will update you soon.`,
+          link: `/user/orders/${orderId}`,
+          meta: readableOrder,
+        } as never);
+      } catch (notifyError) {
+        console.warn("[checkout] user notification failed:", notifyError);
+      }
+    }
+
     await notifyAdminPanel(orderId, customerName, customerEmail, isCustomOrder, totalAmount);
 
     const [{ data: settingRow }] = await Promise.all([

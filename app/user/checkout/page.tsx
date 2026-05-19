@@ -439,7 +439,7 @@ function CheckoutPageContent() {
             type="submit"
             className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-caramel to-rose text-white font-semibold disabled:opacity-60 shadow-button"
           >
-            {saving ? "Sending order..." : "Confirm order & send query"}
+            {saving ? "Sending order..." : "Confirm order & send confirmation"}
           </button>
         </form>
       </main>

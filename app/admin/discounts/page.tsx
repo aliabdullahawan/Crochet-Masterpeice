@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { CardSkeleton, TableSkeleton } from "@/components/ui/PageSkeletons";
 
 /* =============================================
    TYPES
@@ -614,23 +615,33 @@ export default function AdminDiscountsPage() {
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {[
-            { label: "Active Discounts", value: stats.active, color: "from-green-50 to-emerald-50/50 border-green-200/60", icon: <Tag className="w-5 h-5 text-green-600" /> },
-            { label: "Total Uses",       value: stats.totalUses, color: "from-caramel/10 to-blush/10 border-caramel/20",   icon: <Check className="w-5 h-5 text-caramel" /> },
-            { label: "Total Discounts",  value: stats.total,  color: "from-blush/10 to-mauve/8 border-blush/25",           icon: <Percent className="w-5 h-5 text-mauve" /> },
-          ].map((s) => (
-            <div key={s.label} className={cn("glass rounded-2xl border p-4 bg-gradient-to-br", s.color)}>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center">{s.icon}</div>
-                <div>
-                  <p className="font-display text-xl font-semibold text-ink-dark">{s.value}</p>
-                  <p className="text-[11px] text-ink-light/60 font-sans">{s.label}</p>
+        {dbLoading ? (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="glass rounded-2xl border">
+                <CardSkeleton lines={2} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: "Active Discounts", value: stats.active, color: "from-green-50 to-emerald-50/50 border-green-200/60", icon: <Tag className="w-5 h-5 text-green-600" /> },
+              { label: "Total Uses",       value: stats.totalUses, color: "from-caramel/10 to-blush/10 border-caramel/20",   icon: <Check className="w-5 h-5 text-caramel" /> },
+              { label: "Total Discounts",  value: stats.total,  color: "from-blush/10 to-mauve/8 border-blush/25",           icon: <Percent className="w-5 h-5 text-mauve" /> },
+            ].map((s) => (
+              <div key={s.label} className={cn("glass rounded-2xl border p-4 bg-gradient-to-br", s.color)}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center">{s.icon}</div>
+                  <div>
+                    <p className="font-display text-xl font-semibold text-ink-dark">{s.value}</p>
+                    <p className="text-[11px] text-ink-light/60 font-sans">{s.label}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Filter */}
         <div className="flex gap-2 mb-5">
@@ -664,52 +675,58 @@ export default function AdminDiscountsPage() {
               <p key={h} className="text-[10px] font-sans font-bold text-ink-light/50 uppercase tracking-widest">{h}</p>
             ))}
           </div>
-          <AnimatePresence mode="popLayout">
-            {filtered.map(d => (
-              <DiscountRow key={d.id} d={d}
-                onEdit={() => { setEditing(d); setModal(true); }}
-                onDelete={() => setDelId(d.id)}
-                onToggle={async () => {
-                  const isExpired = Boolean(d.end_date && new Date(d.end_date) < new Date());
-                  const shouldActivate = !d.active || isExpired;
-                  const payload = shouldActivate
-                    ? ({ active: true, ...(isExpired ? { end_date: null } : {}) })
-                    : ({ active: false });
+          {dbLoading ? (
+            <TableSkeleton rows={6} />
+          ) : (
+            <>
+              <AnimatePresence mode="popLayout">
+                {filtered.map(d => (
+                  <DiscountRow key={d.id} d={d}
+                    onEdit={() => { setEditing(d); setModal(true); }}
+                    onDelete={() => setDelId(d.id)}
+                    onToggle={async () => {
+                      const isExpired = Boolean(d.end_date && new Date(d.end_date) < new Date());
+                      const shouldActivate = !d.active || isExpired;
+                      const payload = shouldActivate
+                        ? ({ active: true, ...(isExpired ? { end_date: null } : {}) })
+                        : ({ active: false });
 
-                  await supabase
-                    .from("discounts")
-                    .update(payload as unknown as never)
-                    .eq("id", d.id);
+                      await supabase
+                        .from("discounts")
+                        .update(payload as unknown as never)
+                        .eq("id", d.id);
 
-                  setDiscounts((p) =>
-                    p.map((di) =>
-                      di.id === d.id
-                        ? {
-                            ...di,
-                            active: shouldActivate,
-                            end_date: shouldActivate && isExpired ? null : di.end_date,
-                          }
-                        : di
-                    )
-                  );
-                }}
-                onToggleBanner={async () => {
-                  const ids = await readHiddenBannerIds();
-                  if (d.hidden_from_banner) ids.delete(d.id);
-                  else ids.add(d.id);
-                  await writeHiddenBannerIds(ids);
-                  setDiscounts((p) => p.map((di) => di.id === d.id ? { ...di, hidden_from_banner: !d.hidden_from_banner } : di));
-                }}
-                onCopy={() => d.code && copyCode(d.code)}
-              />
-            ))}
-          </AnimatePresence>
-          {filtered.length === 0 && (
+                      setDiscounts((p) =>
+                        p.map((di) =>
+                          di.id === d.id
+                            ? {
+                                ...di,
+                                active: shouldActivate,
+                                end_date: shouldActivate && isExpired ? null : di.end_date,
+                              }
+                            : di
+                        )
+                      );
+                    }}
+                    onToggleBanner={async () => {
+                      const ids = await readHiddenBannerIds();
+                      if (d.hidden_from_banner) ids.delete(d.id);
+                      else ids.add(d.id);
+                      await writeHiddenBannerIds(ids);
+                      setDiscounts((p) => p.map((di) => di.id === d.id ? { ...di, hidden_from_banner: !d.hidden_from_banner } : di));
+                    }}
+                    onCopy={() => d.code && copyCode(d.code)}
+                  />
+                ))}
+              </AnimatePresence>
+              {filtered.length === 0 && (
             <div className="flex flex-col items-center py-16 gap-3">
               <Tag className="w-8 h-8 text-caramel/30" />
               <p className="font-display text-base text-ink-dark">No discounts found</p>
               <button onClick={() => setModal(true)} className="text-sm text-caramel font-sans font-semibold">Create your first discount →</button>
             </div>
+              )}
+            </>
           )}
         </div>
       </main>

@@ -22,6 +22,18 @@ export function CheckoutSuccessModal({
   whatsappUrl?: string;
   onClose: () => void;
 }) {
+  const autoOpenedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!open) {
+      autoOpenedRef.current = false;
+      return;
+    }
+    if (!whatsappUrl || autoOpenedRef.current || typeof window === "undefined") return;
+    autoOpenedRef.current = true;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  }, [open, whatsappUrl]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -54,11 +66,10 @@ export function CheckoutSuccessModal({
               </div>
 
               <h2 id="checkout-success-title" className="font-display text-xl font-semibold text-ink-dark mb-2">
-                Your order query has been sent!
+                Order confirmed!
               </h2>
               <p className="text-sm text-ink-light/70 font-sans leading-relaxed mb-4">
-                Our admin team will review your request soon and update you by email. Thank you for choosing Crochet
-                Masterpiece.
+                We received your order and it is now pending review. We will update you by email soon.
               </p>
 
               <div className="rounded-2xl bg-cream-50 border border-caramel/15 px-4 py-3 text-left mb-4">
@@ -93,7 +104,7 @@ export function CheckoutSuccessModal({
                     rel="noopener noreferrer"
                     className="w-full py-3 rounded-xl border border-[#25D366]/40 text-[#128C7E] text-sm font-semibold bg-[#25D366]/10 hover:bg-[#25D366]/15 transition"
                   >
-                    Also message us on WhatsApp
+                    Open WhatsApp (if it did not open)
                   </a>
                 )}
                 <button

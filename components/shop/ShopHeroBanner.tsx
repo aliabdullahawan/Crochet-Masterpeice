@@ -5,9 +5,10 @@ import { Sparkles, Truck, Heart } from "lucide-react";
 
 export function ShopHeroBanner() {
   return (
-    <div className="relative overflow-hidden border-b border-caramel/15 bg-gradient-to-r from-cream-50 via-blush/20 to-mauve/10">
-      <div className="absolute inset-0 pointer-events-none opacity-30">
-        <img src="/images/crochet-3.jpg" alt="" className="absolute right-0 top-0 h-full w-1/3 object-cover" aria-hidden />
+    <div className="relative overflow-hidden border-b border-caramel/15 bg-gradient-to-br from-cream-50 via-blush/15 to-mauve/10">
+      <div className="absolute inset-0 pointer-events-none">
+        <img src="/images/crochet-3.jpg" alt="" className="absolute right-0 top-0 h-full w-1/3 object-cover opacity-40" aria-hidden />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(244,184,193,0.25),transparent_55%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-cream-100 via-cream-100/85 to-transparent" />
       </div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
@@ -27,6 +28,12 @@ export function ShopHeroBanner() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 border border-caramel/15">
               <Truck className="w-3.5 h-3.5 text-caramel" /> Pakistan-wide delivery
             </span>
+            <Link
+              href="/user/shop?filter=featured"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/80 border border-blush/30 text-ink hover:bg-blush/10 transition"
+            >
+              Shop Featured →
+            </Link>
             <Link
               href="/user/custom-order"
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-caramel to-rose text-white shadow-button hover:opacity-95 transition"

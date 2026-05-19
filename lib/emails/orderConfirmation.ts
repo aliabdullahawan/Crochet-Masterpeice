@@ -96,8 +96,8 @@ export function buildOrderConfirmationEmail(payload: OrderEmailPayload) {
         <tr>
           <td style="background:linear-gradient(135deg,#f4d4c1 0%,#e8c4a8 50%,#d4a574 100%);padding:32px 28px;text-align:center;">
             <p style="margin:0;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#5c4a3a;opacity:0.9;">Crochet Masterpiece</p>
-            <h1 style="margin:8px 0 0;font-size:26px;color:#3d2f24;font-weight:600;">Thank you, ${firstName}!</h1>
-            <p style="margin:8px 0 0;font-size:15px;color:#5c4a3a;">Your order has been received</p>
+            <h1 style="margin:8px 0 0;font-size:26px;color:#3d2f24;font-weight:600;">Order confirmation</h1>
+            <p style="margin:8px 0 0;font-size:15px;color:#5c4a3a;">Thanks, ${firstName}! Your order is confirmed and pending review.</p>
           </td>
         </tr>
         <tr>
@@ -155,9 +155,9 @@ export function buildOrderConfirmationEmail(payload: OrderEmailPayload) {
 </html>`;
 
   const textLines = [
-    `Thank you, ${customerName}!`,
+    `Order confirmation`,
     ``,
-    `Your order ${orderRef} has been received.`,
+    `Thanks, ${customerName}! Your order ${orderRef} is confirmed and pending review.`,
     isCustomOrder
       ? `Custom order: ${customCategory || ""} — ${customDescription || ""}`
       : items.map((i) => `${i.name} x${i.quantity} — PKR ${i.lineTotal.toLocaleString()}`).join("\n"),
@@ -170,7 +170,7 @@ export function buildOrderConfirmationEmail(payload: OrderEmailPayload) {
   ].filter(Boolean);
 
   return {
-    subject: `Order received — ${orderRef} | Crochet Masterpiece`,
+    subject: `Order confirmation — ${orderRef} | Crochet Masterpiece`,
     htmlContent,
     textContent: textLines.join("\n"),
   };
@@ -182,9 +182,9 @@ export function buildAdminNewOrderEmail(payload: OrderEmailPayload) {
 <!DOCTYPE html>
 <html><body style="font-family:sans-serif;background:#f5f5f5;padding:20px;">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;border-left:4px solid #c9a06c;">
-    <h2 style="margin:0 0 12px;color:#333;">New order query — ${escapeHtml(orderRef)}</h2>
+    <h2 style="margin:0 0 12px;color:#333;">New order — ${escapeHtml(orderRef)}</h2>
     <p style="color:#555;line-height:1.5;">
-      <strong>${escapeHtml(payload.customerName)}</strong> submitted an order via the website.
+      <strong>${escapeHtml(payload.customerName)}</strong> submitted a new order via the website.
       Review it in the admin panel.
     </p>
     <p style="font-size:14px;color:#666;">
