@@ -396,9 +396,9 @@ export default function AdminCustomersPage() {
             {/* Customer list */}
             <div className="glass rounded-3xl border border-caramel/15 overflow-hidden">
               {dbLoading ? (
-                <div className="p-4 space-y-2">
+                <div>
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 px-1 py-2 border-b border-caramel/8 last:border-0">
+                    <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-caramel/8 last:border-0">
                       <Skeleton className="w-10 h-10 rounded-xl" />
                       <div className="flex-1">
                         <Skeleton className="h-4 w-40 mb-2" />
