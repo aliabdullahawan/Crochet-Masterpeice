@@ -25,8 +25,8 @@ export const BusinessFeature = () => {
           className="w-full h-full object-cover"
         />
         {/* Deep warm overlay so text is readable */}
-        <div className="absolute inset-0 bg-gradient-to-r from-ink-dark/65 via-ink-dark/45 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-dark/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-ink-dark/65 via-ink-dark/45 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-ink-dark/30 via-transparent to-transparent" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28">
@@ -71,11 +71,11 @@ export const BusinessFeature = () => {
 
             <div className="flex gap-3 flex-wrap">
               <Link href="/user/shop"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-blush to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-linear-to-r from-blush to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
                 Shop Now <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/user/custom-order"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/15 border border-white/30 text-white text-sm font-sans font-semibold hover:bg-white/25 transition-all btn-bubble backdrop-blur-sm">
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/15 border border-white/30 text-white text-sm font-sans font-semibold hover:bg-white/25 transition-all btn-bubble backdrop-blur-xs">
                 Custom Order
               </Link>
             </div>
@@ -107,7 +107,7 @@ export const BusinessFeature = () => {
               </motion.div>
               {/* Badge */}
               <motion.div
-                className="absolute -top-4 -right-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-blush to-rose flex flex-col items-center justify-center text-center shadow-button"
+                className="absolute -top-4 -right-4 w-16 h-16 rounded-2xl bg-linear-to-br from-blush to-rose flex flex-col items-center justify-center text-center shadow-button"
                 animate={{ rotate: [0, 5, 0, -5, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               >

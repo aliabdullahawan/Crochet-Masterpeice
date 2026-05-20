@@ -85,10 +85,10 @@ const AdminNavLink = ({ href, label, icon, active }: { href: string; label: stri
    NOTIFICATION DROPDOWN
    ============================================= */
 const rowTypeIcon = (t: AdminNotification["type"]) => {
-  if (t === "inventory") return <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden />;
-  if (t === "order") return <ShoppingBag className="w-3.5 h-3.5 text-caramel flex-shrink-0 mt-0.5" aria-hidden />;
-  if (t === "user") return <User className="w-3.5 h-3.5 text-ink-light flex-shrink-0 mt-0.5" aria-hidden />;
-  return <Bell className="w-3.5 h-3.5 text-caramel/70 flex-shrink-0 mt-0.5" aria-hidden />;
+  if (t === "inventory") return <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" aria-hidden />;
+  if (t === "order") return <ShoppingBag className="w-3.5 h-3.5 text-caramel shrink-0 mt-0.5" aria-hidden />;
+  if (t === "user") return <User className="w-3.5 h-3.5 text-ink-light shrink-0 mt-0.5" aria-hidden />;
+  return <Bell className="w-3.5 h-3.5 text-caramel/70 shrink-0 mt-0.5" aria-hidden />;
 };
 
 const AdminNotifDropdown = ({
@@ -136,7 +136,7 @@ const AdminNotifDropdown = ({
               {rowTypeIcon(n.type)}
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-1.5">
-                  <div className={cn("w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0", n.read ? "bg-transparent" : "bg-caramel")} />
+                  <div className={cn("w-1.5 h-1.5 rounded-full mt-1 shrink-0", n.read ? "bg-transparent" : "bg-caramel")} />
                   <div className="min-w-0">
                     <p className="text-[11px] font-sans font-semibold text-ink-dark leading-snug line-clamp-2">{n.title}</p>
                     <p className="text-xs font-sans text-ink/70 leading-snug line-clamp-2 mt-0.5">{n.message}</p>
@@ -290,13 +290,13 @@ export const AdminNavbar = () => {
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-[100] w-full transition-all duration-500",
+        "sticky top-0 z-100 w-full transition-all duration-500",
         scrolled ? "glass-navbar shadow-navbar py-2" : "bg-cream-100/95 py-3 border-b border-caramel/10"
       )}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             {/* Logo */}
-            <Link href="/admin/dashboard" className="flex items-center gap-2.5 flex-shrink-0 group">
+            <Link href="/admin/dashboard" className="flex items-center gap-2.5 shrink-0 group">
               <div className="w-9 h-9 rounded-xl overflow-hidden ring-2 ring-caramel/20 transition-all duration-300 group-hover:ring-caramel/50">
                 <Image src="/images/logo.png" alt="Logo" width={36} height={36} className="object-cover" />
               </div>
@@ -336,7 +336,7 @@ export const AdminNavbar = () => {
                 >
                   <Bell className="w-4.5 h-4.5" />
                   {unread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-gradient-to-br from-caramel to-rose text-white text-[9px] font-bold flex items-center justify-center animate-bloom">
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-linear-to-br from-caramel to-rose text-white text-[9px] font-bold flex items-center justify-center animate-bloom">
                       {unread}
                     </span>
                   )}
@@ -375,7 +375,7 @@ export const AdminNavbar = () => {
                     profileOpen ? "bg-caramel/15 text-caramel" : "text-ink hover:bg-caramel/8"
                   )}
                 >
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-caramel to-latte flex items-center justify-center text-white text-[10px] font-bold">
+                  <div className="w-6 h-6 rounded-lg bg-linear-to-br from-caramel to-latte flex items-center justify-center text-white text-[10px] font-bold">
                     {adminName.charAt(0).toUpperCase()}
                   </div>
                   <span className="hidden sm:block">{adminName}</span>
@@ -385,7 +385,7 @@ export const AdminNavbar = () => {
                   <div className="absolute right-0 top-full mt-2 w-48 glass rounded-2xl shadow-card border border-caramel/20 overflow-hidden z-50 animate-slide-down">
                     <Link href="/admin/profile" onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-3 text-sm font-sans text-ink hover:bg-caramel/8 transition-colors border-b border-caramel/8">
-                      <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-blush/30 to-caramel/20">
+                      <div className="w-7 h-7 rounded-lg overflow-hidden shrink-0 bg-linear-to-br from-blush/30 to-caramel/20">
                         <img src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(adminName)}&backgroundColor=ffd5dc,ffdfbf&radius=0`} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div>

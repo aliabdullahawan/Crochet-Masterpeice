@@ -5,11 +5,11 @@ import { Sparkles, Truck, Heart } from "lucide-react";
 
 export function ShopHeroBanner() {
   return (
-    <div className="relative overflow-hidden border-b border-caramel/15 bg-gradient-to-br from-cream-50 via-blush/15 to-mauve/10">
+    <div className="relative overflow-hidden border-b border-caramel/15 bg-linear-to-br from-cream-50 via-blush/15 to-mauve/10">
       <div className="absolute inset-0 pointer-events-none">
         <img src="/images/crochet-3.jpg" alt="" className="absolute right-0 top-0 h-full w-1/3 object-cover opacity-40" aria-hidden />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(244,184,193,0.25),transparent_55%)]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-cream-100 via-cream-100/85 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-cream-100 via-cream-100/85 to-transparent" />
       </div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -36,7 +36,7 @@ export function ShopHeroBanner() {
             </Link>
             <Link
               href="/user/custom-order"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-caramel to-rose text-white shadow-button hover:opacity-95 transition"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-linear-to-r from-caramel to-rose text-white shadow-button hover:opacity-95 transition"
             >
               Design yours →
             </Link>

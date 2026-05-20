@@ -29,7 +29,7 @@ const INITIAL_WISHLIST: WishlistItem[] = []; // Wishlist from ShopContext
 const EmptyWishlist = () => (
   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
     className="flex flex-col items-center justify-center py-24 text-center gap-5">
-    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blush/20 to-rose/10 flex items-center justify-center text-5xl animate-float">
+    <div className="w-24 h-24 rounded-full bg-linear-to-br from-blush/20 to-rose/10 flex items-center justify-center text-5xl animate-float">
       
     </div>
     <div>
@@ -37,7 +37,7 @@ const EmptyWishlist = () => (
       <p className="text-sm text-ink-light/60 font-sans">Tap the heart on any product to save it for later.</p>
     </div>
     <Link href="/user/shop"
-      className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+      className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
       <Heart className="w-4 h-4" /> Browse products
     </Link>
   </motion.div>
@@ -68,19 +68,19 @@ const WishlistCard = ({
     >
       {/* Image */}
       <Link href={`/user/shop/${item.productId}`}
-        className="block h-44 bg-gradient-to-br from-cream-50 to-blush/15 flex items-center justify-center relative">
+        className="block h-44 bg-linear-to-br from-cream-50 to-blush/15 flex items-center justify-center relative">
         <div className={cn("text-5xl select-none transition-transform duration-500", hover ? "scale-110 rotate-6" : "")}>
           {item.emoji}
         </div>
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1">
           {item.discount_percent && (
-            <span className="bg-gradient-to-r from-caramel to-rose text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-button">
+            <span className="bg-linear-to-r from-caramel to-rose text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-button">
               -{item.discount_percent}%
             </span>
           )}
           {item.is_featured && (
-            <span className="bg-gradient-to-r from-mauve to-blush text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+            <span className="bg-linear-to-r from-mauve to-blush text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
               <Sparkles className="w-2.5 h-2.5" /> Featured
             </span>
           )}
@@ -112,7 +112,7 @@ const WishlistCard = ({
             )}
           </div>
           <button onClick={(e) => { e.stopPropagation(); onAddCart(item.id); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <ShoppingCart className="w-3 h-3" /> Add
           </button>
         </div>
@@ -151,7 +151,7 @@ export default function WishlistPage() {
             <div className="mt-6 flex justify-center">
               <Link
                 href="/user/login"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
               >
                 Go to Login
               </Link>

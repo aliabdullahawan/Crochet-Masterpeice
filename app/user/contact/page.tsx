@@ -36,8 +36,8 @@ const SOCIALS: SocialPlatform[] = [
     description: "The fastest way to reach me. I reply to every message — usually within a few hours.",
     icon: <WhatsAppIcon />,
     gradient: "from-[#25D366]/20 to-[#128C7E]/10",
-    iconBg: "bg-gradient-to-br from-[#25D366]/20 to-[#128C7E]/10",
-    btnBg: "bg-gradient-to-r from-[#25D366]/20 to-[#128C7E]/10 text-[#0a6640] border-transparent",
+    iconBg: "bg-linear-to-br from-[#25D366]/20 to-[#128C7E]/10",
+    btnBg: "bg-linear-to-r from-[#25D366]/20 to-[#128C7E]/10 text-[#0a6640] border-transparent",
     textColor: "text-[#128C7E]",
     followLabel: "Message me",
   },
@@ -48,8 +48,8 @@ const SOCIALS: SocialPlatform[] = [
     description: "Join my channel for new arrivals, behind-the-scenes, and occasional discounts.",
     icon: <WhatsAppIcon />,
     gradient: "from-[#25D366]/15 to-[#075E54]/8",
-    iconBg: "bg-gradient-to-br from-[#25D366]/15 to-[#075E54]/8",
-    btnBg: "bg-gradient-to-r from-[#25D366]/15 to-[#075E54]/8 text-[#0a6640] border-transparent",
+    iconBg: "bg-linear-to-br from-[#25D366]/15 to-[#075E54]/8",
+    btnBg: "bg-linear-to-r from-[#25D366]/15 to-[#075E54]/8 text-[#0a6640] border-transparent",
     textColor: "text-[#075E54]",
     followLabel: "Join channel",
   },
@@ -60,8 +60,8 @@ const SOCIALS: SocialPlatform[] = [
     description: "All my finished pieces, works-in-progress, and the occasional yarn haul. Come say hi!",
     icon: <Instagram size={22} />,
     gradient: "from-[#E1306C]/12 to-[#833AB4]/8",
-    iconBg: "bg-gradient-to-br from-[#E1306C]/12 to-[#833AB4]/8",
-    btnBg: "bg-gradient-to-r from-[#E1306C]/12 to-[#833AB4]/8 text-[#c2185b] border-transparent",
+    iconBg: "bg-linear-to-br from-[#E1306C]/12 to-[#833AB4]/8",
+    btnBg: "bg-linear-to-r from-[#E1306C]/12 to-[#833AB4]/8 text-[#c2185b] border-transparent",
     textColor: "text-[#C13584]",
     followLabel: "Follow on Instagram",
   },
@@ -72,8 +72,8 @@ const SOCIALS: SocialPlatform[] = [
     description: "For longer updates, customer photos, and community posts. Love seeing you there.",
     icon: <Facebook size={22} />,
     gradient: "from-[#1877F2]/12 to-[#0a5dc5]/6",
-    iconBg: "bg-gradient-to-br from-[#1877F2]/12 to-[#0a5dc5]/6",
-    btnBg: "bg-gradient-to-r from-[#1877F2]/12 to-[#0a5dc5]/6 text-[#1877F2] border-transparent",
+    iconBg: "bg-linear-to-br from-[#1877F2]/12 to-[#0a5dc5]/6",
+    btnBg: "bg-linear-to-r from-[#1877F2]/12 to-[#0a5dc5]/6 text-[#1877F2] border-transparent",
     textColor: "text-[#1877F2]",
     followLabel: "Like on Facebook",
   },
@@ -84,8 +84,8 @@ const SOCIALS: SocialPlatform[] = [
     description: "Short videos of the process — from yarn selection to finished pieces. Oddly satisfying!",
     icon: <TikTokIcon />,
     gradient: "from-ink-dark/8 to-ink/5",
-    iconBg: "bg-gradient-to-br from-ink-dark/8 to-ink/5",
-    btnBg: "bg-gradient-to-r from-ink-dark/8 to-ink/5 text-ink-dark border-transparent",
+    iconBg: "bg-linear-to-br from-ink-dark/8 to-ink/5",
+    btnBg: "bg-linear-to-r from-ink-dark/8 to-ink/5 text-ink-dark border-transparent",
     textColor: "text-ink-dark",
     followLabel: "Follow on TikTok",
   },
@@ -112,7 +112,7 @@ const SocialCard = ({ platform, index }: { platform: SocialPlatform; index: numb
         )}
       >
         {/* Gradient bg */}
-        <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300", platform.gradient)} />
+        <div className={cn("absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300", platform.gradient)} />
 
         <div className="relative z-10 p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
@@ -125,7 +125,7 @@ const SocialCard = ({ platform, index }: { platform: SocialPlatform; index: numb
             <a
               href={platform.url} target="_blank" rel="noopener noreferrer"
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-sans font-bold border transition-all duration-250 btn-bubble flex-shrink-0",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-sans font-bold border transition-all duration-250 btn-bubble shrink-0",
                 hovered
                   ? platform.btnBg
                   : "border-caramel/20 text-ink-light/70 bg-white/60"
@@ -167,7 +167,7 @@ const ChatForm = () => {
     setSent(true);
   };
 
-  const inputCls = "w-full bg-white/70 border border-caramel/20 rounded-2xl px-4 py-3 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-blush focus:bg-white focus:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all duration-300";
+  const inputCls = "w-full bg-white/70 border border-caramel/20 rounded-2xl px-4 py-3 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-blush focus:bg-white focus:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all duration-300";
 
   return (
     <motion.div ref={ref}
@@ -175,9 +175,9 @@ const ChatForm = () => {
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
       className="glass rounded-3xl border border-blush/25 shadow-card overflow-hidden"
     >
-      <div className="bg-gradient-to-r from-blush/20 via-cream-50 to-mauve/15 px-7 py-5 border-b border-blush/15">
+      <div className="bg-linear-to-r from-blush/20 via-cream-50 to-mauve/15 px-7 py-5 border-b border-blush/15">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blush to-mauve flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-blush to-mauve flex items-center justify-center text-white">
             <MessageCircle className="w-5 h-5" />
           </div>
           <div>
@@ -295,9 +295,9 @@ export default function ContactPage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-10">
           <p className="text-xs font-sans font-semibold text-caramel tracking-widest uppercase mb-2 flex items-center justify-center gap-2">
-            <span className="h-px w-8 bg-gradient-to-r from-transparent to-caramel/60 inline-block" />
+            <span className="h-px w-8 bg-linear-to-r from-transparent to-caramel/60 inline-block" />
             Find me here
-            <span className="h-px w-8 bg-gradient-to-l from-transparent to-caramel/60 inline-block" />
+            <span className="h-px w-8 bg-linear-to-l from-transparent to-caramel/60 inline-block" />
           </p>
           <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-dark">All my little corners of the internet</h2>
         </div>
@@ -327,7 +327,7 @@ export default function ContactPage() {
           transition={{ duration: 0.6 }}
           className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6 text-center sm:text-left"
         >
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blush/25 to-mauve/15 flex items-center justify-center text-2xl flex-shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blush/25 to-mauve/15 flex items-center justify-center text-2xl shrink-0">
             
           </div>
           <div>

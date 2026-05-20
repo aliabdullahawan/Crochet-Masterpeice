@@ -66,18 +66,18 @@ const ShatterBtn = ({
         onClick={handleClick}
         className={cn(
           "relative overflow-hidden transition-all duration-300 active:scale-95",
-          variant === "primary" && "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
+          variant === "primary" && "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
           variant === "ghost" && "flex items-center justify-center w-8 h-8 rounded-xl bg-white/80 border border-blush/30 text-ink-light hover:text-blush hover:bg-blush/10 hover:border-blush/50",
           variant === "icon" && "flex items-center justify-center w-8 h-8 rounded-xl bg-white/80 border border-caramel/20 text-ink-light hover:text-caramel hover:bg-caramel/10",
           burst && "scale-0 opacity-0 transition-all duration-150",
           className
         )}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-500" />
+        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-500" />
         <span className="relative z-10">{children}</span>
       </button>
       {shards.map((s) => (
-        <div key={s.id} className="absolute left-1/2 top-1/2 pointer-events-none rounded-sm"
+        <div key={s.id} className="absolute left-1/2 top-1/2 pointer-events-none rounded-xs"
           style={{ width: s.size, height: s.size, background: s.color, boxShadow: `0 0 6px ${s.color}`, transition: "all 0.5s ease-out",
             transform: `translate(${s.tx}px, ${s.ty}px) rotate(${s.rot}deg) scale(0.3)`, opacity: 0 }}
           ref={(el) => { if (el) requestAnimationFrame(() => { el.style.transform = `translate(${s.tx}px, ${s.ty}px) rotate(${s.rot}deg) scale(0.5)`; el.style.opacity = "0"; }); }}
@@ -158,7 +158,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
         onMouseLeave={() => setIsHover(false)}
         className={cn(
           "relative rounded-3xl overflow-hidden border border-blush/20",
-          "bg-gradient-to-br from-cream-50 to-cream-100",
+          "bg-linear-to-br from-cream-50 to-cream-100",
           "transition-all duration-300 group cursor-pointer",
           isHover ? "shadow-[0_20px_50px_rgba(74,55,40,0.18)] -translate-y-2" : "shadow-card"
         )}
@@ -183,7 +183,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
                 className="w-full h-full object-cover opacity-[0.22]"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-br from-cream-50/80 via-blush/8 to-cream-100/86" />
+            <div className="absolute inset-0 bg-linear-to-br from-cream-50/80 via-blush/8 to-cream-100/86" />
           </div>
 
           {/* Clickable link overlay — below heart button */}
@@ -194,7 +194,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
               <div className={cn(
                 "w-20 h-20 rounded-full border-2 border-blush/25 flex items-center justify-center shadow-soft",
-                "bg-gradient-to-br from-blush/35 to-mauve/25",
+                "bg-linear-to-br from-blush/35 to-mauve/25",
                 "transition-transform duration-500 group-hover:scale-110"
               )}>
                 <span className="font-display text-3xl font-semibold text-caramel/80">{product.name.charAt(0)}</span>
@@ -206,7 +206,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
           {/* Badges — bottom-left of z-10 layer */}
           <div className="absolute top-3 left-3 flex flex-col gap-1 z-20 pointer-events-none">
             {product.discount_percent && product.discount_percent > 0 && (
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-caramel to-rose text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-button">
+              <span className="inline-flex items-center gap-1 bg-linear-to-r from-caramel to-rose text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-button">
                 <Tag className="w-2.5 h-2.5" /> -{product.discount_percent}%
               </span>
             )}
@@ -216,7 +216,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
               </span>
             )}
             {product.is_featured && (
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-mauve to-blush text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+              <span className="inline-flex items-center gap-1 bg-linear-to-r from-mauve to-blush text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
                 <Sparkles className="w-2.5 h-2.5" /> Featured
               </span>
             )}
@@ -247,7 +247,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
             "absolute inset-0 flex items-center justify-center bg-ink-dark/20 rounded-t-3xl transition-all duration-300 pointer-events-none z-10",
             isHover ? "opacity-100" : "opacity-0"
           )}>
-            <span className="flex items-center gap-1.5 text-white text-xs font-semibold font-sans bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="flex items-center gap-1.5 text-white text-xs font-semibold font-sans bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-xs">
               <Eye className="w-3.5 h-3.5" /> Quick View
             </span>
           </div>
@@ -303,7 +303,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
                 disabled={outOfStock}
                 onClick={(e) => { e.stopPropagation(); if (!outOfStock) setShowOrder(true); }}
                 className={cn("flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-sans font-bold transition-all btn-bubble",
-                  outOfStock ? "bg-red-100 text-red-500 border border-red-200 cursor-not-allowed" : "bg-gradient-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5")}
+                  outOfStock ? "bg-red-100 text-red-500 border border-red-200 cursor-not-allowed" : "bg-linear-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5")}
               >
                 {outOfStock ? "Sold out" : "Buy"}
               </button>
@@ -325,9 +325,9 @@ const SectionHeading = ({ label, title, sub }: { label: string; title: string; s
     <div ref={ref} className="text-center mb-12">
       <motion.p initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5 }}
         className="text-xs font-sans font-semibold text-caramel tracking-widest uppercase mb-2 flex items-center justify-center gap-2">
-        <span className="h-px w-8 bg-gradient-to-r from-transparent to-caramel/60 inline-block" />
+        <span className="h-px w-8 bg-linear-to-r from-transparent to-caramel/60 inline-block" />
         {label}
-        <span className="h-px w-8 bg-gradient-to-l from-transparent to-caramel/60 inline-block" />
+        <span className="h-px w-8 bg-linear-to-l from-transparent to-caramel/60 inline-block" />
       </motion.p>
       <motion.h2 initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6, delay: 0.1 }}
         className="font-display text-3xl sm:text-4xl font-semibold text-ink-dark">
@@ -468,7 +468,7 @@ export const FeaturedProducts = () => {
   }, [loadFeaturedProducts]);
 
   return (
-    <section ref={sectionRef} className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-cream-100 to-cream-50/80 overflow-hidden">
+    <section ref={sectionRef} className="relative py-20 px-4 sm:px-6 lg:px-8 bg-linear-to-b from-cream-100 to-cream-50/80 overflow-hidden">
       {/* BG decoration */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-blush/8 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-mauve/8 blur-3xl pointer-events-none" />
@@ -503,7 +503,7 @@ export const FeaturedProducts = () => {
             className={cn(
               "flex items-center gap-2 px-8 py-3.5 rounded-2xl font-sans font-bold text-sm",
               "border-2 border-caramel/30 text-caramel bg-white/60",
-              "hover:bg-gradient-to-r hover:from-caramel hover:to-rose hover:text-white hover:border-transparent",
+              "hover:bg-linear-to-r hover:from-caramel hover:to-rose hover:text-white hover:border-transparent",
               "hover:shadow-button-hover hover:-translate-y-0.5",
               "transition-all duration-300 group btn-bubble"
             )}

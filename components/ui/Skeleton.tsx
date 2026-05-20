@@ -16,7 +16,7 @@ export function Skeleton({
 export function ProductCardSkeleton() {
   return (
     <div className="rounded-3xl border border-blush/15 bg-white/80 overflow-hidden">
-      <Skeleton className="aspect-[4/5] w-full rounded-none" />
+      <Skeleton className="aspect-4/5 w-full rounded-none" />
       <div className="p-4 space-y-3">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />

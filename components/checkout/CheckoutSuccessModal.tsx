@@ -41,7 +41,7 @@ export function CheckoutSuccessModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-sm"
+          className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-xs"
           onClick={onClose}
         >
           <motion.div
@@ -61,7 +61,7 @@ export function CheckoutSuccessModal({
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-100 to-caramel/20 flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-full bg-linear-to-br from-green-100 to-caramel/20 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-9 h-9 text-green-600" />
               </div>
 
@@ -78,7 +78,7 @@ export function CheckoutSuccessModal({
               </div>
 
               <div className="flex items-start gap-2.5 rounded-2xl bg-blush/10 border border-blush/20 px-4 py-3 text-left mb-5">
-                <Mail className="w-4 h-4 text-caramel flex-shrink-0 mt-0.5" />
+                <Mail className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
                 <p className="text-xs text-ink-light/75 font-sans leading-relaxed">
                   A confirmation email was sent to <strong className="text-ink-dark">{email}</strong>.
                   {accountExists && magicLinkIncluded && (
@@ -93,7 +93,7 @@ export function CheckoutSuccessModal({
               <div className="flex flex-col gap-2">
                 <Link
                   href="/user/orders"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-semibold shadow-button hover:opacity-95 transition"
+                  className="w-full py-3 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-sm font-semibold shadow-button hover:opacity-95 transition"
                 >
                   View My Orders
                 </Link>

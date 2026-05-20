@@ -339,7 +339,7 @@ function CheckoutPageContent() {
 
         <form onSubmit={submit} className="glass rounded-3xl border border-caramel/20 p-5 sm:p-6 space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
-            <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Full Name *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel" />
+            <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Full Name *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel" />
             <div className="sm:col-span-1">
               <input
                 value={form.email}
@@ -354,14 +354,14 @@ function CheckoutPageContent() {
                 placeholder="Email *"
                 type="email"
                 autoComplete="email"
-                className={`w-full px-3 py-2.5 rounded-xl border bg-white/80 outline-none focus:border-caramel ${emailError ? "border-red-400" : "border-caramel/20"}`}
+                className={`w-full px-3 py-2.5 rounded-xl border bg-white/80 outline-hidden focus:border-caramel ${emailError ? "border-red-400" : "border-caramel/20"}`}
               />
               {emailError && <p className="text-[11px] text-red-500 mt-1 font-sans">{emailError}</p>}
             </div>
-            <input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="Phone (+92...) *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel" />
-            <input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="City *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel" />
-            <input value={form.postalCode} onChange={(e) => set("postalCode", e.target.value)} placeholder="Postal Code *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel" />
-            <input value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Full Address *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel" />
+            <input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="Phone (+92...) *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel" />
+            <input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="City *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel" />
+            <input value={form.postalCode} onChange={(e) => set("postalCode", e.target.value)} placeholder="Postal Code *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel" />
+            <input value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Full Address *" className="px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel" />
           </div>
 
           <div className="space-y-3">
@@ -403,7 +403,7 @@ function CheckoutPageContent() {
                 value={form.mapUrl}
                 onChange={(e) => handleMapUrlChange(e.target.value)}
                 placeholder="Google Maps link (optional)"
-                className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel"
+                className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel"
               />
               {form.mapUrl.trim().length > 0 && (
                 <a
@@ -418,7 +418,7 @@ function CheckoutPageContent() {
               )}
             </div>
           </div>
-          <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Additional notes (optional)" rows={3} className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-none focus:border-caramel resize-none" />
+          <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Additional notes (optional)" rows={3} className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 outline-hidden focus:border-caramel resize-none" />
 
           <label className="flex items-center gap-2 text-sm text-ink-light/75 font-sans">
             <input type="checkbox" checked={form.rememberMe} onChange={(e) => set("rememberMe", e.target.checked)} />
@@ -437,7 +437,7 @@ function CheckoutPageContent() {
           <button
             disabled={saving}
             type="submit"
-            className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-caramel to-rose text-white font-semibold disabled:opacity-60 shadow-button"
+            className="w-full px-4 py-3 rounded-xl bg-linear-to-r from-caramel to-rose text-white font-semibold disabled:opacity-60 shadow-button"
           >
             {saving ? "Sending order..." : "Confirm order & send confirmation"}
           </button>

@@ -20,7 +20,7 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
             i + 1 < current
               ? "w-7 h-7 bg-caramel text-white shadow-button"
               : i + 1 === current
-              ? "w-8 h-8 bg-gradient-to-br from-blush to-mauve text-white shadow-glow-blush"
+              ? "w-8 h-8 bg-linear-to-br from-blush to-mauve text-white shadow-glow-blush"
               : "w-7 h-7 bg-cream-200 text-ink-light/40 border border-caramel/10"
           )}
         >
@@ -228,7 +228,7 @@ export default function ForgotPasswordPage() {
       >
         <div className="glass rounded-3xl shadow-card border border-blush/30 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blush/30 via-cream-100 to-mauve-100/30 px-8 pt-8 pb-6 border-b border-blush/20 text-center relative">
+          <div className="bg-linear-to-r from-blush/30 via-cream-100 to-mauve-100/30 px-8 pt-8 pb-6 border-b border-blush/20 text-center relative">
             {/* Back button */}
             <Link
               href="/user/login"
@@ -273,7 +273,7 @@ export default function ForgotPasswordPage() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="yourname@example.com"
-                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none"
+                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden"
                     />
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export default function ForgotPasswordPage() {
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
                       placeholder="Min. 8 characters"
-                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none"
+                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden"
                     />
                     <button type="button" onClick={() => setShowNew(!showNew)} className="pr-3 text-ink-light/40 hover:text-caramel transition-colors duration-200">
                       {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -376,7 +376,7 @@ export default function ForgotPasswordPage() {
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
                       placeholder="Repeat your password"
-                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none"
+                      className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden"
                     />
                     <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="pr-3 text-ink-light/40 hover:text-caramel transition-colors duration-200">
                       {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -399,7 +399,7 @@ export default function ForgotPasswordPage() {
             {step === 4 && (
               <div className="text-center space-y-6 animate-morph-in py-4">
                 <div className="flex justify-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blush/30 to-mauve/30 flex items-center justify-center shadow-glow-blush animate-bloom">
+                  <div className="w-20 h-20 rounded-full bg-linear-to-br from-blush/30 to-mauve/30 flex items-center justify-center shadow-glow-blush animate-bloom">
                     <CheckCircle2 className="w-10 h-10 text-caramel" />
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export default function ForgotPasswordPage() {
                   href="/user/login"
                   className={cn(
                     "w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl",
-                    "bg-gradient-to-r from-caramel via-rose to-blush",
+                    "bg-linear-to-r from-caramel via-rose to-blush",
                     "text-white text-sm font-semibold font-sans tracking-wide",
                     "transition-all duration-300 hover:shadow-button-hover hover:-translate-y-0.5",
                     "btn-bubble"
@@ -456,7 +456,7 @@ const ActionButton = ({
     disabled={loading}
     className={cn(
       "w-full py-3.5 px-6 rounded-2xl font-sans font-bold text-sm",
-      "bg-gradient-to-r from-caramel via-rose to-blush",
+      "bg-linear-to-r from-caramel via-rose to-blush",
       "text-white tracking-wide",
       "relative overflow-hidden",
       "transition-all duration-300",

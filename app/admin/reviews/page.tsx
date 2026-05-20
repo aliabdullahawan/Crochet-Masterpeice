@@ -166,7 +166,7 @@ export default function AdminReviewsPage() {
                       <p className="mt-2 text-sm text-ink/80 font-sans">{r.comment}</p>
                     </div>
 
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-2 shrink-0">
                       {!r.is_hidden ? (
                         <button
                           disabled={processingId === r.id}

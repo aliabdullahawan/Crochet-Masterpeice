@@ -124,7 +124,7 @@ export default function AdminProfilePage() {
   const total = Object.values(counts).reduce((a, b) => a + b, 0) + registeredUsers;
 
   const platforms = [
-    { key: "instagram", label: "Instagram", icon: <Instagram className="w-4 h-4" />, color: "bg-gradient-to-br from-[#E1306C] to-[#833AB4]", bar: "from-[#E1306C] to-[#833AB4]" },
+    { key: "instagram", label: "Instagram", icon: <Instagram className="w-4 h-4" />, color: "bg-linear-to-br from-[#E1306C] to-[#833AB4]", bar: "from-[#E1306C] to-[#833AB4]" },
     { key: "facebook",  label: "Facebook",  icon: <Facebook className="w-4 h-4" />,  color: "bg-[#1877F2]", bar: "from-[#1877F2] to-blue-400" },
     { key: "tiktok",    label: "TikTok",    icon: <TikTokIcon />,                    color: "bg-ink-dark", bar: "from-ink-dark to-ink/60" },
     { key: "whatsapp",  label: "WhatsApp",  icon: <WhatsAppIcon />,                  color: "bg-[#25D366]", bar: "from-[#25D366] to-green-400" },
@@ -137,13 +137,13 @@ export default function AdminProfilePage() {
 
         {/* Profile header */}
         <div className="glass rounded-3xl border border-caramel/15 p-6 flex items-center gap-6">
-          <div className="relative flex-shrink-0">
+          <div className="relative shrink-0">
             <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-caramel/20 shadow-card">
               <img
                 src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(adminEmail || "admin")}&backgroundColor=ffd5dc,ffdfbf,c0aede&radius=50`}
                 alt={adminName} className="w-full h-full object-cover" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-gradient-to-br from-caramel to-latte flex items-center justify-center shadow-button">
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-linear-to-br from-caramel to-latte flex items-center justify-center shadow-button">
               <Shield className="w-3.5 h-3.5 text-white" />
             </div>
           </div>
@@ -154,11 +154,11 @@ export default function AdminProfilePage() {
               <p className="text-sm text-ink-light/55 font-sans truncate">{adminEmail}</p>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] font-sans font-bold text-white bg-gradient-to-r from-caramel to-latte px-2.5 py-1 rounded-lg tracking-wider uppercase shadow-button">Admin</span>
+              <span className="text-[10px] font-sans font-bold text-white bg-linear-to-r from-caramel to-latte px-2.5 py-1 rounded-lg tracking-wider uppercase shadow-button">Admin</span>
               <span className="text-[10px] font-sans text-ink-light/40">Full access · Crochet Masterpiece</span>
             </div>
           </div>
-          <div className="text-right flex-shrink-0 hidden sm:block">
+          <div className="text-right shrink-0 hidden sm:block">
             <p className="font-display text-3xl font-semibold text-caramel">{total.toLocaleString()}</p>
             <p className="text-xs text-ink-light/50 font-sans">total community</p>
           </div>
@@ -172,9 +172,9 @@ export default function AdminProfilePage() {
               { key: "users", label: "Site Users", value: registeredUsers, bar: "from-caramel to-rose" }
             ].map((item) => (
               <div key={item.key} className="flex items-center gap-3">
-                <span className="text-xs font-sans text-ink-light/60 w-28 flex-shrink-0">{item.label}</span>
+                <span className="text-xs font-sans text-ink-light/60 w-28 shrink-0">{item.label}</span>
                 <div className="flex-1 h-2.5 bg-blush/15 rounded-full overflow-hidden">
-                  <motion.div className={cn("h-full rounded-full bg-gradient-to-r", item.bar)}
+                  <motion.div className={cn("h-full rounded-full bg-linear-to-r", item.bar)}
                     initial={{ width: 0 }}
                     animate={{ width: total > 0 ? `${Math.min(100, (item.value / total) * 100)}%` : "0%" }}
                     transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} />
@@ -249,7 +249,7 @@ export default function AdminProfilePage() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter") saveCount(p.key);
                         }}
-                        className="flex-1 px-2.5 py-2 rounded-xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink outline-none focus:border-caramel transition-all" />
+                        className="flex-1 px-2.5 py-2 rounded-xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink outline-hidden focus:border-caramel transition-all" />
                       <button onClick={() => saveCount(p.key)}
                         className="px-3 py-2 rounded-xl bg-caramel/15 border border-caramel/25 text-caramel text-xs font-bold hover:bg-caramel/25 transition-all btn-bubble">
                         <span className="flex items-center gap-1"><Save className="w-3.5 h-3.5" /> Save</span>
@@ -264,7 +264,7 @@ export default function AdminProfilePage() {
 
           {/* Site users live card */}
           <div className="mt-4 glass rounded-2xl border border-green-200/50 bg-green-50/30 p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-caramel/15 to-blush/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-caramel/15 to-blush/10 flex items-center justify-center">
               <Users className="w-5 h-5 text-caramel" />
             </div>
             <div className="flex-1">
@@ -298,8 +298,8 @@ export default function AdminProfilePage() {
             <Shield className="w-4 h-4 text-caramel" /> Account Security
           </h3>
           <p className="text-xs text-ink-light/55 font-sans">
-            Admin credentials are stored in your Supabase <code className="bg-caramel/10 px-1.5 py-0.5 rounded text-caramel text-[11px]">admins</code> table.
-            To change the password, update the <code className="bg-caramel/10 px-1.5 py-0.5 rounded text-caramel text-[11px]">password_hash</code> field directly in Supabase.
+            Admin credentials are stored in your Supabase <code className="bg-caramel/10 px-1.5 py-0.5 rounded-sm text-caramel text-[11px]">admins</code> table.
+            To change the password, update the <code className="bg-caramel/10 px-1.5 py-0.5 rounded-sm text-caramel text-[11px]">password_hash</code> field directly in Supabase.
           </p>
         </div>
       </main>

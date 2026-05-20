@@ -77,7 +77,7 @@ export const ExpandingCategoryCards = React.forwardRef<
             onFocus={() => setActiveIndex(index)}
           >
             {/* Background gradient */}
-            <div className={cn("absolute inset-0 bg-gradient-to-br transition-opacity duration-300", item.bgColor,
+            <div className={cn("absolute inset-0 bg-linear-to-br transition-opacity duration-300", item.bgColor,
               isActive ? "opacity-100" : "opacity-40 group-hover:opacity-70")} />
 
             {/* Noise overlay */}
@@ -105,7 +105,7 @@ export const ExpandingCategoryCards = React.forwardRef<
                     <p className="text-xs text-ink-light/65 font-sans mt-0.5 max-w-[180px] leading-snug">{item.description}</p>
                   </div>
                   {item.count !== undefined && (
-                    <span className="flex-shrink-0 text-xs font-sans font-bold text-caramel bg-white/60 px-2 py-1 rounded-xl border border-caramel/20 mb-0.5">
+                    <span className="shrink-0 text-xs font-sans font-bold text-caramel bg-white/60 px-2 py-1 rounded-xl border border-caramel/20 mb-0.5">
                       {item.count}+
                     </span>
                   )}

@@ -52,7 +52,7 @@ const DrawerOrderPopup = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-20 flex items-end sm:items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-sm rounded-3xl"
+      className="absolute inset-0 z-20 flex items-end sm:items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-xs rounded-3xl"
       onClick={onClose}
     >
       <motion.div
@@ -81,7 +81,7 @@ const DrawerOrderPopup = ({
               }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
               <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 0 1-5.003-1.374l-.36-.213-3.74.981 1-3.648-.236-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
             </svg>
@@ -264,7 +264,7 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={onClose}
-            className="fixed inset-0 z-[150] bg-ink-dark/30 backdrop-blur-[2px]"
+            className="fixed inset-0 z-150 bg-ink-dark/30 backdrop-blur-[2px]"
           />
 
           {/* Drawer */}
@@ -274,7 +274,7 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
-            className="fixed top-0 right-0 bottom-0 z-[160] w-full max-w-sm flex flex-col"
+            className="fixed top-0 right-0 bottom-0 z-160 w-full max-w-sm flex flex-col"
           >
             <div className="relative flex flex-col h-full glass border-l border-blush/25 shadow-[-8px_0_40px_rgba(74,55,40,0.12)]">
               {/* Checkout popup overlay */}
@@ -289,9 +289,9 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
               </AnimatePresence>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-blush/20 flex-shrink-0">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-blush/20 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-caramel/20 to-blush/15 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-linear-to-br from-caramel/20 to-blush/15 flex items-center justify-center">
                     <ShoppingCart className="w-4 h-4 text-caramel" />
                   </div>
                   <div>
@@ -321,7 +321,7 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                       <p className="text-xs text-ink-light/55 font-sans">Add something lovely!</p>
                     </div>
                     <button onClick={onClose}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button btn-bubble">
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button btn-bubble">
                       <ShoppingBag className="w-3.5 h-3.5" /> Browse shop
                     </button>
                   </div>
@@ -330,7 +330,7 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                     <div key={item.id || `${item.productId}-${index}`} className="flex gap-3 p-3 rounded-2xl glass border border-blush/15 hover:border-blush/30 transition-all group">
                       {/* Emoji image */}
                       <Link href={`/user/shop/${item.productId}`} onClick={onClose}
-                        className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 hover:scale-105 transition-transform relative bg-gradient-to-br from-cream-50 to-blush/20">
+                        className="w-14 h-14 rounded-xl overflow-hidden shrink-0 hover:scale-105 transition-transform relative bg-linear-to-br from-cream-50 to-blush/20">
                         <img
                           src={item.productId === "1" || item.productId === "5" ? "/images/bg-hands-knitting.jpg"
                             : item.productId === "2" ? "/images/bg-yarn-table.jpg"
@@ -382,11 +382,11 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
 
               {/* Footer — only show if items */}
               {cartItems.length > 0 && (
-                <div className="px-4 py-4 border-t border-blush/20 space-y-3 flex-shrink-0 bg-white/40">
+                <div className="px-4 py-4 border-t border-blush/20 space-y-3 shrink-0 bg-white/40">
                   {/* Coupon */}
                   <div className="flex gap-2">
                     <div className="flex-1 flex items-center rounded-xl border border-caramel/15 bg-white/70 focus-within:border-blush focus-within:shadow-[0_0_0_2px_rgba(244,184,193,0.2)] transition-all">
-                      <Tag className="w-3.5 h-3.5 text-caramel/40 ml-2.5 flex-shrink-0" />
+                      <Tag className="w-3.5 h-3.5 text-caramel/40 ml-2.5 shrink-0" />
                       <input type="text" value={coupon}
                         onChange={(e) => {
                           setCoupon(e.target.value.toUpperCase());
@@ -395,7 +395,7 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                           clearCoupon();
                         }}
                         placeholder="Coupon code"
-                        className="flex-1 bg-transparent px-2 py-2 text-xs font-sans text-ink placeholder:text-ink-light/35 outline-none" />
+                        className="flex-1 bg-transparent px-2 py-2 text-xs font-sans text-ink placeholder:text-ink-light/35 outline-hidden" />
                       {couponApplied && <Check className="w-3.5 h-3.5 text-green-500 mr-2" />}
                     </div>
                     <button onClick={applyCoupon} disabled={couponLoading}
@@ -458,12 +458,12 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                     }}
                     className={cn(
                       "w-full flex items-center justify-center gap-2 py-3 rounded-2xl",
-                      "bg-gradient-to-r from-caramel via-rose to-blush text-white",
+                      "bg-linear-to-r from-caramel via-rose to-blush text-white",
                       "text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
                       "transition-all duration-300 btn-bubble relative overflow-hidden group"
                     )}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     <ShoppingBag className="w-4 h-4" /> Checkout
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>

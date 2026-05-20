@@ -49,17 +49,17 @@ const NotifCard = ({
         "relative rounded-2xl border p-4 cursor-pointer group transition-all duration-200",
         notif.read
           ? "border-blush/15 bg-white/60 hover:border-blush/30"
-          : "border-blush/30 bg-gradient-to-r from-blush/8 to-mauve/5 hover:border-caramel/30 shadow-soft"
+          : "border-blush/30 bg-linear-to-r from-blush/8 to-mauve/5 hover:border-caramel/30 shadow-soft"
       )}
     >
       {/* Unread dot */}
       {!notif.read && (
-        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-gradient-to-br from-caramel to-rose animate-pulse-soft" />
+        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-linear-to-br from-caramel to-rose animate-pulse-soft" />
       )}
 
       <div className="flex gap-3">
         {/* Icon */}
-        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5", cfg.bg, cfg.color)}>
+        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5", cfg.bg, cfg.color)}>
           {cfg.icon}
         </div>
 
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blush/25 to-mauve/15 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-blush/25 to-mauve/15 flex items-center justify-center">
               <Bell className="w-5 h-5 text-caramel" />
             </div>
             <div>
@@ -221,7 +221,7 @@ export default function NotificationsPage() {
               className={cn(
                 "px-4 py-1.5 rounded-xl text-xs font-sans font-semibold transition-all duration-200 btn-bubble",
                 filter === tab
-                  ? "bg-gradient-to-r from-caramel to-rose text-white shadow-button"
+                  ? "bg-linear-to-r from-caramel to-rose text-white shadow-button"
                   : "border border-caramel/20 text-ink-light/60 hover:border-blush/50"
               )}>
               {tab === "all" ? `All (${notifs.length})` : `Unread (${unreadCount})`}

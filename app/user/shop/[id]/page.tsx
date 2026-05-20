@@ -86,7 +86,7 @@ const ImageGallery = ({ images, productName }: { images: string[]; productName: 
   return (
     <div className="flex flex-col gap-3">
       {/* Main image */}
-      <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream-50 to-blush/15 border border-blush/20 shadow-card">
+      <div className="relative aspect-square rounded-3xl overflow-hidden bg-linear-to-br from-cream-50 to-blush/15 border border-blush/20 shadow-card">
         <AnimatePresence mode="wait">
           <motion.div key={activeSrc}
             initial={{ opacity: 0, scale: 1.05 }}
@@ -131,7 +131,7 @@ const ImageGallery = ({ images, productName }: { images: string[]; productName: 
         {safeImages.map((img, i) => (
           <button key={i} onClick={() => setActive(i)}
             className={cn("aspect-square rounded-2xl overflow-hidden",
-              "bg-gradient-to-br from-cream-50 to-blush/10 border transition-all duration-200",
+              "bg-linear-to-br from-cream-50 to-blush/10 border transition-all duration-200",
               i === active ? "border-caramel/50 shadow-button scale-[0.97]" : "border-blush/15 hover:border-blush/40 hover:scale-[0.98]")}>
             <img
               src={toImageSrc(img)}
@@ -174,7 +174,7 @@ const OrderPopup = ({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/50 backdrop-blur-xs"
       onClick={onClose}>
       <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -185,7 +185,7 @@ const OrderPopup = ({
         </button>
 
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-3xl mx-auto mb-3">🛒</div>
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-3xl mx-auto mb-3">🛒</div>
           <h3 className="font-display text-lg font-semibold text-ink-dark">How would you like to order?</h3>
           <p className="text-xs text-ink-light/60 font-sans mt-1">{product.name} × {quantity}</p>
         </div>
@@ -199,7 +199,7 @@ const OrderPopup = ({
               "bg-[#25D366] text-white",
               "hover:brightness-110 transition-all duration-200 btn-bubble shadow-button"
             )}>
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.799 9.799 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
               </svg>
@@ -509,12 +509,12 @@ export default function ProductDetailPage() {
       <div className="min-h-screen bg-cream-100 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 py-24">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center">
             <Package className="w-7 h-7 text-caramel/50" />
           </div>
           <p className="font-display text-xl text-ink-dark">Product not found</p>
           <p className="text-sm text-ink-light/55 font-sans">This product may have been removed or doesn&apos;t exist.</p>
-          <Link href="/user/shop" className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button btn-bubble">
+          <Link href="/user/shop" className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button btn-bubble">
             Browse shop
           </Link>
         </div>
@@ -777,12 +777,12 @@ export default function ProductDetailPage() {
                 {product.category_name}
               </span>
               {product.is_featured && (
-                <span className="text-xs font-sans font-semibold text-white bg-gradient-to-r from-mauve to-blush px-3 py-1 rounded-full">
+                <span className="text-xs font-sans font-semibold text-white bg-linear-to-r from-mauve to-blush px-3 py-1 rounded-full">
                   ✦ Featured
                 </span>
               )}
               {product.discount_active && product.discount_percent && (
-                <span className="text-xs font-sans font-bold text-white bg-gradient-to-r from-caramel to-rose px-3 py-1 rounded-full shadow-button">
+                <span className="text-xs font-sans font-bold text-white bg-linear-to-r from-caramel to-rose px-3 py-1 rounded-full shadow-button">
                   -{product.discount_percent}% OFF
                 </span>
               )}
@@ -853,10 +853,10 @@ export default function ProductDetailPage() {
             {/* Coupon */}
             <div className="flex gap-2">
               <div className="flex-1 relative flex items-center rounded-xl border border-caramel/20 bg-white/80 focus-within:border-blush focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
-                <Tag className="w-4 h-4 text-caramel/50 ml-3 flex-shrink-0" />
+                <Tag className="w-4 h-4 text-caramel/50 ml-3 shrink-0" />
                 <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
                   placeholder="Coupon code"
-                  className="flex-1 bg-transparent px-2.5 py-2.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none" />
+                  className="flex-1 bg-transparent px-2.5 py-2.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden" />
                 {couponApplied && <Check className="w-4 h-4 text-green-500 mr-3" />}
               </div>
               <button onClick={handleCoupon} disabled={couponLoading || outOfStock}
@@ -878,12 +878,12 @@ export default function ProductDetailPage() {
               <button onClick={() => setShowOrder(true)} disabled={outOfStock}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl",
-                  "bg-gradient-to-r from-caramel via-rose to-blush text-white",
+                  "bg-linear-to-r from-caramel via-rose to-blush text-white",
                   "text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
                   "transition-all duration-300 btn-bubble relative overflow-hidden group",
                   outOfStock && "opacity-60 cursor-not-allowed"
                 )}>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 <ShoppingBag className="w-4 h-4" /> {outOfStock ? "Out of Stock" : "Buy Now"}
               </button>
               <AddToCartButton
@@ -981,7 +981,7 @@ export default function ProductDetailPage() {
                       alt="" aria-hidden="true"
                       className="absolute inset-0 w-full h-full object-cover opacity-[0.10]"
                     />
-                    <div className={cn("absolute inset-0 bg-gradient-to-br", p.gradient, "opacity-80")} />
+                    <div className={cn("absolute inset-0 bg-linear-to-br", p.gradient, "opacity-80")} />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 rounded-full bg-white/60 border border-white/80 flex items-center justify-center shadow-soft transition-transform duration-300 group-hover:scale-110">
                         <span className="font-display text-xl font-semibold text-caramel/80">{p.initial}</span>
@@ -1050,7 +1050,7 @@ export default function ProductDetailPage() {
               )}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-lg">{r.avatar_emoji}</div>
+                    <div className="w-8 h-8 rounded-xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-lg">{r.avatar_emoji}</div>
                     <div>
                       <p className="text-xs font-sans font-semibold text-ink-dark">{r.user_name}</p>
                       <p className="text-[10px] text-ink-light/40">{r.date}</p>
@@ -1104,7 +1104,7 @@ export default function ProductDetailPage() {
             <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)}
               placeholder="Share your experience with this product..."
               rows={3}
-              className="w-full px-4 py-3 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-blush focus:bg-white focus:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all resize-none mb-3" />
+              className="w-full px-4 py-3 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-blush focus:bg-white focus:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all resize-none mb-3" />
             {reviewMessage && (
               <p className={cn("text-xs font-sans mb-3", reviewMessage.toLowerCase().includes("success") ? "text-green-600" : "text-red-500")}>
                 {reviewMessage}
@@ -1118,7 +1118,7 @@ export default function ProductDetailPage() {
                 "flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-sans font-bold shadow-button transition-all btn-bubble",
                 !isLoggedIn || reviewSubmitting || !reviewText.trim()
                   ? "bg-ink-light/40 cursor-not-allowed"
-                  : "bg-gradient-to-r from-caramel to-rose hover:shadow-button-hover hover:-translate-y-0.5"
+                  : "bg-linear-to-r from-caramel to-rose hover:shadow-button-hover hover:-translate-y-0.5"
               )}
             >
               {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}

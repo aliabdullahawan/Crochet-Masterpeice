@@ -71,7 +71,7 @@ const AnimatedNavLink = ({
       <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-caramel animate-pulse-soft" />
     )}
     {/* Hover underline */}
-    <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-gradient-to-r from-transparent via-caramel/60 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+    <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-linear-to-r from-transparent via-caramel/60 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
   </Link>
 );
 
@@ -102,7 +102,7 @@ const IconBtn = ({
   >
     {children}
     {count !== undefined && count > 0 && (
-      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-gradient-to-br from-blush to-caramel text-white text-[10px] font-bold px-1 shadow-button animate-bloom">
+      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-linear-to-br from-blush to-caramel text-white text-[10px] font-bold px-1 shadow-button animate-bloom">
         {count > 99 ? "99+" : count}
       </span>
     )}
@@ -165,7 +165,7 @@ const NotificationDropdown = ({
                 !n.read && "bg-cream-50"
               )}
             >
-              <div className="w-7 h-7 rounded-xl bg-cream-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-7 h-7 rounded-xl bg-cream-100 flex items-center justify-center shrink-0 mt-0.5">
                 {typeIcon(n.type)}
               </div>
               <div className="flex-1 min-w-0">
@@ -178,7 +178,7 @@ const NotificationDropdown = ({
                 <p className="text-[10px] text-ink-light/50 mt-0.5">{n.time}</p>
               </div>
               {!n.read && (
-                <div className="w-1.5 h-1.5 rounded-full bg-blush mt-1.5 flex-shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-blush mt-1.5 shrink-0" />
               )}
             </Link>
           ))
@@ -222,7 +222,7 @@ const ProfileDropdown = ({
       <>
         {/* User info */}
         <div className="px-4 py-3 border-b border-blush/20 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-blush to-mauve flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl overflow-hidden bg-linear-to-br from-blush to-mauve flex items-center justify-center shrink-0">
             {avatarEmoji && avatarEmoji.startsWith("http") ? (
               <img src={avatarEmoji} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -285,14 +285,14 @@ const DiscountBanner = ({
 }) => {
   if (!discounts.length) return null;
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-caramel/90 via-blush/90 to-mauve/90 text-white py-2 text-xs font-sans font-semibold tracking-wide">
+    <div className="relative overflow-hidden bg-linear-to-r from-caramel/90 via-blush/90 to-mauve/90 text-white py-2 text-xs font-sans font-semibold tracking-wide">
       <div
         className="flex gap-12 whitespace-nowrap items-center"
         style={{ animation: "marquee 32s linear infinite" }}
       >
         {[...discounts, ...discounts].map((d, i) => (
           <span key={`${d.id ?? d.code ?? "discount"}-${i}`} className="inline-flex items-center gap-2 shrink-0">
-            <Tag className="w-3 h-3 inline flex-shrink-0" />
+            <Tag className="w-3 h-3 inline shrink-0" />
             <span className="font-script text-sm">{d.code ?? "Special"}</span>
             <span>
               — {d.discountType === "flat" ? `PKR ${d.value.toLocaleString()}` : `${d.value}%`} off {d.label}
@@ -301,7 +301,7 @@ const DiscountBanner = ({
             {d.code && d.appliesTo !== "cart" && (
               <Link
                 href={shopUrlWithDiscount(d.code)}
-                className="ml-1 px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-bold uppercase tracking-wide hover:bg-white transition shadow-sm"
+                className="ml-1 px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-bold uppercase tracking-wide hover:bg-white transition shadow-xs"
                 onClick={(e) => e.stopPropagation()}
               >
                 Shop now
@@ -648,7 +648,7 @@ export const Navbar = () => {
     <>
       {/* Discount ticker */}
       {activeDiscounts.length > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-[120]">
+        <div className="fixed top-0 left-0 right-0 z-120">
           <DiscountBanner discounts={activeDiscounts} />
         </div>
       )}
@@ -656,7 +656,7 @@ export const Navbar = () => {
 
       <header
         className={cn(
-          "sticky z-[100] w-full transition-all duration-500",
+          "sticky z-100 w-full transition-all duration-500",
           activeDiscounts.length > 0 ? "top-7" : "top-0",
           scrolled
             ? "glass-navbar shadow-navbar py-3"
@@ -667,7 +667,7 @@ export const Navbar = () => {
           <div className="flex items-center justify-between gap-4">
 
             {/* ── Logo ── */}
-            <Link href="/" className="flex-shrink-0 group">
+            <Link href="/" className="shrink-0 group">
               <div className="transition-transform duration-300 group-hover:scale-105">
                 <CrochetLogo variant="horizontal" size={56} showText />
               </div>
@@ -787,16 +787,16 @@ export const Navbar = () => {
                     "btn-bubble",
                     profileOpen
                       ? "bg-caramel text-white shadow-button"
-                      : "bg-gradient-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5"
+                      : "bg-linear-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5"
                   )}
                   aria-label={isLoggedIn ? "Account menu" : "Get started"}
                 >
                   {isLoggedIn ? (
                     <>
                       {avatarUrl ? (
-                        <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                        <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blush to-mauve flex-shrink-0" />
+                        <div className="w-6 h-6 rounded-full bg-linear-to-br from-blush to-mauve shrink-0" />
                       )}
                       <span className="hidden sm:block">{displayName.split(" ")[0] || "My Account"}</span>
                     </>

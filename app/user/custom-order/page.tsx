@@ -101,11 +101,11 @@ const CategorySelector = ({
         <div className={cn(
           "absolute inset-0 transition-all duration-300",
           value === cat.value
-            ? "bg-gradient-to-t from-caramel/80 to-caramel/20"
-            : "bg-gradient-to-t from-ink-dark/60 to-ink-dark/10"
+            ? "bg-linear-to-t from-caramel/80 to-caramel/20"
+            : "bg-linear-to-t from-ink-dark/60 to-ink-dark/10"
         )} />
         {/* Label */}
-        <span className="relative z-10 text-[11px] font-sans font-bold text-white leading-tight px-2 pb-2 drop-shadow-sm">
+        <span className="relative z-10 text-[11px] font-sans font-bold text-white leading-tight px-2 pb-2 drop-shadow-xs">
           {cat.label}
         </span>
         {/* Selected check */}
@@ -141,7 +141,7 @@ const FloatInput = ({
           ? "border-blush bg-white shadow-[0_0_0_3px_rgba(244,184,193,0.18)]"
           : "border-caramel/20 bg-white/70 hover:border-blush/40"
       )}>
-        <div className={cn("pl-4 flex-shrink-0 transition-colors duration-300", focused ? "text-caramel" : "text-ink-light/40")}>
+        <div className={cn("pl-4 shrink-0 transition-colors duration-300", focused ? "text-caramel" : "text-ink-light/40")}>
           {icon}
         </div>
         <div className="relative flex-1 px-3">
@@ -160,7 +160,7 @@ const FloatInput = ({
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder={focused ? placeholder : ""}
-            className="w-full bg-transparent pt-5 pb-2 text-sm font-sans text-ink outline-none"
+            className="w-full bg-transparent pt-5 pb-2 text-sm font-sans text-ink outline-hidden"
           />
         </div>
       </div>
@@ -348,7 +348,7 @@ export default function CustomOrderPage() {
           className="glass rounded-3xl border border-blush/25 shadow-card overflow-hidden"
         >
           {/* Form header */}
-          <div className="bg-gradient-to-r from-blush/20 via-cream-50 to-mauve/15 px-8 py-6 border-b border-blush/15">
+          <div className="bg-linear-to-r from-blush/20 via-cream-50 to-mauve/15 px-8 py-6 border-b border-blush/15">
             <h2 className="font-display text-xl font-semibold text-ink-dark">Your custom order request</h2>
             <p className="text-xs text-ink-light/55 font-sans mt-1">
               Share the item details here. We will collect contact info on the next step.
@@ -360,7 +360,7 @@ export default function CustomOrderPage() {
             {/* ── Section 1: The order ── */}
             <div className="space-y-5">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blush to-mauve text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</div>
+                <div className="w-6 h-6 rounded-lg bg-linear-to-br from-blush to-mauve text-white text-xs font-bold flex items-center justify-center shrink-0">1</div>
                 <h3 className="font-sans font-semibold text-sm text-ink-dark">What are you after?</h3>
               </div>
 
@@ -392,7 +392,7 @@ export default function CustomOrderPage() {
                       placeholder="Be as specific or as vague as you like! Colours, textures, who it's for, any inspo you've seen... I love all the details "
                       rows={5}
                       maxLength={800}
-                      className="w-full bg-transparent pb-3 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none resize-none"
+                      className="w-full bg-transparent pb-3 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-hidden resize-none"
                     />
                   </div>
                   <div className="flex items-center justify-between px-4 py-2 bg-cream-50/60 border-t border-caramel/10">
@@ -412,7 +412,7 @@ export default function CustomOrderPage() {
             {/* ── Section 2: Budget & timing ── */}
             <div className="space-y-5">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-mauve to-blush text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</div>
+                <div className="w-6 h-6 rounded-lg bg-linear-to-br from-mauve to-blush text-white text-xs font-bold flex items-center justify-center shrink-0">2</div>
                 <h3 className="font-sans font-semibold text-sm text-ink-dark">Budget & timing <span className="text-ink-light/40 font-normal">(totally optional)</span></h3>
               </div>
 
@@ -421,17 +421,17 @@ export default function CustomOrderPage() {
                   <p className="text-xs font-sans font-semibold text-ink-light/55 uppercase tracking-wider">Budget range (PKR)</p>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1 flex items-center rounded-2xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
-                      <span className="pl-3 text-xs text-ink-light/50 font-sans flex-shrink-0">Min</span>
+                      <span className="pl-3 text-xs text-ink-light/50 font-sans shrink-0">Min</span>
                       <input type="number" value={form.priceMin} onChange={(e) => set("priceMin")(e.target.value)}
                         placeholder="e.g. 1500"
-                        className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-none w-full" />
+                        className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-hidden w-full" />
                     </div>
                     <span className="text-ink-light/30 text-xs">—</span>
                     <div className="relative flex-1 flex items-center rounded-2xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.18)] transition-all">
-                      <span className="pl-3 text-xs text-ink-light/50 font-sans flex-shrink-0">Max</span>
+                      <span className="pl-3 text-xs text-ink-light/50 font-sans shrink-0">Max</span>
                       <input type="number" value={form.priceMax} onChange={(e) => set("priceMax")(e.target.value)}
                         placeholder="e.g. 3000"
-                        className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-none w-full" />
+                        className="flex-1 bg-transparent px-2 py-3 text-sm font-sans text-ink outline-hidden w-full" />
                     </div>
                   </div>
                   <p className="text-[10px] text-ink-light/40 font-sans pl-1">Not sure? Leave blank — we&apos;ll discuss on WhatsApp</p>
@@ -473,8 +473,8 @@ export default function CustomOrderPage() {
                   "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
                   "transition-all duration-300 btn-bubble relative overflow-hidden group"
                 )}>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                   <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.799 9.799 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
                 </svg>

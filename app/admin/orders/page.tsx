@@ -78,7 +78,7 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSe
   return (
     <div className="flex flex-col h-full">
       {/* Panel header */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-caramel/12 flex-shrink-0">
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-caramel/12 shrink-0">
         <button onClick={onClose}
           className="p-1.5 rounded-xl hover:bg-caramel/10 text-ink-light transition-colors btn-bubble">
           <ArrowLeft className="w-4 h-4" />
@@ -98,7 +98,7 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSe
         <div className="rounded-2xl border border-caramel/15 bg-cream-50/60 p-4">
           <p className="text-[10px] font-sans font-bold text-ink-light/50 uppercase tracking-widest mb-2.5">Customer</p>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blush/35 to-mauve/25 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blush/35 to-mauve/25 flex items-center justify-center shrink-0">
               <span className="font-display text-base font-semibold text-caramel/80">{order.customer_name.charAt(0)}</span>
             </div>
             <div>
@@ -122,7 +122,7 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSe
             {order.items.map((item, i) => (
               <div key={i} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blush/30 to-cream-100 border border-blush/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-linear-to-br from-blush/30 to-cream-100 border border-blush/20 flex items-center justify-center shrink-0">
                     <span className="font-display text-xs font-semibold text-caramel/80">{item.name.charAt(0)}</span>
                   </div>
                   <div>
@@ -130,7 +130,7 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSe
                     <p className="text-[10px] text-ink-light/50">× {item.qty} · PKR {item.price.toLocaleString()} each</p>
                   </div>
                 </div>
-                <span className="text-xs font-bold font-sans text-caramel flex-shrink-0">PKR {(item.price * item.qty).toLocaleString()}</span>
+                <span className="text-xs font-bold font-sans text-caramel shrink-0">PKR {(item.price * item.qty).toLocaleString()}</span>
               </div>
             ))}
             <div className="border-t border-caramel/15 pt-2.5 flex justify-between">
@@ -213,7 +213,7 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSe
           <textarea value={adminMsg} onChange={(e) => setAdminMsg(e.target.value)}
             placeholder="Add a note for the customer…"
             rows={2}
-            className="w-full px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink placeholder:text-ink-light/35 outline-none focus:border-caramel transition-all resize-none mb-2.5" />
+            className="w-full px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink placeholder:text-ink-light/35 outline-hidden focus:border-caramel transition-all resize-none mb-2.5" />
           <a href={`https://wa.me/${order.customer_phone.replace(/^0/, "92")}?text=${waMsg}`}
             target="_blank" rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#25D366] text-white text-xs font-sans font-bold hover:brightness-110 transition-all btn-bubble">
@@ -612,7 +612,7 @@ export default function AdminOrdersPage() {
             <div className="relative mb-4 max-w-sm">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-caramel/50" />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or ID…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-caramel transition-all" />
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-caramel transition-all" />
             </div>
 
             {/* Orders list */}
@@ -635,7 +635,7 @@ export default function AdminOrdersPage() {
                         isSelected ? "bg-caramel/8 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
                       )}>
                       {/* Initial */}
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center shrink-0">
                         <span className="font-display text-sm font-semibold text-caramel/80">{order.customer_name.charAt(0)}</span>
                       </div>
                       {/* Info */}
@@ -647,7 +647,7 @@ export default function AdminOrdersPage() {
                         <p className="text-[11px] text-ink-light/55 font-sans truncate">{order.items.map(i => i.name).join(", ")}</p>
                       </div>
                       {/* Right side */}
-                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
                         <span className="text-sm font-bold font-sans text-ink-dark">PKR {order.total.toLocaleString()}</span>
                         <div className="flex flex-wrap gap-1.5 justify-end">
                           <span className={cn("text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border flex items-center gap-0.5", s.color)}>{s.icon} {s.label}</span>
@@ -660,7 +660,7 @@ export default function AdminOrdersPage() {
                           )}
                         </div>
                       </div>
-                      <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all flex-shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
+                      <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
                     </motion.div>
                   );
                 })}
@@ -685,7 +685,7 @@ export default function AdminOrdersPage() {
               animate={{ width: isMobile ? "100%" : "45%", opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 35 }}
-              className="flex-shrink-0 border-l border-caramel/15 bg-cream-50/95 backdrop-blur-sm overflow-hidden"
+              className="shrink-0 border-l border-caramel/15 bg-cream-50/95 backdrop-blur-xs overflow-hidden"
             >
               <div className="w-full h-full overflow-y-auto">
                 <OrderDetailPanel

@@ -56,7 +56,7 @@ const ReviewCard = ({
         "absolute left-1/2 top-1/2 cursor-pointer transition-all duration-500 ease-out",
         "border-2 p-6",
         isCenter
-          ? "z-20 bg-gradient-to-br from-cream-50 to-white border-caramel/30"
+          ? "z-20 bg-linear-to-br from-cream-50 to-white border-caramel/30"
           : "z-10 bg-cream-100/80 border-blush/20 hover:border-blush/50"
       )}
       style={{
@@ -191,10 +191,10 @@ export const ReviewsSection = () => {
     );
 
     const avatarBackgrounds = [
-      "bg-gradient-to-br from-blush/30 to-mauve/20",
-      "bg-gradient-to-br from-caramel/20 to-rose/25",
-      "bg-gradient-to-br from-mauve/25 to-cream-100",
-      "bg-gradient-to-br from-rose/20 to-blush/20",
+      "bg-linear-to-br from-blush/30 to-mauve/20",
+      "bg-linear-to-br from-caramel/20 to-rose/25",
+      "bg-linear-to-br from-mauve/25 to-cream-100",
+      "bg-linear-to-br from-rose/20 to-blush/20",
     ];
 
     const productEmojis = ["🧶", "🌸", "✨", "🧵", "💝", "🎀"];
@@ -255,7 +255,7 @@ export const ReviewsSection = () => {
   }, [loadLatestReviews]);
 
   return (
-    <section ref={sectionRef} className="relative py-24 overflow-hidden bg-gradient-to-b from-cream-50 to-cream-100">
+    <section ref={sectionRef} className="relative py-24 overflow-hidden bg-linear-to-b from-cream-50 to-cream-100">
       {/* Decorations */}
       <div className="absolute top-0 left-0 w-64 h-64 rounded-full bg-mauve/8 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-blush/10 blur-3xl pointer-events-none" />
@@ -268,9 +268,9 @@ export const ReviewsSection = () => {
           transition={{ duration: 0.5 }}
           className="text-xs font-sans font-semibold text-caramel tracking-widest uppercase mb-2 flex items-center justify-center gap-2"
         >
-          <span className="h-px w-8 bg-gradient-to-r from-transparent to-caramel/60 inline-block" />
+          <span className="h-px w-8 bg-linear-to-r from-transparent to-caramel/60 inline-block" />
           Customer Love
-          <span className="h-px w-8 bg-gradient-to-l from-transparent to-caramel/60 inline-block" />
+          <span className="h-px w-8 bg-linear-to-l from-transparent to-caramel/60 inline-block" />
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -331,7 +331,7 @@ export const ReviewsSection = () => {
           className={cn(
             "flex items-center justify-center w-12 h-12 rounded-2xl",
             "border-2 border-blush/30 bg-white/70 text-ink-light",
-            "hover:bg-gradient-to-br hover:from-blush hover:to-caramel hover:text-white hover:border-transparent",
+            "hover:bg-linear-to-br hover:from-blush hover:to-caramel hover:text-white hover:border-transparent",
             "transition-all duration-300 hover:shadow-button hover:-translate-y-0.5",
             reviews.length < 2 && "opacity-50 cursor-not-allowed",
             "btn-bubble"
@@ -349,7 +349,7 @@ export const ReviewsSection = () => {
               className={cn(
                 "rounded-full transition-all duration-300",
                 i === Math.floor(reviews.length / 2)
-                  ? "w-6 h-2 bg-gradient-to-r from-caramel to-rose"
+                  ? "w-6 h-2 bg-linear-to-r from-caramel to-rose"
                   : "w-2 h-2 bg-caramel/20 hover:bg-caramel/40"
               )}
             />
@@ -363,7 +363,7 @@ export const ReviewsSection = () => {
           className={cn(
             "flex items-center justify-center w-12 h-12 rounded-2xl",
             "border-2 border-blush/30 bg-white/70 text-ink-light",
-            "hover:bg-gradient-to-br hover:from-caramel hover:to-rose hover:text-white hover:border-transparent",
+            "hover:bg-linear-to-br hover:from-caramel hover:to-rose hover:text-white hover:border-transparent",
             "transition-all duration-300 hover:shadow-button hover:-translate-y-0.5",
             reviews.length < 2 && "opacity-50 cursor-not-allowed",
             "btn-bubble"

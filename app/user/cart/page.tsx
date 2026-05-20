@@ -49,7 +49,7 @@ const INITIAL_CART: CartItem[] = []; // Cart loaded from ShopContext (localStora
 const EmptyCart = () => (
   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
     className="flex flex-col items-center justify-center py-24 text-center gap-5">
-    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blush/20 to-mauve/15 flex items-center justify-center text-5xl animate-float">
+    <div className="w-24 h-24 rounded-full bg-linear-to-br from-blush/20 to-mauve/15 flex items-center justify-center text-5xl animate-float">
       
     </div>
     <div>
@@ -57,7 +57,7 @@ const EmptyCart = () => (
       <p className="text-sm text-ink-light/60 font-sans">Haven&apos;t found something you love yet? Let&apos;s fix that.</p>
     </div>
     <Link href="/user/shop"
-      className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+      className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
       <ShoppingBag className="w-4 h-4" /> Browse the shop
     </Link>
   </motion.div>
@@ -92,7 +92,7 @@ const CartRow = ({
   >
     {/* Product image placeholder */}
     <Link href={`/user/shop/${item.productId}`}
-      className="w-20 h-20 rounded-xl bg-gradient-to-br from-cream-100 to-blush/15 flex items-center justify-center text-3xl flex-shrink-0 hover:scale-105 transition-transform duration-200">
+      className="w-20 h-20 rounded-xl bg-linear-to-br from-cream-100 to-blush/15 flex items-center justify-center text-3xl shrink-0 hover:scale-105 transition-transform duration-200">
       {item.emoji}
     </Link>
 
@@ -118,7 +118,7 @@ const CartRow = ({
     </div>
 
     {/* Qty + remove */}
-    <div className="flex flex-col items-end justify-between gap-2 flex-shrink-0">
+    <div className="flex flex-col items-end justify-between gap-2 shrink-0">
       <button onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
         className="p-1.5 rounded-lg text-ink-light/30 hover:text-rose hover:bg-rose/10 transition-all duration-200 btn-bubble opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
@@ -150,7 +150,7 @@ const CartRow = ({
 
 const RemoveCouponModal = ({ onCancel, onConfirm, totalWithoutCoupon }: { onCancel: () => void; onConfirm: () => void; totalWithoutCoupon: number }) => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-sm"
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-xs"
     onClick={onCancel}>
     <motion.div initial={{ scale: 0.92, y: 14 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 14 }}
       transition={{ type: "spring", stiffness: 320, damping: 26 }}
@@ -203,7 +203,7 @@ const OrderModal = ({
   )}`;
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-xs"
       onClick={onClose}>
       <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -237,7 +237,7 @@ const OrderModal = ({
             href={checkoutHref}
             onClick={onClose}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.799 9.799 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
             </svg>
             <div>
@@ -458,7 +458,7 @@ export default function CartPage() {
             <div className="mt-6 flex justify-center">
               <Link
                 href="/user/login"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
               >
                 Go to Login
               </Link>
@@ -539,10 +539,10 @@ export default function CartPage() {
                 {/* Coupon */}
                 <div className="flex gap-2">
                   <div className="flex-1 flex items-center rounded-xl border border-caramel/20 bg-white/70 focus-within:border-blush focus-within:shadow-[0_0_0_2px_rgba(244,184,193,0.2)] transition-all">
-                    <Tag className="w-3.5 h-3.5 text-caramel/50 ml-3 flex-shrink-0" />
+                    <Tag className="w-3.5 h-3.5 text-caramel/50 ml-3 shrink-0" />
                     <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); setCouponMessage(""); }}
                       placeholder="Coupon code"
-                      className="flex-1 bg-transparent px-2 py-2 text-xs font-sans text-ink placeholder:text-ink-light/40 outline-none" />
+                      className="flex-1 bg-transparent px-2 py-2 text-xs font-sans text-ink placeholder:text-ink-light/40 outline-hidden" />
                   </div>
                   <button onClick={applyCoupon} disabled={couponLoading}
                     className="px-3 py-2 rounded-xl bg-caramel/10 border border-caramel/20 text-caramel text-xs font-sans font-bold hover:bg-caramel/18 transition-all btn-bubble">
@@ -572,11 +572,11 @@ export default function CartPage() {
                   }}
                   className={cn(
                     "w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl",
-                    "bg-gradient-to-r from-caramel via-rose to-blush text-white",
+                    "bg-linear-to-r from-caramel via-rose to-blush text-white",
                     "text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
                     "transition-all duration-300 btn-bubble relative overflow-hidden group"
                   )}>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <ShoppingBag className="w-4 h-4" /> Checkout
                 </button>
 

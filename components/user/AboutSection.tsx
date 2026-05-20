@@ -19,7 +19,7 @@ const StatPill = ({ icon, value, label, delay }: {
       transition={{ duration: 0.5, delay, type: "spring", stiffness: 200 }}
       className="flex flex-col items-center gap-1 text-center"
     >
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-caramel mb-1">
+      <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center text-caramel mb-1">
         {icon}
       </div>
       <p className="font-display text-2xl font-semibold text-ink-dark">{value}</p>
@@ -49,7 +49,7 @@ export const AboutSection = () => {
       {/* Full-bleed background photo with warm overlay */}
       <div className="absolute inset-0 pointer-events-none">
         <img src="/images/crochet-5.jpg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
-        <div className="absolute inset-0 bg-gradient-to-r from-cream-100/92 via-cream-100/82 to-cream-100/65" />
+        <div className="absolute inset-0 bg-linear-to-r from-cream-100/92 via-cream-100/82 to-cream-100/65" />
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -67,7 +67,7 @@ export const AboutSection = () => {
               {/* Main photo */}
               <div className="relative w-72 h-72 sm:w-80 sm:h-80 mx-auto rounded-3xl overflow-hidden shadow-card ring-4 ring-white/60">
                 <img src="/images/crochet-3.jpg" alt="Crochet work in progress" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-dark/20 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-ink-dark/20 to-transparent" />
               </div>
 
               {/* Floating accent photo — bottom right */}
@@ -145,7 +145,7 @@ export const AboutSection = () => {
               className="mt-8"
             >
               <Link href={content.cta_link}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-linear-to-r from-caramel to-rose text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
               >
                 <Heart className="w-4 h-4 fill-white/70" />
                 {content.cta_label}

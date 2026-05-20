@@ -40,7 +40,7 @@ const FieldInput = ({ label, value, onChange, placeholder, type = "text", requir
     </label>
     <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-4 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)] transition-all" />
+      className="w-full px-4 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)] transition-all" />
   </div>
 );
 
@@ -147,7 +147,7 @@ export default function AdminCategoriesPage() {
             <p className="text-sm text-ink-light/55 font-sans mt-0.5">{cats.length} categories · {cats.filter(c => c.active).length} active</p>
           </div>
           <button onClick={openNew}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <Plus className="w-4 h-4" /> New Category
           </button>
         </div>
@@ -166,7 +166,7 @@ export default function AdminCategoriesPage() {
                 <label className="block text-xs font-sans font-semibold text-ink-light/70 uppercase tracking-wider mb-1.5">Category Photo</label>
                 <div className="flex gap-3 items-start">
                   {form.image_url && (
-                    <div className="w-20 h-16 rounded-xl overflow-hidden border border-caramel/20 flex-shrink-0">
+                    <div className="w-20 h-16 rounded-xl overflow-hidden border border-caramel/20 shrink-0">
                       <img src={form.image_url} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
@@ -198,7 +198,7 @@ export default function AdminCategoriesPage() {
                   </label>
                   {form.image_url && (
                     <button type="button" onClick={() => setForm(f => ({ ...f, image_url: "" }))}
-                      className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble flex-shrink-0 mt-1">
+                      className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble shrink-0 mt-1">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     </button>
                   )}
@@ -209,7 +209,7 @@ export default function AdminCategoriesPage() {
                 <label className="block text-xs font-sans font-semibold text-ink-light/70 uppercase tracking-wider mb-1.5">Description</label>
                 <textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="Short description…" rows={3}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-caramel transition-all resize-none" />
+                  className="w-full px-4 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-caramel transition-all resize-none" />
               </div>
               <div className="flex gap-4">
                 <FieldInput label="Sort Order" type="number" value={form.sort_order}
@@ -226,7 +226,7 @@ export default function AdminCategoriesPage() {
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setModal(false)} className="flex-1 py-2.5 rounded-2xl border border-caramel/20 text-ink font-sans font-semibold text-sm hover:bg-caramel/8 transition-all btn-bubble">Cancel</button>
-              <button onClick={handleSave} className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
+              <button onClick={handleSave} className="flex-1 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
                 <Save className="w-3.5 h-3.5" /> {editing ? "Save" : "Create"}
               </button>
             </div>
@@ -266,11 +266,11 @@ export default function AdminCategoriesPage() {
                   <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} className="p-0.5 text-ink-light/30 hover:text-caramel disabled:opacity-20 transition-colors btn-bubble"><ChevronDown className="w-3.5 h-3.5" /></button>
                 </div>
                 {/* Icon / Image */}
-                <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-caramel/15">
+                <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-caramel/15">
                   {cat.image_url ? (
                     <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-caramel/15 to-blush/10 flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-caramel/15 to-blush/10 flex items-center justify-center">
                       <Grid3X3 className="w-4 h-4 text-caramel" />
                     </div>
                   )}
@@ -279,7 +279,7 @@ export default function AdminCategoriesPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-display text-sm font-semibold text-ink-dark truncate">{cat.name}</p>
-                    <span className={cn("flex-shrink-0 text-[10px] font-sans font-semibold px-1.5 py-0.5 rounded-full border",
+                    <span className={cn("shrink-0 text-[10px] font-sans font-semibold px-1.5 py-0.5 rounded-full border",
                       cat.active ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-400 border-red-200")}>
                       {cat.active ? "Active" : "Hidden"}
                     </span>
@@ -332,7 +332,7 @@ export default function AdminCategoriesPage() {
       <AnimatePresence>
         {delId && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-sm" onClick={() => setDelId(null)}>
+            className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-xs" onClick={() => setDelId(null)}>
             <motion.div initial={{ scale: 0.94 }} animate={{ scale: 1 }} exit={{ scale: 0.94 }} onClick={(e) => e.stopPropagation()}
               className="w-full max-w-sm glass rounded-3xl border border-red-200/60 shadow-card p-6 text-center">
               <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-4">

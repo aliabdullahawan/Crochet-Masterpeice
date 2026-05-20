@@ -46,7 +46,7 @@ export const GlowCard = ({
     <div
       ref={cardRef}
       data-glow
-      className={cn("relative rounded-3xl backdrop-blur-sm", className)}
+      className={cn("relative rounded-3xl backdrop-blur-xs", className)}
       style={{
         "--base": base,
         "--spread": spread,

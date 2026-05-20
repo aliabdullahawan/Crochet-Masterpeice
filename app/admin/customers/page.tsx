@@ -40,7 +40,7 @@ const BulkEmailModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-ink-dark/40 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-200 bg-ink-dark/40 backdrop-blur-xs flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
@@ -62,14 +62,14 @@ const BulkEmailModal = ({
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               placeholder="Subject"
-              className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 text-sm outline-none focus:border-caramel"
+              className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 text-sm outline-hidden focus:border-caramel"
             />
             <textarea
               value={html}
               onChange={(event) => setHtml(event.target.value)}
               placeholder="Email body (HTML is supported)"
               rows={8}
-              className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 text-sm outline-none focus:border-caramel resize-y"
+              className="w-full px-3 py-2.5 rounded-xl border border-caramel/20 bg-white/80 text-sm outline-hidden focus:border-caramel resize-y"
             />
             <label className="flex items-center gap-2 text-sm text-ink-light/70 font-sans">
               <input
@@ -106,7 +106,7 @@ const BulkEmailModal = ({
                   setResultMessage(`Sent to ${Number(body?.sent ?? 0).toLocaleString()} users.`);
                   setSending(false);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-bold shadow-button disabled:opacity-60"
+                className="px-4 py-2.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-sm font-bold shadow-button disabled:opacity-60"
               >
                 {sending ? "Sending..." : "Send"}
               </button>
@@ -146,7 +146,7 @@ const CustomerDetailPanel = ({
   return (
   <div className="flex flex-col h-full">
     {/* Header */}
-    <div className="flex items-center gap-3 px-6 py-5 border-b border-caramel/12 flex-shrink-0">
+    <div className="flex items-center gap-3 px-6 py-5 border-b border-caramel/12 shrink-0">
       <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-caramel/10 text-ink-light btn-bubble">
         <ArrowLeft className="w-4 h-4" />
       </button>
@@ -163,7 +163,7 @@ const CustomerDetailPanel = ({
     <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
       {/* Avatar + basic info */}
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blush/35 to-mauve/25 flex items-center justify-center flex-shrink-0 shadow-soft">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blush/35 to-mauve/25 flex items-center justify-center shrink-0 shadow-soft">
           <span className="font-display text-2xl font-semibold text-caramel/80">{c.name.charAt(0)}</span>
         </div>
         <div>
@@ -237,7 +237,7 @@ const CustomerDetailPanel = ({
           onChange={(e) => setAdminMsg(e.target.value)}
           placeholder="Send an in-site notification to this customer..."
           rows={2}
-          className="w-full px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink placeholder:text-ink-light/35 outline-none focus:border-caramel transition-all resize-none"
+          className="w-full px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink placeholder:text-ink-light/35 outline-hidden focus:border-caramel transition-all resize-none"
         />
         <button
           onClick={async () => {
@@ -380,7 +380,7 @@ export default function AdminCustomersPage() {
               </div>
               <button
                 onClick={() => setShowBulkEmail(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-bold shadow-button hover:shadow-button-hover transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-xs font-bold shadow-button hover:shadow-button-hover transition-all"
               >
                 <Mail className="w-3.5 h-3.5" /> Send Email to All Users
               </button>
@@ -390,7 +390,7 @@ export default function AdminCustomersPage() {
             <div className="relative mb-4 max-w-sm">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-caramel/50" />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or email…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-caramel transition-all" />
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-caramel transition-all" />
             </div>
 
             {/* Customer list */}
@@ -426,14 +426,14 @@ export default function AdminCustomersPage() {
                             isSelected ? "bg-caramel/8 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
                           )}>
                           {/* Avatar */}
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center shrink-0">
                             <span className="font-display text-base font-semibold text-caramel/80">{c.name.charAt(0)}</span>
                           </div>
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-sans text-sm font-semibold text-ink-dark">{c.name}</p>
-                              <span className={cn("text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0",
+                              <span className={cn("text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full border shrink-0",
                                 c.is_active ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-400 border-red-200")}>
                                 {c.is_active ? "Active" : "Inactive"}
                               </span>
@@ -441,11 +441,11 @@ export default function AdminCustomersPage() {
                             <p className="text-xs text-ink-light/55 font-sans truncate">{c.email}</p>
                           </div>
                           {/* Stats */}
-                          <div className="text-right flex-shrink-0 hidden sm:block">
+                          <div className="text-right shrink-0 hidden sm:block">
                             <p className="text-sm font-bold font-sans text-ink-dark">PKR {c.total_spent.toLocaleString()}</p>
                             <p className="text-[10px] text-ink-light/45 font-sans">{c.total_orders} order{c.total_orders !== 1 ? "s" : ""}</p>
                           </div>
-                          <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all flex-shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
+                          <ChevronRight className={cn("w-4 h-4 text-ink-light/25 transition-all shrink-0", isSelected ? "text-caramel rotate-90" : "group-hover:text-caramel")} />
                         </motion.div>
                       );
                     })}
@@ -471,7 +471,7 @@ export default function AdminCustomersPage() {
               animate={{ width: isMobile ? "100%" : "45%", opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 35 }}
-              className="flex-shrink-0 border-l border-caramel/15 bg-cream-50/95 backdrop-blur-sm overflow-hidden"
+              className="shrink-0 border-l border-caramel/15 bg-cream-50/95 backdrop-blur-xs overflow-hidden"
             >
               <div className="w-full h-full overflow-y-auto">
                 <CustomerDetailPanel

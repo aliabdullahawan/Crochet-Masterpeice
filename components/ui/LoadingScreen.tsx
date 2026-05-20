@@ -46,7 +46,7 @@ const CrochetSpinner = () => (
 const YarnProgress = ({ progress }: { progress: number }) => (
   <div className="w-48 h-1.5 rounded-full bg-blush/20 overflow-hidden">
     <motion.div
-      className="h-full rounded-full bg-gradient-to-r from-caramel via-rose to-blush"
+      className="h-full rounded-full bg-linear-to-r from-caramel via-rose to-blush"
       initial={{ width: "0%" }}
       animate={{ width: `${progress}%` }}
       transition={{ duration: 0.4, ease: "easeOut" }}
@@ -157,7 +157,7 @@ export const LoadingScreen = ({
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.03 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-9999 flex flex-col items-center justify-center overflow-hidden"
           style={{
             background:
               "radial-gradient(ellipse at 30% 40%, rgba(244,184,193,0.25) 0%, transparent 55%), radial-gradient(ellipse at 70% 60%, rgba(201,160,220,0.18) 0%, transparent 50%), #FFF8ED",
@@ -177,7 +177,7 @@ export const LoadingScreen = ({
               {/* Circular logo placeholder / emoji */}
               <div className="relative">
                 <motion.div
-                  className="w-20 h-20 rounded-full bg-gradient-to-br from-blush/40 to-mauve/30 flex items-center justify-center text-4xl shadow-glow-blush"
+                  className="w-20 h-20 rounded-full bg-linear-to-br from-blush/40 to-mauve/30 flex items-center justify-center text-4xl shadow-glow-blush"
                   animate={{ rotate: [0, 360] }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 >

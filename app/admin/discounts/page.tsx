@@ -117,7 +117,7 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
         }}
         min={type === "number" ? "0" : undefined}
         placeholder={placeholder}
-        className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none transition-all",
+        className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink placeholder:text-ink-light/35 outline-hidden transition-all",
           errors[name] ? "border-red-300 bg-red-50/50" : "border-caramel/20 bg-cream-50/80 focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)]")} />
       {errors[name] && <p className="text-[11px] text-red-500 mt-1">{errors[name]}</p>}
       {hint && !errors[name] && <p className="text-[11px] text-ink-light/40 mt-1">{hint}</p>}
@@ -126,7 +126,7 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className={embedded ? "w-full" : "fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-sm"}
+      className={embedded ? "w-full" : "fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-xs"}
       onClick={embedded ? undefined : onClose}>
       <motion.div initial={{ scale: 0.94, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.94, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
@@ -136,7 +136,7 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
           embedded ? "max-h-none" : "max-w-md max-h-[90vh]"
         )}>
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-caramel/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-caramel/10 shrink-0">
           <h3 className="font-display text-lg font-semibold text-ink-dark">{discount ? "Edit Discount" : "New Discount"}</h3>
           <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-caramel/10 text-ink-light btn-bubble"><X className="w-4 h-4" /></button>
         </div>
@@ -156,7 +156,7 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
             {!form.no_code && (
               <input value={form.code} onChange={(e) => { setForm(f => ({ ...f, code: e.target.value.toUpperCase() })); setErrors(er => ({...er, code: undefined})); }}
                 placeholder="e.g. YARN20"
-                className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans font-mono text-ink placeholder:text-ink-light/35 outline-none transition-all tracking-widest",
+                className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans font-mono text-ink placeholder:text-ink-light/35 outline-hidden transition-all tracking-widest",
                   errors.code ? "border-red-300 bg-red-50/50" : "border-caramel/20 bg-cream-50/80 focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)]")} />
             )}
             {form.no_code && <p className="text-[11px] text-ink-light/45 mt-1">Discount shows as badge on product — no code needed to apply</p>}
@@ -184,7 +184,7 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
               <input type="number" min="1" max={form.discount_type === "percent" ? "99" : "99999"} value={form.discount_value}
                 onChange={(e) => { setForm(f => ({ ...f, discount_value: String(Math.max(1, Number(e.target.value))) })); setErrors(er => ({...er, value: undefined})); }}
                 placeholder={form.discount_type === "percent" ? "20" : "100"}
-                className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink outline-none transition-all",
+                className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink outline-hidden transition-all",
                   errors.value ? "border-red-300 bg-red-50/50" : "border-caramel/20 bg-cream-50/80 focus:border-caramel")} />
               {errors.value && <p className="text-[11px] text-red-500 mt-1">{errors.value}</p>}
             </div>
@@ -211,7 +211,7 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
                 Select {form.applies_to === "product" ? "Product" : "Category"}
               </label>
               <select value={form.target_id} onChange={(e) => { setForm(f => ({ ...f, target_id: e.target.value })); setErrors(er => ({...er, target: undefined})); }}
-                className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink outline-none transition-all",
+                className={cn("w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink outline-hidden transition-all",
                   errors.target ? "border-red-300 bg-red-50/50" : "border-caramel/20 bg-cream-50/80 focus:border-caramel")}>
                 <option value="">Select {form.applies_to === "product" ? "a product" : "a category"}…</option>
                 {(form.applies_to === "product" ? productsList : categoriesList).map(item => (
@@ -236,18 +236,18 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
             <p className="text-sm font-sans font-semibold text-ink-dark">
               {form.active ? "Active — discount is live" : "Inactive — discount is hidden"}
             </p>
-            <div className={cn("w-10 h-5 rounded-full border-2 relative transition-all flex-shrink-0",
+            <div className={cn("w-10 h-5 rounded-full border-2 relative transition-all shrink-0",
               form.active ? "bg-green-500 border-green-500" : "bg-white border-caramel/30")}>
-              <div className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-all",
+              <div className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-all",
                 form.active ? "left-[calc(100%-18px)]" : "left-0.5")} />
             </div>
           </button>
         </div>
 
-        <div className="px-6 py-4 border-t border-caramel/10 flex gap-3 flex-shrink-0">
+        <div className="px-6 py-4 border-t border-caramel/10 flex gap-3 shrink-0">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-2xl border border-caramel/20 text-ink font-sans font-semibold text-sm hover:bg-caramel/8 transition-all btn-bubble">Cancel</button>
           <button onClick={handleSave}
-            className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
+            className="flex-1 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
             <Save className="w-3.5 h-3.5" /> {discount ? "Save Changes" : "Create Discount"}
           </button>
         </div>
@@ -596,7 +596,7 @@ export default function AdminDiscountsPage() {
             </p>
           </div>
           <button onClick={() => { setEditing(undefined); setModal(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <Plus className="w-4 h-4" /> New Discount
           </button>
         </div>
@@ -630,7 +630,7 @@ export default function AdminDiscountsPage() {
               { label: "Total Uses",       value: stats.totalUses, color: "from-caramel/10 to-blush/10 border-caramel/20",   icon: <Check className="w-5 h-5 text-caramel" /> },
               { label: "Total Discounts",  value: stats.total,  color: "from-blush/10 to-mauve/8 border-blush/25",           icon: <Percent className="w-5 h-5 text-mauve" /> },
             ].map((s) => (
-              <div key={s.label} className={cn("glass rounded-2xl border p-4 bg-gradient-to-br", s.color)}>
+              <div key={s.label} className={cn("glass rounded-2xl border p-4 bg-linear-to-br", s.color)}>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center">{s.icon}</div>
                   <div>
@@ -734,7 +734,7 @@ export default function AdminDiscountsPage() {
       <AnimatePresence>
         {delId && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-sm" onClick={() => setDelId(null)}>
+            className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-xs" onClick={() => setDelId(null)}>
             <motion.div initial={{ scale: 0.94 }} animate={{ scale: 1 }} exit={{ scale: 0.94 }}
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-sm glass rounded-3xl border border-red-200/60 shadow-card p-6 text-center">

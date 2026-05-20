@@ -26,11 +26,11 @@ const InputField = ({ label, type, placeholder, value, onChange, icon, rightEl, 
         focused ? "border-caramel bg-white shadow-[0_0_0_3px_rgba(200,149,108,0.18)]"
           : error ? "border-red-300 bg-cream-50"
           : "border-caramel/20 bg-cream-50/80 hover:border-caramel/45")}>
-        <div className={cn("flex items-center pl-4 flex-shrink-0 transition-colors", focused ? "text-caramel" : "text-ink-light/45")}>{icon}</div>
+        <div className={cn("flex items-center pl-4 shrink-0 transition-colors", focused ? "text-caramel" : "text-ink-light/45")}>{icon}</div>
         <input type={type} value={value} onChange={onChange}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           placeholder={placeholder}
-          className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none border-none" />
+          className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-hidden border-none" />
         {rightEl && <div className="pr-3">{rightEl}</div>}
       </div>
       {error && <p className="text-[11px] text-red-400 pl-1">{error}</p>}
@@ -219,7 +219,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 pointer-events-none z-0">
         <img src="/images/bg-yarn-table.jpg" alt="" aria-hidden className="absolute top-0 left-0 w-1/2 h-full object-cover opacity-[0.06]" />
         <img src="/images/bg-crochet-pink.jpg" alt="" aria-hidden className="absolute top-0 right-0 w-1/2 h-full object-cover opacity-[0.06]" />
-        <div className="absolute inset-0 bg-gradient-to-br from-cream-100/90 via-transparent to-cream-100/80" />
+        <div className="absolute inset-0 bg-linear-to-br from-cream-100/90 via-transparent to-cream-100/80" />
       </div>
 
       <div className={cn("w-full max-w-md relative z-10 transition-all duration-700",
@@ -254,7 +254,7 @@ export default function LoginPage() {
             {magicSent ? (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blush/30 to-caramel/20 flex items-center justify-center mx-auto mb-4 text-3xl">
+                <div className="w-16 h-16 rounded-full bg-linear-to-br from-blush/30 to-caramel/20 flex items-center justify-center mx-auto mb-4 text-3xl">
                   📧
                 </div>
                 <h3 className="font-display text-lg font-semibold text-ink-dark mb-2">Check your inbox!</h3>
@@ -299,11 +299,11 @@ export default function LoginPage() {
 
                 <button type="submit" disabled={loading || magicLoading}
                   className={cn("w-full py-3.5 rounded-2xl font-sans font-bold text-sm text-white",
-                    "bg-gradient-to-r from-caramel via-rose to-blush",
+                    "bg-linear-to-r from-caramel via-rose to-blush",
                     "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
                     "transition-all duration-300 btn-bubble relative overflow-hidden group",
                     "flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed")}>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   {(loading || magicLoading) ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> {mode === "magic" ? "Sending..." : "Signing in..."}</>
                   ) : mode === "magic" ? (

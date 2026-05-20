@@ -21,7 +21,7 @@ export const CustomOrderBanner = () => {
       {/* Real photo background with warm overlay — like crochet.com's feature blocks */}
       <div className="absolute inset-0">
         <img src="/images/banner-hero.jpg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
-        <div className="absolute inset-0 bg-gradient-to-br from-blush/85 via-cream-100/80 to-mauve/70" />
+        <div className="absolute inset-0 bg-linear-to-br from-blush/85 via-cream-100/80 to-mauve/70" />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
@@ -66,7 +66,7 @@ export const CustomOrderBanner = () => {
               className="relative text-center p-6 rounded-3xl glass border border-blush/25 hover:border-caramel/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-card group"
             >
               {/* Step number */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-gradient-to-br from-caramel to-rose text-white text-xs font-bold font-sans flex items-center justify-center shadow-button">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-linear-to-br from-caramel to-rose text-white text-xs font-bold font-sans flex items-center justify-center shadow-button">
                 {i + 1}
               </div>
               <div className="text-4xl mb-3 mt-1 transition-transform duration-300 group-hover:scale-110">{step.emoji}</div>
@@ -86,11 +86,11 @@ export const CustomOrderBanner = () => {
           <Link href="/user/custom-order"
             className={cn(
               "flex items-center gap-2 px-8 py-4 rounded-2xl font-sans font-bold text-sm",
-              "bg-gradient-to-r from-caramel via-rose to-blush text-white",
+              "bg-linear-to-r from-caramel via-rose to-blush text-white",
               "shadow-button hover:shadow-button-hover hover:-translate-y-1",
               "transition-all duration-300 btn-bubble relative overflow-hidden group"
             )}>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             <Sparkles className="w-4 h-4" />
             Start My Custom Order
             <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />

@@ -40,7 +40,7 @@ export const AnimatedSocialIcons = () => {
 
   const socials: SocialItem[] = [
     { icon: <WhatsAppIcon size={18} />, label: "WhatsApp", href: "https://wa.me/923159202186", color: "bg-[#25D366]", hoverBg: "hover:bg-[#1fb558]" },
-    { icon: <Instagram size={18} />, label: "Instagram", href: "https://www.instagram.com/croch_etmasterpiece", color: "bg-gradient-to-br from-[#E1306C] to-[#833AB4]", hoverBg: "" },
+    { icon: <Instagram size={18} />, label: "Instagram", href: "https://www.instagram.com/croch_etmasterpiece", color: "bg-linear-to-br from-[#E1306C] to-[#833AB4]", hoverBg: "" },
     { icon: <Facebook size={18} />, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61579353555271", color: "bg-[#1877F2]", hoverBg: "hover:bg-[#0f65d9]" },
     { icon: <TikTokIcon size={18} />, label: "TikTok", href: "https://www.tiktok.com/@croch_et.masterpiece", color: "bg-ink-dark", hoverBg: "hover:bg-black" },
   ];
@@ -57,7 +57,7 @@ export const AnimatedSocialIcons = () => {
           onClick={() => setActive(!active)}
           animate={{ rotate: active ? 45 : 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="w-10 h-10 rounded-full bg-gradient-to-br from-caramel to-rose flex items-center justify-center text-white shadow-button hover:shadow-button-hover transition-shadow btn-bubble"
+          className="w-10 h-10 rounded-full bg-linear-to-br from-caramel to-rose flex items-center justify-center text-white shadow-button hover:shadow-button-hover transition-shadow btn-bubble"
           aria-label="Toggle social links"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

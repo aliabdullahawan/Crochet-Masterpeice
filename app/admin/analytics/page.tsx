@@ -48,7 +48,7 @@ const EMPTY_SOURCES: {source:string;count:number;fill:string}[] = [];
 const RevenueTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white/95 backdrop-blur-sm border border-caramel/20 rounded-2xl px-3 py-2 shadow-card text-xs font-sans">
+    <div className="bg-white/95 backdrop-blur-xs border border-caramel/20 rounded-2xl px-3 py-2 shadow-card text-xs font-sans">
       <p className="text-ink-light/60 mb-1">Day {label}</p>
       <p className="font-bold text-caramel">PKR {payload[0].value.toLocaleString()}</p>
       {payload[1] && <p className="text-ink/60">{payload[1].value} orders</p>}
@@ -59,7 +59,7 @@ const RevenueTooltip = ({ active, payload, label }: { active?: boolean; payload?
 const MonthTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number; name: string }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white/95 backdrop-blur-sm border border-caramel/20 rounded-2xl px-3 py-2 shadow-card text-xs font-sans min-w-[140px]">
+    <div className="bg-white/95 backdrop-blur-xs border border-caramel/20 rounded-2xl px-3 py-2 shadow-card text-xs font-sans min-w-[140px]">
       <p className="text-ink-light/60 font-semibold mb-2">{label}</p>
       {payload.map((p, i) => (
         <p key={i} className="flex justify-between gap-4">
@@ -138,19 +138,19 @@ const TopProductRow = ({ product, index }: {
     <div ref={ref}>
       <div className="flex items-center justify-between mb-1.5 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="w-5 h-5 rounded-lg bg-caramel/15 flex items-center justify-center text-[10px] font-sans font-bold text-caramel flex-shrink-0">
+          <span className="w-5 h-5 rounded-lg bg-caramel/15 flex items-center justify-center text-[10px] font-sans font-bold text-caramel shrink-0">
             {index + 1}
           </span>
           <span className="text-xs font-sans font-semibold text-ink-dark truncate">{product.name}</span>
         </div>
-        <div className="text-right flex-shrink-0">
+        <div className="text-right shrink-0">
           <span className="text-xs font-bold font-sans text-caramel">PKR {(product.revenue / 1000).toFixed(0)}K</span>
           <span className="text-[10px] text-ink-light/40 font-sans ml-1.5">({product.orders})</span>
         </div>
       </div>
       <div className="h-1.5 bg-blush/15 rounded-full overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-caramel to-blush"
+          className="h-full rounded-full bg-linear-to-r from-caramel to-blush"
           initial={{ width: 0 }}
           animate={inView ? { width: `${product.pct}%` } : {}}
           transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -404,14 +404,14 @@ export default function AdminAnalyticsPage() {
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink outline-none"
+                className="px-3 py-1.5 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink outline-hidden"
               />
               <label className="text-xs font-sans text-ink-light/60">To</label>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink outline-none"
+                className="px-3 py-1.5 rounded-xl border border-caramel/20 bg-white/80 text-xs font-sans text-ink outline-hidden"
               />
             </div>
           )}
@@ -507,7 +507,7 @@ export default function AdminAnalyticsPage() {
             <div className="flex gap-5 mt-3 text-[11px] font-sans">
               {[["#C8956C","Revenue"],["#F4B8C1","Orders"],["#C9A0DC","Customers"]].map(([c,l]) => (
                 <span key={l} className="flex items-center gap-1.5 text-ink-light/60">
-                  <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{backgroundColor: c}} />{l}
+                  <span className="w-3 h-3 rounded-xs shrink-0" style={{backgroundColor: c}} />{l}
                 </span>
               ))}
             </div>
@@ -530,7 +530,7 @@ export default function AdminAnalyticsPage() {
               <div className="flex-1 space-y-2">
                 {categoryPie.map((seg) => (
                   <div key={seg.name} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: seg.fill }} />
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: seg.fill }} />
                     <span className="text-[11px] font-sans text-ink/70 flex-1 truncate">{seg.name}</span>
                     <span className="text-[11px] font-sans font-bold text-ink-dark">{seg.value}%</span>
                   </div>

@@ -105,7 +105,7 @@ const ProductField = ({
       min={type === "number" ? "0" : undefined}
       className={[
         "w-full px-3.5 py-2.5 rounded-2xl border text-sm font-sans text-ink",
-        "placeholder:text-ink-light/35 outline-none transition-all",
+        "placeholder:text-ink-light/35 outline-hidden transition-all",
         errors[name]
           ? "border-red-300 bg-red-50/50 focus:border-red-400"
           : "border-caramel/20 bg-cream-50/80 focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)]",
@@ -182,9 +182,9 @@ const ProductModal = ({
         <p className="text-sm font-sans font-semibold text-ink-dark">{label}</p>
         {sub && <p className="text-[11px] text-ink-light/50 mt-0.5">{sub}</p>}
       </div>
-      <div className={cn("w-10 h-5.5 rounded-full border-2 relative transition-all flex-shrink-0",
+      <div className={cn("w-10 h-5.5 rounded-full border-2 relative transition-all shrink-0",
         form[name] ? "bg-caramel border-caramel" : "bg-white border-caramel/30")}>
-        <div className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-all",
+        <div className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-all",
           form[name] ? "left-[calc(100%-18px)]" : "left-0.5")} />
       </div>
     </button>
@@ -192,7 +192,7 @@ const ProductModal = ({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className={embedded ? "w-full" : "fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-sm"}
+      className={embedded ? "w-full" : "fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/45 backdrop-blur-xs"}
       onClick={embedded ? undefined : onClose}>
       <motion.div initial={{ scale: 0.94, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.94, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
@@ -203,13 +203,13 @@ const ProductModal = ({
         )}>
 
         {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-caramel/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-caramel/10 shrink-0">
           <h3 className="font-display text-lg font-semibold text-ink-dark">{product ? "Edit Product" : "New Product"}</h3>
           <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-caramel/10 text-ink-light btn-bubble"><X className="w-4 h-4" /></button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-caramel/10 px-6 flex-shrink-0">
+        <div className="flex border-b border-caramel/10 px-6 shrink-0">
           {(["basic", "pricing", "extra"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={cn("px-4 py-2.5 text-xs font-sans font-semibold border-b-2 transition-all capitalize",
@@ -228,19 +228,19 @@ const ProductModal = ({
                 <label className="block text-xs font-sans font-semibold text-ink-light/65 uppercase tracking-wider mb-1.5">Description</label>
                 <textarea value={form.description} onChange={(e) => set("description")(e.target.value)}
                   placeholder="Short card description (optional)…" rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)] transition-all resize-none" />
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-hidden focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)] transition-all resize-none" />
               </div>
               <div>
                 <label className="block text-xs font-sans font-semibold text-ink-light/65 uppercase tracking-wider mb-1.5">Product Detail (Optional)</label>
                 <textarea value={form.product_detail} onChange={(e) => set("product_detail")(e.target.value)}
                   placeholder="Long detail for product page (materials, size, notes)..." rows={5}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)] transition-all resize-none" />
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-cream-50/80 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-hidden focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.15)] transition-all resize-none" />
               </div>
               <div>
                 <label className="block text-xs font-sans font-semibold text-ink-light/65 uppercase tracking-wider mb-1.5">Category</label>
                 <select value={form.category_id ?? ""} onChange={(e) => set("category_id")(e.target.value)}
                   className={cn(
-                    "w-full px-3.5 py-2.5 rounded-2xl border bg-cream-50/80 text-sm font-sans text-ink outline-none transition-all",
+                    "w-full px-3.5 py-2.5 rounded-2xl border bg-cream-50/80 text-sm font-sans text-ink outline-hidden transition-all",
                     errors.category_id
                       ? "border-red-300 focus:border-red-400"
                       : "border-caramel/20 focus:border-caramel"
@@ -291,7 +291,7 @@ const ProductModal = ({
                 )}
                 {/* Upload button */}
                 <label className="flex items-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-caramel/20 cursor-pointer hover:border-caramel/50 transition-colors">
-                  <Upload className="w-4 h-4 text-caramel/50 flex-shrink-0" />
+                  <Upload className="w-4 h-4 text-caramel/50 shrink-0" />
                   <span className="text-xs font-sans text-ink-light/60">Click to add images (multiple allowed)</span>
                   <input type="file" accept="image/*" multiple className="hidden"
                     onChange={async (e) => {
@@ -364,7 +364,7 @@ const ProductModal = ({
                   <input
                     type="text"
                     placeholder={(form.tags || "").split(",").filter(t => t.trim()).length === 0 ? "Type a tag, press Enter" : "Add another..."}
-                    className="flex-1 min-w-[120px] bg-transparent outline-none text-sm font-sans text-ink placeholder:text-ink-light/35 py-0.5"
+                    className="flex-1 min-w-[120px] bg-transparent outline-hidden text-sm font-sans text-ink placeholder:text-ink-light/35 py-0.5"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === ",") {
                         e.preventDefault();
@@ -391,10 +391,10 @@ const ProductModal = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-caramel/10 flex gap-3 flex-shrink-0">
+        <div className="px-6 py-4 border-t border-caramel/10 flex gap-3 shrink-0">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-2xl border border-caramel/20 text-ink font-sans font-semibold text-sm hover:bg-caramel/8 transition-all btn-bubble">Cancel</button>
           <button onClick={handleSave}
-            className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
+            className="flex-1 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
             <Save className="w-3.5 h-3.5" /> {product ? "Save Changes" : "Create Product"}
           </button>
         </div>
@@ -422,8 +422,8 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
 
     <div className="flex items-start gap-3">
       {/* Image or initial circle */}
-      <div className={cn("w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center font-display text-sm font-semibold text-caramel/80 flex-shrink-0",
-        "bg-gradient-to-br from-blush/30 to-mauve/20")}>
+      <div className={cn("w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center font-display text-sm font-semibold text-caramel/80 shrink-0",
+        "bg-linear-to-br from-blush/30 to-mauve/20")}>
         {(product as Product & {image_url?:string}).image_url ? (
           <img src={(product as Product & {image_url?:string}).image_url} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -436,10 +436,10 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-display text-sm font-semibold text-ink-dark truncate">{product.name}</p>
           {product.is_featured && (
-            <span className="flex-shrink-0 text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-mauve/20 to-blush/15 text-mauve border border-mauve/20">Featured</span>
+            <span className="shrink-0 text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full bg-linear-to-r from-mauve/20 to-blush/15 text-mauve border border-mauve/20">Featured</span>
           )}
           {product.discount_active && product.discount_percent && (
-            <span className="flex-shrink-0 text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full bg-caramel/15 text-caramel border border-caramel/20">
+            <span className="shrink-0 text-[9px] font-sans font-bold px-1.5 py-0.5 rounded-full bg-caramel/15 text-caramel border border-caramel/20">
               {product.discount_type === "flat" ? `-PKR ${product.discount_percent}` : `-${product.discount_percent}%`}
             </span>
           )}
@@ -489,7 +489,7 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
     </div>
 
     {/* Desktop columns */}
-    <div className="hidden md:grid md:[grid-template-columns:120px_80px_100px_130px] gap-4 items-center mt-3">
+    <div className="hidden md:grid md:grid-cols-[120px_80px_100px_130px] gap-4 items-center mt-3">
       {/* Price */}
       <div>
         <p className="text-sm font-bold font-sans text-ink-dark">PKR {displayPrice.toLocaleString()}</p>
@@ -814,7 +814,7 @@ export default function AdminProductsPage() {
             </p>
           </div>
           <button onClick={() => { setEditing(undefined); setModal(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <Plus className="w-4 h-4" /> Add Product
           </button>
         </div>
@@ -838,12 +838,12 @@ export default function AdminProductsPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-caramel/50" />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products…"
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.12)] transition-all" />
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-caramel focus:shadow-[0_0_0_3px_rgba(200,149,108,0.12)] transition-all" />
           </div>
 
           {/* Category filter */}
           <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}
-            className="px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink outline-none focus:border-caramel transition-all">
+            className="px-3.5 py-2.5 rounded-2xl border border-caramel/20 bg-white/80 text-sm font-sans text-ink outline-hidden focus:border-caramel transition-all">
             <option value="">All Categories</option>
             {catList.map(c => <option key={(c.id || String(Math.random()))} value={c.id}>{c.name}</option>)}
           </select>
@@ -941,7 +941,7 @@ export default function AdminProductsPage() {
       <AnimatePresence>
         {delId && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-sm"
+            className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/40 backdrop-blur-xs"
             onClick={() => setDelId(null)}>
             <motion.div initial={{ scale: 0.94 }} animate={{ scale: 1 }} exit={{ scale: 0.94 }}
               onClick={(e) => e.stopPropagation()}

@@ -46,7 +46,7 @@ const SocialButton = ({
         "border border-white/20",
         active ? `pl-3 pr-4 py-2 ${bgColor} text-white shadow-button` : "p-2.5 bg-white/10 text-white/70 hover:text-white hover:bg-white/15"
       )}>
-        <span className="flex-shrink-0">{icon}</span>
+        <span className="shrink-0">{icon}</span>
         <motion.span
           className="text-xs font-sans font-semibold whitespace-nowrap overflow-hidden"
           initial={{ width: 0, opacity: 0 }}
@@ -156,7 +156,7 @@ const BackToTop = () => {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       className={cn(
         "fixed bottom-6 right-6 z-50 w-11 h-11 rounded-2xl",
-        "bg-gradient-to-br from-caramel to-rose text-white shadow-button",
+        "bg-linear-to-br from-caramel to-rose text-white shadow-button",
         "flex items-center justify-center",
         "hover:shadow-button-hover hover:-translate-y-1 transition-all duration-300",
         "btn-bubble"
@@ -226,7 +226,7 @@ export const Footer = () => {
 
   const socials = [
     { icon: <WhatsAppIcon />, label: "WhatsApp", href: "https://whatsapp.com/channel/0029VbBXbGv9WtC90s3UER04", color: "text-[#25D366]", bgColor: "bg-[#25D366]" },
-    { icon: <Instagram size={18} />, label: "Instagram", href: "https://www.instagram.com/croch_etmasterpiece", color: "text-pink-400", bgColor: "bg-gradient-to-br from-pink-500 to-purple-600" },
+    { icon: <Instagram size={18} />, label: "Instagram", href: "https://www.instagram.com/croch_etmasterpiece", color: "text-pink-400", bgColor: "bg-linear-to-br from-pink-500 to-purple-600" },
     { icon: <Facebook size={18} />, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61579353555271", color: "text-blue-400", bgColor: "bg-[#1877F2]" },
     { icon: <TikTokIcon />, label: "TikTok", href: "https://www.tiktok.com/@croch_et.masterpiece", color: "text-white", bgColor: "bg-ink-dark" },
   ];

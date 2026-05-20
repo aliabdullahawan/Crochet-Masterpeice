@@ -250,7 +250,7 @@ export default function UserProfilePage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blush/35 to-mauve/25 animate-pulse" />
+        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-blush/35 to-mauve/25 animate-pulse" />
       </div>
     );
   }
@@ -273,12 +273,12 @@ export default function UserProfilePage() {
             className="absolute inset-0 w-full h-full object-cover opacity-[0.05] pointer-events-none" />
 
           {/* Avatar */}
-          <div className="relative flex-shrink-0 z-10">
+          <div className="relative shrink-0 z-10">
             <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-blush/30 shadow-card">
               <img src={googleAvatar ?? avatarUrl} alt={displayName} className="w-full h-full object-cover" />
             </div>
             <button onClick={() => setTab("avatar")}
-              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-gradient-to-br from-caramel to-rose flex items-center justify-center shadow-button hover:scale-110 transition-transform btn-bubble">
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-linear-to-br from-caramel to-rose flex items-center justify-center shadow-button hover:scale-110 transition-transform btn-bubble">
               <Edit2 className="w-3.5 h-3.5 text-white" />
             </button>
           </div>
@@ -288,7 +288,7 @@ export default function UserProfilePage() {
             <h1 className="font-display text-xl font-semibold text-ink-dark">{displayName}</h1>
             <p className="text-sm text-ink-light/55 font-sans truncate">{user.email}</p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] font-sans font-bold text-white bg-gradient-to-r from-caramel to-rose px-2.5 py-1 rounded-lg tracking-wide shadow-button">Member</span>
+              <span className="text-[10px] font-sans font-bold text-white bg-linear-to-r from-caramel to-rose px-2.5 py-1 rounded-lg tracking-wide shadow-button">Member</span>
               {user.app_metadata?.provider === "google" && (
                 <span className="text-[10px] font-sans font-semibold text-ink-light/55 bg-cream-100 px-2 py-0.5 rounded-lg border border-caramel/15">via Google</span>
               )}
@@ -297,7 +297,7 @@ export default function UserProfilePage() {
 
           {/* Sign out */}
           <button onClick={handleSignOut}
-            className="z-10 flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200/60 text-red-400 text-xs font-sans font-semibold hover:bg-red-50 transition-all btn-bubble flex-shrink-0">
+            className="z-10 flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200/60 text-red-400 text-xs font-sans font-semibold hover:bg-red-50 transition-all btn-bubble shrink-0">
             <LogOut className="w-3.5 h-3.5" /> Sign out
           </button>
         </motion.div>
@@ -307,7 +307,7 @@ export default function UserProfilePage() {
           {(["profile", "orders", "reviews", "avatar"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={cn("px-5 py-2 rounded-xl text-xs font-sans font-semibold capitalize transition-all btn-bubble border",
-                tab === t ? "bg-gradient-to-r from-caramel to-rose text-white border-transparent shadow-button"
+                tab === t ? "bg-linear-to-r from-caramel to-rose text-white border-transparent shadow-button"
                   : "border-caramel/20 text-ink-light/65 hover:border-caramel/40 bg-white/70")}>
               {t === "avatar" ? "My Avatar" : t}
             </button>
@@ -350,7 +350,7 @@ export default function UserProfilePage() {
                     <input value={form[field.key as keyof typeof form]}
                       onChange={(e) => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                       placeholder={field.placeholder}
-                      className="flex-1 bg-transparent px-3 py-3 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-none" />
+                      className="flex-1 bg-transparent px-3 py-3 text-sm font-sans text-ink placeholder:text-ink-light/35 outline-hidden" />
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-cream-50/60 border border-caramel/10">
@@ -375,7 +375,7 @@ export default function UserProfilePage() {
 
             {editing && (
               <button onClick={handleSaveProfile} disabled={saving}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2 disabled:opacity-60">
+                className="w-full py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2 disabled:opacity-60">
                 <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Changes"}
               </button>
             )}
@@ -392,7 +392,7 @@ export default function UserProfilePage() {
             <div className="divide-y divide-blush/10">
               {orders.map((order) => (
                 <div key={order.id} className="flex items-center gap-4 px-6 py-4 hover:bg-caramel/4 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blush/30 to-mauve/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blush/30 to-mauve/20 flex items-center justify-center shrink-0">
                     <ShoppingBag className="w-4 h-4 text-caramel" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -403,7 +403,7 @@ export default function UserProfilePage() {
                     <p className="text-sm font-sans font-semibold text-ink-dark truncate">{order.product}</p>
                     <p className="text-[10px] text-ink-light/45 font-sans">{order.date}</p>
                   </div>
-                  <span className="text-sm font-bold font-sans text-ink-dark flex-shrink-0">PKR {order.total.toLocaleString()}</span>
+                  <span className="text-sm font-bold font-sans text-ink-dark shrink-0">PKR {order.total.toLocaleString()}</span>
                 </div>
               ))}
               {orders.length === 0 && (
@@ -510,7 +510,7 @@ export default function UserProfilePage() {
             </div>
 
             <button onClick={handleSaveAvatar} disabled={saving}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2 disabled:opacity-60">
+              className="w-full py-3 rounded-2xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2 disabled:opacity-60">
               <Save className="w-4 h-4" />
               {saving ? "Saving…" : saved ? "Saved!" : "Save Avatar"}
             </button>

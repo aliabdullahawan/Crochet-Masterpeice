@@ -169,7 +169,7 @@ export default function SignupPage() {
     }
   };
 
-  const inputClass = "flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none";
+  const inputClass = "flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden";
 
   return (
     <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-4 relative overflow-hidden">
@@ -185,7 +185,7 @@ export default function SignupPage() {
       >
         <div className="glass rounded-3xl shadow-card border border-blush/30 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-mauve/20 via-cream-100 to-blush/20 px-8 pt-8 pb-6 border-b border-blush/20 text-center">
+          <div className="bg-linear-to-r from-mauve/20 via-cream-100 to-blush/20 px-8 pt-8 pb-6 border-b border-blush/20 text-center">
             <div className="flex justify-center mb-3">
               <div className="w-14 h-14 rounded-full overflow-hidden shadow-soft ring-4 ring-blush/25">
                 <Image src="/images/logo.png" alt="Logo" width={56} height={56} className="object-cover" />
@@ -259,7 +259,7 @@ export default function SignupPage() {
             </div>
 
             {/* Address */}
-            <div className={cn("transition-all duration-500 delay-[600ms]", animationPhase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
+            <div className={cn("transition-all duration-500 delay-600", animationPhase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold tracking-widest uppercase text-ink-light/80 font-sans">Delivery Address</label>
                 <div className="relative flex items-start rounded-2xl border-[1.5px] border-caramel/20 bg-cream-50/80 focus-within:border-blush focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(244,184,193,0.2)] transition-all duration-300">
@@ -269,7 +269,7 @@ export default function SignupPage() {
                     onChange={e => update("address", e.target.value)}
                     placeholder="House no., street, city, province..."
                     rows={2}
-                    className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none resize-none"
+                    className="flex-1 bg-transparent px-3 py-3.5 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden resize-none"
                   />
                 </div>
               </div>
@@ -283,9 +283,9 @@ export default function SignupPage() {
                   type="button"
                   onClick={() => setAgreed(!agreed)}
                   className={cn(
-                    "mt-0.5 w-5 h-5 rounded-lg border-[1.5px] flex items-center justify-center flex-shrink-0 transition-all duration-300",
+                    "mt-0.5 w-5 h-5 rounded-lg border-[1.5px] flex items-center justify-center shrink-0 transition-all duration-300",
                     agreed
-                      ? "bg-gradient-to-br from-blush to-caramel border-transparent shadow-button"
+                      ? "bg-linear-to-br from-blush to-caramel border-transparent shadow-button"
                       : "border-caramel/25 bg-cream-50 group-hover:border-blush/60"
                   )}
                 >
@@ -308,7 +308,7 @@ export default function SignupPage() {
                 disabled={isLoading}
                 className={cn(
                   "w-full py-3.5 px-6 rounded-2xl font-sans font-bold text-sm",
-                  "bg-gradient-to-r from-caramel via-rose to-blush",
+                  "bg-linear-to-r from-caramel via-rose to-blush",
                   "text-white tracking-wide",
                   "relative overflow-hidden",
                   "transition-all duration-300",

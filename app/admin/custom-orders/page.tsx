@@ -183,7 +183,7 @@ export default function AdminCustomOrdersPage() {
                         setQuoteId(row.id);
                         setPriceInput("");
                       }}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-semibold"
+                      className="px-4 py-2 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-sm font-semibold"
                     >
                       Set price
                     </button>

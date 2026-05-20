@@ -132,7 +132,7 @@ const ProductCard = ({
 
   return (
     <motion.div
-      className="flex-shrink-0 w-[260px] sm:w-[300px] cursor-pointer"
+      className="shrink-0 w-[260px] sm:w-[300px] cursor-pointer"
       whileHover={{ scale: 1.04, y: -10 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       onHoverStart={() => setHovered(true)}
@@ -148,7 +148,7 @@ const ProductCard = ({
           style={{ height: "340px" }}
         >
           {/* Product image / placeholder */}
-          <div className="absolute inset-0 bg-gradient-to-br from-cream-100 via-blush/20 to-mauve/20">
+          <div className="absolute inset-0 bg-linear-to-br from-cream-100 via-blush/20 to-mauve/20">
             {primaryImage && (
               <img src={primaryImage} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
             )}
@@ -164,7 +164,7 @@ const ProductCard = ({
 
                 {/* Initial circle fallback */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blush/35 to-mauve/25 border-2 border-blush/25 flex items-center justify-center shadow-soft">
+                  <div className="w-16 h-16 rounded-full bg-linear-to-br from-blush/35 to-mauve/25 border-2 border-blush/25 flex items-center justify-center shadow-soft">
                     <span className="font-display text-2xl font-semibold text-caramel/80">{product.name.charAt(0)}</span>
                   </div>
                   <p className="text-[10px] font-sans font-semibold text-ink-light/40 tracking-wider uppercase">{product.category_name}</p>
@@ -173,19 +173,19 @@ const ProductCard = ({
             )}
 
             {/* Cream gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-cream-50/80 via-blush/10 to-cream-100/88" />
+            <div className="absolute inset-0 bg-linear-to-br from-cream-50/80 via-blush/10 to-cream-100/88" />
           </div>
 
           {/* Discount badge */}
           {product.discount_percent && product.discount_percent > 0 && (
-            <div className="absolute top-3 left-3 z-10 bg-gradient-to-r from-caramel to-rose text-white text-[11px] font-bold font-sans px-2 py-1 rounded-xl shadow-button animate-pulse-soft">
+            <div className="absolute top-3 left-3 z-10 bg-linear-to-r from-caramel to-rose text-white text-[11px] font-bold font-sans px-2 py-1 rounded-xl shadow-button animate-pulse-soft">
               -{product.discount_percent}%
             </div>
           )}
 
           {/* Hover overlay */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-ink-dark/70 via-ink-dark/20 to-transparent z-10"
+            className="absolute inset-0 bg-linear-to-t from-ink-dark/70 via-ink-dark/20 to-transparent z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: hovered ? 1 : 0 }}
             transition={{ duration: 0.3 }}
@@ -203,7 +203,7 @@ const ProductCard = ({
               >
                 <button className={cn(
                   "w-full py-2.5 rounded-xl text-xs font-sans font-bold text-white",
-                  "bg-gradient-to-r from-caramel to-rose",
+                  "bg-linear-to-r from-caramel to-rose",
                   "flex items-center justify-center gap-2",
                   "btn-bubble shadow-button"
                 )}>
@@ -216,7 +216,7 @@ const ProductCard = ({
           {/* Info bar (always visible) */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 z-10 p-4",
-            "bg-gradient-to-t from-white/95 to-transparent",
+            "bg-linear-to-t from-white/95 to-transparent",
             "transition-all duration-300",
             hovered ? "pb-16" : "pb-4"
           )}>
@@ -284,8 +284,8 @@ const ProductCarousel = ({ products }: { products: Product[] }) => {
   return (
     <div className="relative w-full overflow-hidden">
       {/* Edge fades */}
-      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-cream-100 via-cream-100/85 to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-cream-100 via-cream-100/85 to-transparent z-10 pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-cream-100 via-cream-100/85 to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-linear-to-l from-cream-100 via-cream-100/85 to-transparent z-10 pointer-events-none" />
 
       <div
         ref={trackRef}
@@ -562,7 +562,7 @@ export const HeroSection = () => {
     {
       platform: "Instagram", count: socialData.instagram,
       icon: <Instagram size={18} />,
-      color: "bg-gradient-to-br from-[#E1306C] to-[#833AB4]",
+      color: "bg-linear-to-br from-[#E1306C] to-[#833AB4]",
       url: "https://www.instagram.com/croch_etmasterpiece",
     },
     {
@@ -613,9 +613,9 @@ export const HeroSection = () => {
         <img src="/images/crochet-4.jpg" alt="" aria-hidden="true"
           className="absolute top-0 right-0 w-1/3 h-full object-cover" />
         {/* Cream gradient overlay — keeps text readable while showing photos */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cream-100/82 via-cream-100/72 to-cream-100/80" />
+        <div className="absolute inset-0 bg-linear-to-br from-cream-100/82 via-cream-100/72 to-cream-100/80" />
         {/* Extra fade at the very top for navbar contrast */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-cream-100/70 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-cream-100/70 to-transparent" />
       </div>
       {/* ── Subtle background decorations ── */}
       <FloatingYarn style={{ top: "8%", left: "3%", opacity: 0.35 }} color="#F4B8C1" />
@@ -698,13 +698,13 @@ export const HeroSection = () => {
                 href="/user/shop"
                 className={cn(
                   "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
-                  "bg-gradient-to-r from-caramel via-rose to-blush",
+                  "bg-linear-to-r from-caramel via-rose to-blush",
                   "text-white text-sm font-sans font-bold tracking-wide",
                   "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
                   "transition-all duration-300 btn-bubble relative overflow-hidden group"
                 )}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 <ShoppingBag className="w-4 h-4" />
                 Shop Bestsellers
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
@@ -733,10 +733,10 @@ export const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.25 }}
             className="relative w-full max-w-md mx-auto"
           >
-            <div className="relative rounded-[32px] border border-white/60 bg-white/70 backdrop-blur-sm p-4 shadow-card">
-              <div className="relative rounded-3xl overflow-hidden aspect-[4/5]">
+            <div className="relative rounded-[32px] border border-white/60 bg-white/70 backdrop-blur-xs p-4 shadow-card">
+              <div className="relative rounded-3xl overflow-hidden aspect-4/5">
                 <img src="/images/crochet-6.jpg" alt="Crochet bestseller" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-dark/40 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-ink-dark/40 via-transparent to-transparent" />
               </div>
 
               <div className="absolute -bottom-8 -left-6 w-36 rounded-2xl border border-blush/30 bg-white/90 p-3 shadow-button">
@@ -775,7 +775,7 @@ export const HeroSection = () => {
             <SocialCard key={s.platform} {...s} />
           ))}
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass border border-caramel/20">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blush to-mauve flex items-center justify-center text-white text-sm font-bold font-display">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-blush to-mauve flex items-center justify-center text-white text-sm font-bold font-display">
               C
             </div>
             <div>

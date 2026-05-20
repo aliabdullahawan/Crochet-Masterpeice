@@ -71,7 +71,7 @@ export const ExpandingCards = React.forwardRef<HTMLUListElement, ExpandingCardsP
           <li
             key={item.id}
             className={cn(
-              "group relative cursor-pointer overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm",
+              "group relative cursor-pointer overflow-hidden rounded-lg border bg-card text-card-foreground shadow-xs",
               "md:min-w-[80px]",
               "min-h-0 min-w-0"
             )}
@@ -92,7 +92,7 @@ export const ExpandingCards = React.forwardRef<HTMLUListElement, ExpandingCardsP
               alt={item.title}
               className="absolute inset-0 h-full w-full object-cover transition-all duration-300 ease-out group-data-[active=true]:scale-100 group-data-[active=true]:grayscale-0 scale-110 grayscale"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
             <article className="absolute inset-0 flex flex-col justify-end gap-2 p-4">
               <h3 className="hidden origin-left rotate-90 text-sm font-light uppercase tracking-wider text-white/80 opacity-100 transition-all duration-300 ease-out md:block group-data-[active=true]:opacity-0">

@@ -39,7 +39,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={onClose}
-            className="fixed inset-0 z-[150] bg-ink-dark/30 backdrop-blur-[2px]"
+            className="fixed inset-0 z-150 bg-ink-dark/30 backdrop-blur-[2px]"
           />
 
           {/* Drawer */}
@@ -49,13 +49,13 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
-            className="fixed top-0 right-0 bottom-0 z-[160] w-full max-w-sm flex flex-col"
+            className="fixed top-0 right-0 bottom-0 z-160 w-full max-w-sm flex flex-col"
           >
             <div className="flex flex-col h-full glass border-l border-blush/25 shadow-[-8px_0_40px_rgba(74,55,40,0.12)]">
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-blush/20 flex-shrink-0">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-blush/20 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blush/25 to-rose/15 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-linear-to-br from-blush/25 to-rose/15 flex items-center justify-center">
                     <Heart className="w-4 h-4 fill-blush text-blush" />
                   </div>
                   <div>
@@ -86,7 +86,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
                       <p className="text-xs text-ink-light/55 font-sans">Tap the heart on any product to save it here.</p>
                     </div>
                     <button onClick={onClose}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button btn-bubble">
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-xs font-sans font-bold shadow-button btn-bubble">
                       <ShoppingBag className="w-3.5 h-3.5" /> Browse products
                     </button>
                   </div>
@@ -97,7 +97,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
                     >
                       {/* Image + badges */}
                       <Link href={`/user/shop/${item.productId}`} onClick={onClose}
-                        className="block relative h-32 overflow-hidden bg-gradient-to-br from-cream-50 to-blush/10">
+                        className="block relative h-32 overflow-hidden bg-linear-to-br from-cream-50 to-blush/10">
                         {/* Subtle texture */}
                         <img
                           src={item.productId === "1" || item.productId === "5" ? "/images/bg-hands-knitting.jpg"
@@ -108,21 +108,21 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
                           aria-hidden="true"
                           className="absolute inset-0 w-full h-full object-cover opacity-[0.1]"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-br from-cream-50/90 to-blush/15" />
+                        <div className="absolute inset-0 bg-linear-to-br from-cream-50/90 to-blush/15" />
                         {/* Initial circle */}
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blush/40 to-mauve/25 border-2 border-blush/20 flex items-center justify-center shadow-soft transition-transform duration-300 group-hover:scale-110">
+                          <div className="w-14 h-14 rounded-full bg-linear-to-br from-blush/40 to-mauve/25 border-2 border-blush/20 flex items-center justify-center shadow-soft transition-transform duration-300 group-hover:scale-110">
                             <span className="font-display text-xl font-semibold text-caramel/80">{item.name.charAt(0)}</span>
                           </div>
                         </div>
                         <div className="absolute top-2 left-2 flex flex-col gap-1">
                           {item.discount_percent && (
-                            <span className="bg-gradient-to-r from-caramel to-rose text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-button">
+                            <span className="bg-linear-to-r from-caramel to-rose text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-button">
                               -{item.discount_percent}%
                             </span>
                           )}
                           {item.is_featured && (
-                            <span className="bg-gradient-to-r from-mauve to-blush text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                            <span className="bg-linear-to-r from-mauve to-blush text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
                               <Sparkles className="w-2 h-2" /> Featured
                             </span>
                           )}
@@ -130,7 +130,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
                         {/* Remove from wishlist — always visible */}
                         <button
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeFromWishlist(item.productId); }}
-                          className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/90 border border-rose/30 flex items-center justify-center hover:bg-rose/15 hover:border-rose/60 transition-all btn-bubble shadow-sm"
+                          className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/90 border border-rose/30 flex items-center justify-center hover:bg-rose/15 hover:border-rose/60 transition-all btn-bubble shadow-xs"
                           title="Remove from wishlist"
                         >
                           <Trash2 className="w-3.5 h-3.5 text-rose/70 hover:text-rose" />
@@ -170,7 +170,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
                             {/* Add to cart */}
                             <button
                               onClick={() => { handleAddToCart(item.productId); onClose(); onOpenCart(); }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-[10px] font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-[10px] font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble"
                               title="Add to cart (stays in wishlist)"
                             >
                               <ShoppingCart className="w-3 h-3" /> Add
@@ -185,7 +185,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
 
               {/* Footer */}
               {wishlistItems.length > 0 && (
-                <div className="px-4 py-4 border-t border-blush/20 flex-shrink-0 bg-white/40">
+                <div className="px-4 py-4 border-t border-blush/20 shrink-0 bg-white/40">
                   <p className="text-[11px] text-ink-light/45 font-sans text-center mb-3">
                     Items stay in wishlist when added to cart 
                   </p>

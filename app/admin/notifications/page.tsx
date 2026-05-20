@@ -167,7 +167,7 @@ export default function AdminNotificationsPage() {
                   <p className="text-[10px] text-ink-light/40 font-sans mt-1.5">{n.time}</p>
                 </div>
                 <Link href={n.href ?? "/admin/notifications"} className="text-caramel/60 hover:text-caramel transition-colors">
-                  <ArrowRight className="w-4 h-4 flex-shrink-0 mt-1" />
+                  <ArrowRight className="w-4 h-4 shrink-0 mt-1" />
                 </Link>
               </div>
             ))

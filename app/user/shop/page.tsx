@@ -58,7 +58,7 @@ const OrderPopup = ({ product, onClose }: { product: Product; onClose: () => voi
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink-dark/50 backdrop-blur-sm"
+      className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-ink-dark/50 backdrop-blur-xs"
       onClick={onClose}>
       <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -78,7 +78,7 @@ const OrderPopup = ({ product, onClose }: { product: Product; onClose: () => voi
             onClick={onClose}
             className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#25D366] text-white hover:brightness-110 transition-all btn-bubble shadow-button"
           >
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
                 <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.86L.057 23.999l6.305-1.654A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 0 1-5.003-1.374l-.358-.213-3.742.981.999-3.648-.235-.374A9.786 9.786 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
@@ -134,7 +134,7 @@ const ShopCard = ({ product }: { product: Product }) => {
               ) : (
                 <img src="/images/crochet-1.jpg" alt="" aria-hidden="true" className="w-full h-full object-cover opacity-[0.35]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-br from-cream-50/95 via-blush/10 to-cream-100/90" />
+              <div className="absolute inset-0 bg-linear-to-br from-cream-50/95 via-blush/10 to-cream-100/90" />
             </div>
 
             {/* Clickable link — z-10 */}
@@ -143,7 +143,7 @@ const ShopCard = ({ product }: { product: Product }) => {
             {/* Initial circle — pointer-events-none */}
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
               <div className={cn(
-                "w-16 h-16 rounded-full bg-gradient-to-br from-blush/30 to-mauve/20 border-2 border-blush/20",
+                "w-16 h-16 rounded-full bg-linear-to-br from-blush/30 to-mauve/20 border-2 border-blush/20",
                 "flex items-center justify-center shadow-soft",
                 "transition-transform duration-300 group-hover:scale-110"
               )}>
@@ -155,13 +155,13 @@ const ShopCard = ({ product }: { product: Product }) => {
             {/* Badges — z-20, no pointer events */}
             <div className="absolute top-3 left-3 flex flex-col gap-1 z-20 pointer-events-none">
               {product.discount_active && product.discount_percent && (
-                <span className="bg-gradient-to-r from-caramel to-rose text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-button">-{product.discount_percent}%</span>
+                <span className="bg-linear-to-r from-caramel to-rose text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-button">-{product.discount_percent}%</span>
               )}
               {outOfStock && (
                 <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">Out of stock</span>
               )}
               {product.is_featured && (
-                <span className="bg-gradient-to-r from-mauve to-blush text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+                <span className="bg-linear-to-r from-mauve to-blush text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> Featured
                 </span>
               )}
@@ -230,7 +230,7 @@ const ShopCard = ({ product }: { product: Product }) => {
                   disabled={outOfStock}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!outOfStock) setShowOrder(true); }}
                   className={cn("flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-sans font-bold transition-all btn-bubble",
-                    outOfStock ? "bg-red-100 text-red-500 border border-red-200 cursor-not-allowed" : "bg-gradient-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5")}
+                    outOfStock ? "bg-red-100 text-red-500 border border-red-200 cursor-not-allowed" : "bg-linear-to-r from-caramel to-rose text-white shadow-button hover:shadow-button-hover hover:-translate-y-0.5")}
                 >
                   {outOfStock ? "Sold out" : "Buy"}
                 </button>
@@ -299,7 +299,7 @@ const FilterPanel = ({
           <button key={f.label} onClick={() => f.toggle(!f.value)}
             className={cn("w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-sans font-semibold transition-all btn-bubble",
               f.value ? "bg-caramel/10 border-caramel/30 text-caramel" : "border-caramel/15 bg-white/60 text-ink-light hover:border-blush/40")}>
-            <div className={cn("w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0 transition-all", f.value ? "bg-gradient-to-br from-caramel to-rose border-transparent" : "border-caramel/25")}>
+            <div className={cn("w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-all", f.value ? "bg-linear-to-br from-caramel to-rose border-transparent" : "border-caramel/25")}>
               {f.value && <Check className="w-3 h-3 text-white" />}
             </div>
             {f.icon} {f.label}
@@ -337,7 +337,7 @@ const FilterPanel = ({
                       isCartOnly && "opacity-60 cursor-not-allowed"
                     )}
                   >
-                    <div className={cn("w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0", selected ? "bg-gradient-to-br from-caramel to-rose border-transparent" : "border-caramel/25")}>
+                    <div className={cn("w-4 h-4 rounded-md border flex items-center justify-center shrink-0", selected ? "bg-linear-to-br from-caramel to-rose border-transparent" : "border-caramel/25")}>
                       {selected && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -745,7 +745,7 @@ function ShopContent() {
         <div className="absolute inset-0 pointer-events-none">
           <img src="/images/crochet-6.jpg" alt="" aria-hidden="true" className="absolute top-0 right-0 w-2/5 h-full object-cover opacity-[0.18]" />
           <img src="/images/crochet-2.jpg" alt="" aria-hidden="true" className="absolute top-0 left-0 w-1/3 h-full object-cover opacity-[0.12]" />
-          <div className="absolute inset-0 bg-gradient-to-br from-cream-100/90 via-cream-100/80 to-cream-100/90" />
+          <div className="absolute inset-0 bg-linear-to-br from-cream-100/90 via-cream-100/80 to-cream-100/90" />
         </div>
         <div className="max-w-7xl mx-auto text-center">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl sm:text-4xl font-semibold text-ink-dark mb-5">Our Shop</motion.h1>
@@ -753,7 +753,7 @@ function ShopContent() {
             <div className="relative w-full max-w-md">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-caramel/50 z-10" />
               <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products, categories, tags..."
-                className="w-full h-12 pl-11 pr-10 rounded-2xl border border-caramel/20 bg-white/90 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-none focus:border-blush focus:shadow-[0_0_0_3px_rgba(244,184,193,0.2)] transition-all" />
+                className="w-full h-12 pl-11 pr-10 rounded-2xl border border-caramel/20 bg-white/90 text-sm font-sans text-ink placeholder:text-ink-light/40 outline-hidden focus:border-blush focus:shadow-[0_0_0_3px_rgba(244,184,193,0.2)] transition-all" />
               {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg text-ink-light/40 hover:text-caramel transition-colors"><X className="w-4 h-4" /></button>}
             </div>
           </motion.div>
@@ -813,7 +813,7 @@ function ShopContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">
           {/* Sidebar */}
-          <aside className="hidden lg:block w-56 flex-shrink-0">
+          <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-28 glass rounded-3xl border border-blush/25 p-5">
               <FilterPanel categories={cats} selectedCategory={cat} onCategory={setCat} priceRange={price} onPriceRange={setPrice} showFeatured={featured} onFeatured={setFeatured} showDiscounted={discounted} onDiscounted={setDiscounted} shopDiscounts={shopDiscounts} selectedDiscountCodes={selectedDiscountCodes} onDiscountCodesChange={handleDiscountCodesChange} onClear={clear} />
             </div>
@@ -826,7 +826,7 @@ function ShopContent() {
               <div className="flex items-center gap-2">
                 <button onClick={() => setFilterOpen(true)} className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm font-sans font-semibold text-ink btn-bubble">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-caramel" /> Filters
-                  {activeCount > 0 && <span className="w-5 h-5 rounded-full bg-gradient-to-br from-caramel to-rose text-white text-[10px] font-bold flex items-center justify-center">{activeCount}</span>}
+                  {activeCount > 0 && <span className="w-5 h-5 rounded-full bg-linear-to-br from-caramel to-rose text-white text-[10px] font-bold flex items-center justify-center">{activeCount}</span>}
                 </button>
                 <SortDropdown value={sort} onChange={setSort} />
                 <div className="flex border border-caramel/20 rounded-xl overflow-hidden">
@@ -843,7 +843,7 @@ function ShopContent() {
                 <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-24 text-center gap-4">
                   <div className="text-6xl"></div>
                   <p className="font-display text-xl text-ink-dark">No products found</p>
-                  <button onClick={() => { setQuery(""); clear(); }} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-caramel to-rose text-white text-sm font-sans font-bold btn-bubble shadow-button">Clear filters</button>
+                  <button onClick={() => { setQuery(""); clear(); }} className="px-6 py-2.5 rounded-xl bg-linear-to-r from-caramel to-rose text-white text-sm font-sans font-bold btn-bubble shadow-button">Clear filters</button>
                 </motion.div>
               ) : (
                 <motion.div key="grid" layout className={cn("grid gap-5", grid ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>
@@ -859,7 +859,7 @@ function ShopContent() {
       <AnimatePresence>
         {filterOpen && (
           <>
-            <motion.div key="ov" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFilterOpen(false)} className="fixed inset-0 bg-ink-dark/40 z-40 backdrop-blur-sm" />
+            <motion.div key="ov" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setFilterOpen(false)} className="fixed inset-0 bg-ink-dark/40 z-40 backdrop-blur-xs" />
             <motion.div key="dr" initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="fixed top-0 left-0 bottom-0 w-72 glass z-50 p-6 overflow-y-auto border-r border-blush/25">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display text-lg font-semibold text-ink-dark">Filters</h2>
