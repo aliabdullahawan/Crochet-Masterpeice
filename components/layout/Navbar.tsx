@@ -12,7 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Heart, ShoppingBag, Bell, User, LogOut, Settings,
   ChevronDown, Menu, X, ShoppingCart, Home, Package,
-  Scissors, Phone, Tag,
+  Scissors, Phone, Tag, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -131,7 +131,8 @@ const NotificationDropdown = ({
   };
 
   return (
-    <div className="absolute right-0 top-full mt-3 w-80 glass rounded-2xl shadow-card border border-blush/30 overflow-hidden z-50 animate-slide-down">
+    <div className="absolute right-0 top-full pt-3 z-50">
+      <div className="w-80 sm:w-96 glass rounded-2xl shadow-card border border-blush/30 overflow-hidden animate-slide-down">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-blush/20">
         <span className="font-display text-sm font-semibold text-ink-dark">Notifications</span>
@@ -198,6 +199,7 @@ const NotificationDropdown = ({
           </Link>
         </div>
       )}
+      </div>
     </div>
   );
 };
@@ -216,8 +218,11 @@ const ProfileDropdown = ({
   userName?: string;
   avatarEmoji?: string;
   onClose: () => void;
-  onLogout?: () => void;
-}) => (
+  onLogout?: () => void | Promise<void>;
+}) => {
+  const [loggingOut, setLoggingOut] = useState(false);
+  
+  return (
   <div className="absolute right-0 top-full mt-3 w-56 glass rounded-2xl shadow-card border border-blush/30 overflow-hidden z-50 animate-slide-down">
     {isLoggedIn ? (
       <>
@@ -243,9 +248,19 @@ const ProfileDropdown = ({
           className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-sans text-ink hover:bg-blush/10 transition-colors border-b border-blush/10">
           <Package className="w-4 h-4 text-ink-light/60" /> My Orders
         </Link>
-        <button onClick={onLogout}
+        <button onClick={async () => {
+            if (!onLogout) return;
+            setLoggingOut(true);
+            try {
+              await onLogout();
+            } finally {
+              setLoggingOut(false);
+              onClose();
+            }
+          }}
+          disabled={loggingOut}
           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-sans text-red-400 hover:bg-red-50 transition-colors">
-          <LogOut className="w-4 h-4" /> Sign Out
+          {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />} Sign Out
         </button>
       </>
     ) : (
@@ -264,7 +279,8 @@ const ProfileDropdown = ({
       </>
     )}
   </div>
-);
+  );
+};
 
 /* =============================================
    DISCOUNT TICKER BANNER — all discounts marquee
@@ -621,7 +637,6 @@ export const Navbar = () => {
     { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
     { href: "/user/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4" /> },
     { href: "/user/custom-order", label: "Custom", icon: <Scissors className="w-4 h-4" /> },
-    { href: "/user/orders", label: "My Orders", icon: <Package className="w-4 h-4" /> },
     { href: "/user/contact", label: "Contact", icon: <Phone className="w-4 h-4" /> },
   ];
 
@@ -711,35 +726,6 @@ export const Navbar = () => {
 
             {/* ── Right icons ── */}
             <div className="flex items-center gap-1">
-              {isLoggedIn && (
-                <>
-                  <Link
-                    href="/user/orders"
-                    className="relative p-2 rounded-xl transition-all duration-200 hover:bg-blush/20 text-ink-light hover:text-ink"
-                    aria-label="My orders"
-                  >
-                    <Package className="w-5 h-5" />
-                    {activeOrderCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-caramel text-white text-[10px] px-1 flex items-center justify-center">
-                        {activeOrderCount > 99 ? "99+" : activeOrderCount}
-                      </span>
-                    )}
-                  </Link>
-
-                  <Link
-                    href="/user/orders"
-                    className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-ink-light hover:text-ink hover:bg-blush/20 transition-all"
-                  >
-                    <Package className="w-4 h-4" />
-                    <span>My Orders</span>
-                    {activeOrderCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] rounded-full bg-caramel text-white text-[10px] px-1 flex items-center justify-center">
-                        {activeOrderCount}
-                      </span>
-                    )}
-                  </Link>
-                </>
-              )}
 
               {/* Wishlist — opens drawer */}
               <IconBtn count={wishlistCount} aria-label="Wishlist" onClick={() => setWishlistOpen(true)}>
@@ -756,8 +742,9 @@ export const Navbar = () => {
               <div
                 ref={notifRef}
                 className="relative"
-                onMouseEnter={() => { if (!notifDisabled) setNotifOpen(true); }}
-                onMouseLeave={() => setNotifOpen(false)}
+                onMouseEnter={() => {
+                  if (!notifDisabled) setNotifOpen(true);
+                }}
               >
                 <IconBtn
                   count={notifDisabled ? undefined : unreadCount}
@@ -765,11 +752,11 @@ export const Navbar = () => {
                   active={notifOpen}
                   onClick={() => {
                     if (notifDisabled) {
-                      router.push("/user/login?redirect=%2Fuser%2Fnotifications");
+                      window.location.href = "/user/login?redirect=%2Fuser%2Fnotifications";
                       return;
                     }
-                    setNotifOpen((o) => !o);
-                    setProfileOpen(false);
+                    setNotifOpen(false);
+                    window.location.href = "/user/notifications";
                   }}
                 >
                   <Bell className={cn("w-5 h-5", notifDisabled && "opacity-70")} />
@@ -840,8 +827,11 @@ export const Navbar = () => {
                     userName={displayName}
                     onClose={() => setProfileOpen(false)}
                     onLogout={async () => {
-                      await signOut();
-                      router.replace("/");
+                      try {
+                        await signOut();
+                      } finally {
+                        window.location.href = "/";
+                      }
                     }}
                   />
                 )}

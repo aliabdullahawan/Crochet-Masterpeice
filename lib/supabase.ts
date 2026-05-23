@@ -119,9 +119,27 @@ export async function signInWithMagicLink(email: string, redirectTo = "/user/hom
 }
 
 export async function signOut() {
-  await supabase.auth.signOut();
+  // 1. Forcefully clear all local storage keys FIRST so local state is instantly wiped.
   if (typeof window !== "undefined") {
-    ["cm_user_logged_in","cm_user_name","cm_user_email",
-     "cm_user_id","cm_remember_me","cm_user_avatar"].forEach(k => localStorage.removeItem(k));
+    [
+      "cm_user_logged_in",
+      "cm_user_name",
+      "cm_user_email",
+      "cm_user_id",
+      "cm_remember_me",
+      "cm_user_avatar",
+      "cm-auth"
+    ].forEach(k => localStorage.removeItem(k));
+  }
+
+  // 2. Attempt to tell Supabase to invalidate the token, but wrap it in a timeout
+  // so a hanging network request never stops the user from logging out locally.
+  try {
+    await Promise.race([
+      supabase.auth.signOut(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Signout timeout")), 2000))
+    ]);
+  } catch (error) {
+    console.warn("Supabase remote signout failed or timed out. Local session is wiped.", error);
   }
 }

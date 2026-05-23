@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Package, Grid3X3, BarChart3,
   ShoppingBag, Users, Tag, Bell, User, LogOut, Star, Scissors,
-  ChevronDown, Menu, X, ExternalLink, AlertTriangle,
+  ChevronDown, Menu, X, ExternalLink, AlertTriangle, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearAdminSession } from "@/lib/adminSession";
@@ -178,6 +178,7 @@ export const AdminNavbar = () => {
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const [adminName, setAdminName] = React.useState("Admin");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -302,10 +303,13 @@ export const AdminNavbar = () => {
                 ref={notifRef}
                 className="relative"
                 onMouseEnter={() => setNotifOpen(true)}
-                onMouseLeave={() => setNotifOpen(false)}
               >
                 <button
-                  onClick={() => { setNotifOpen((o) => !o); setProfileOpen(false); }}
+                  onClick={() => {
+                    setNotifOpen(false);
+                    setProfileOpen(false);
+                    router.push("/admin/notifications");
+                  }}
                   className={cn("relative p-2 rounded-xl transition-all hover:bg-caramel/10 btn-bubble",
                     notifOpen ? "text-caramel bg-caramel/10" : "text-ink-light hover:text-ink")}
                 >
@@ -382,11 +386,13 @@ export const AdminNavbar = () => {
                     </Link>
                     <button
                       onClick={() => {
+                        setLoggingOut(true);
                         clearAdminSession();
-                        router.replace("/admin/login");
+                        window.location.href = "/admin/login";
                       }}
+                      disabled={loggingOut}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-sans text-red-400 hover:bg-red-50 transition-colors">
-                      <LogOut className="w-4 h-4" /> Sign Out
+                      {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />} Sign Out
                     </button>
                   </div>
                 )}

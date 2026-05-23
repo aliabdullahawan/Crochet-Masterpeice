@@ -225,8 +225,11 @@ export default function UserProfilePage() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    router.replace("/user/login");
+    try {
+      await signOut();
+    } finally {
+      window.location.href = "/user/login";
+    }
   };
 
   const deleteMyReview = async (reviewId: string) => {
