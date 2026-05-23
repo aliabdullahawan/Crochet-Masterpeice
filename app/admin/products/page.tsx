@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { AdminLeftPanel } from "@/components/admin/AdminLeftPanel";
 import { TableSkeleton } from "@/components/ui/PageSkeletons";
+import useSWR from "swr";
 
 /* =============================================
    TYPES
@@ -542,9 +543,7 @@ const ProductRow = ({ product, selected, onSelect, onDelete, onToggle, onToggleF
    ============================================= */
 export default function AdminProductsPage() {
   useAdminAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [dbLoading, setDbLoading] = useState(true);
-
+  
   const [catList, setCatList] = useState<{id:string;name:string}[]>([]);
 
   useEffect(() => {
@@ -552,72 +551,72 @@ export default function AdminProductsPage() {
       .then(({ data }) => { if (data) setCatList(data); });
   }, []);
 
-  const loadProducts = async () => {
-    try {
-      const [productsRes, listingRes, categoriesRes] = await Promise.all([
-        supabase
-          .from("products")
-          .select("id, name, description, price, original_price, category_id, stock_quantity, is_featured, is_active, average_rating, review_count, tags, image_url, images, created_at, categories(name)")
-          .order("created_at", { ascending: false }),
-        supabase.from("product_listing").select("id, active_discount_percent, discount_active"),
-        supabase.from("categories").select("id, name"),
-      ]);
+  const fetchProducts = async () => {
+    const [productsRes, listingRes, categoriesRes] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id, name, description, price, original_price, category_id, stock_quantity, is_featured, is_active, average_rating, review_count, tags, image_url, images, created_at, categories(name)")
+        .order("created_at", { ascending: false }),
+      supabase.from("product_listing").select("id, active_discount_percent, discount_active"),
+      supabase.from("categories").select("id, name"),
+    ]);
 
-      const categoryById = new Map<string, string>(
-        ((categoriesRes.data ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name])
-      );
+    const categoryById = new Map<string, string>(
+      ((categoriesRes.data ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name])
+    );
 
-      const discountTypeByProduct = new Map<string, "percent" | "flat">();
-      const modernDiscounts = await supabase
+    const discountTypeByProduct = new Map<string, "percent" | "flat">();
+    const modernDiscounts = await supabase
+      .from("discounts")
+      .select("target_id, applies_to, discount_type")
+      .eq("active", true)
+      .eq("applies_to", "product");
+
+    if (!modernDiscounts.error && modernDiscounts.data) {
+      (modernDiscounts.data as { target_id: string | null; discount_type: "percent" | "flat" | null }[]).forEach((row) => {
+        if (row.target_id) {
+          discountTypeByProduct.set(row.target_id, row.discount_type ?? "percent");
+        }
+      });
+    } else {
+      const legacyDiscounts = await supabase
         .from("discounts")
-        .select("target_id, applies_to, discount_type")
-        .eq("active", true)
-        .eq("applies_to", "product");
-
-      if (!modernDiscounts.error && modernDiscounts.data) {
-        (modernDiscounts.data as { target_id: string | null; discount_type: "percent" | "flat" | null }[]).forEach((row) => {
-          if (row.target_id) {
-            discountTypeByProduct.set(row.target_id, row.discount_type ?? "percent");
+        .select("product_id, discount_type")
+        .eq("active", true);
+      if (!legacyDiscounts.error && legacyDiscounts.data) {
+        (legacyDiscounts.data as { product_id: string | null; discount_type: "percent" | "flat" | null }[]).forEach((row) => {
+          if (row.product_id) {
+            discountTypeByProduct.set(row.product_id, row.discount_type ?? "percent");
           }
         });
-      } else {
-        const legacyDiscounts = await supabase
-          .from("discounts")
-          .select("product_id, discount_type")
-          .eq("active", true);
-        if (!legacyDiscounts.error && legacyDiscounts.data) {
-          (legacyDiscounts.data as { product_id: string | null; discount_type: "percent" | "flat" | null }[]).forEach((row) => {
-            if (row.product_id) {
-              discountTypeByProduct.set(row.product_id, row.discount_type ?? "percent");
-            }
-          });
-        }
       }
+    }
 
-      const listingMap = new Map(
-        ((listingRes.data ?? []) as { id: string; active_discount_percent?: number | null; discount_active?: boolean | null }[])
-          .map((r) => [r.id, r])
-      );
+    const listingMap = new Map(
+      ((listingRes.data ?? []) as { id: string; active_discount_percent?: number | null; discount_active?: boolean | null }[])
+        .map((r) => [r.id, r])
+    );
 
-      if (productsRes.data) {
-        setProducts(productsRes.data.map((p: Record<string, unknown>) => {
-          const discountRow = listingMap.get(String(p.id));
-          const categoryId = (p.category_id as string | null) ?? null;
-          const joinedCategory = (p.categories as {name:string}|null)?.name;
-          return {
-            ...p,
-            category_name: joinedCategory ?? (categoryId ? categoryById.get(categoryId) : undefined) ?? "Uncategorised",
-            discount_active: Boolean(discountRow?.discount_active),
-            discount_type: discountTypeByProduct.get(String(p.id)) ?? "percent",
-            discount_percent: discountRow?.active_discount_percent ?? undefined,
-          };
-        }) as Product[]);
-      }
-    } catch(e) { console.error(e); }
-    finally { setDbLoading(false); }
+    if (productsRes.data) {
+      return productsRes.data.map((p: Record<string, unknown>) => {
+        const discountRow = listingMap.get(String(p.id));
+        const categoryId = (p.category_id as string | null) ?? null;
+        const joinedCategory = (p.categories as {name:string}|null)?.name;
+        return {
+          ...p,
+          category_name: joinedCategory ?? (categoryId ? categoryById.get(categoryId) : undefined) ?? "Uncategorised",
+          discount_active: Boolean(discountRow?.discount_active),
+          discount_type: discountTypeByProduct.get(String(p.id)) ?? "percent",
+          discount_percent: discountRow?.active_discount_percent ?? undefined,
+        };
+      }) as Product[];
+    }
+    return [];
   };
 
-  useEffect(() => { loadProducts(); }, []);
+  const { data: products = [], isLoading: dbLoading, mutate } = useSWR("admin_products", fetchProducts, {
+    revalidateOnFocus: false,
+  });
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "hidden" | "featured">("all");
@@ -736,18 +735,8 @@ export default function AdminProductsPage() {
         }
       }
 
-      setProducts(p => p.map(pr => pr.id === editing.id
-        ? {
-            ...pr,
-            ...payload,
-            original_price: payload.original_price ?? undefined,
-            category_name: cat?.name ?? pr.category_name,
-            discount_active: data.discount_active,
-            discount_type: "percent",
-            discount_percent: data.discount_active ? finalDiscountValue : undefined,
-          }
-        : pr
-      ));
+      mutate(); // re-fetch products to ensure sync
+
     } else {
       const { data: inserted, error } = await supabase.from("products").insert(payload as unknown as never).select().single();
       if (error) { alert("Create failed: " + error.message); return; }
@@ -783,17 +772,9 @@ export default function AdminProductsPage() {
           } as unknown as never);
         }
       }
-      if (insertedRow) setProducts(p => [...p, {
-        ...(insertedRow as unknown as Product), category_name: cat?.name ?? "",
-        original_price: insertedRow.original_price ?? undefined,
-        average_rating: 0, review_count: 0,
-        discount_active: data.discount_active,
-        discount_type: "percent",
-        discount_percent: data.discount_active ? finalDiscountValue : undefined,
-      }]);
+      mutate(); // re-fetch to sync
     }
     setModal(false); setEditing(undefined);
-    loadProducts();
   };
 
   const sortLabels: Record<typeof sortBy, string> = {

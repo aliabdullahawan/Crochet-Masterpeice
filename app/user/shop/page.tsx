@@ -456,7 +456,6 @@ function ShopContent() {
     })
   );
   const [filterOpen, setFilterOpen] = useState(false);
-  const [discountDrawerOpen, setDiscountDrawerOpen] = useState(false);
   const [grid, setGrid] = useState(true);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -482,11 +481,6 @@ function ShopContent() {
       syncDiscountUrl(codes);
     },
     [syncDiscountUrl]
-  );
-
-  const shopNowDiscounts = React.useMemo(
-    () => shopDiscounts.filter((d) => d.appliesTo !== "cart"),
-    [shopDiscounts]
   );
 
   const toggleDiscountCode = React.useCallback(
@@ -801,61 +795,6 @@ function ShopContent() {
               ))}
             </motion.div>
           )}
-          {shopNowDiscounts.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mt-4 flex flex-wrap items-center justify-center gap-2"
-            >
-              <span className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest flex items-center gap-1.5">
-                <Tag className="w-3 h-3 text-caramel" /> Discounts
-              </span>
-              {shopNowDiscounts.map((d) => {
-                const selected = selectedDiscountCodes.includes(d.code);
-                const valueLabel = d.discountType === "flat"
-                  ? `PKR ${d.percent.toLocaleString()}`
-                  : `-${d.percent}%`;
-                return (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => toggleDiscountCode(d.code)}
-                    title={`${d.code} · ${discountScopeLabel(d)}`}
-                    className={cn(
-                      "inline-flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 px-3 py-1.5 rounded-2xl text-[11px] font-sans font-semibold border transition-all btn-bubble text-left sm:text-center",
-                      selected
-                        ? "bg-caramel/15 border-caramel/30 text-caramel"
-                        : "border-caramel/15 text-ink-light/70 hover:border-caramel/40"
-                    )}
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      <Tag className="w-3 h-3 shrink-0" />
-                      <span className="font-bold">{d.code}</span>
-                      <span className={cn(selected ? "text-caramel/80" : "text-ink-light/50")}>{valueLabel}</span>
-                    </span>
-                    <span className="text-[9px] font-normal text-ink-light/55 sm:ml-0">{discountScopeLabel(d)}</span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setDiscountDrawerOpen(true)}
-                className="px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border border-caramel/25 text-caramel hover:bg-caramel/10"
-              >
-                All discounts →
-              </button>
-              {selectedDiscountCodes.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleDiscountCodesChange([])}
-                  className="px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border border-blush/30 text-ink-light/70 hover:text-caramel hover:border-caramel/40 transition-all btn-bubble"
-                >
-                  Clear discounts
-                </button>
-              )}
-            </motion.div>
-          )}
           <AnimatePresence>
             {(featured || discounted || cat || selectedDiscountCodes.length > 0) && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-wrap justify-center gap-2 mt-4">
@@ -880,6 +819,7 @@ function ShopContent() {
         </div>
       </div>
 
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">
           {/* Sidebar */}
@@ -894,14 +834,6 @@ function ShopContent() {
             <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
               <p className="text-sm text-ink-light/70 font-sans"><span className="font-semibold text-ink">{results.length}</span> products{query && <> for <span className="text-caramel font-semibold">&ldquo;{query}&rdquo;</span></>}</p>
               <div className="flex items-center gap-2 flex-wrap">
-                <button type="button" onClick={() => setDiscountDrawerOpen(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm font-sans font-semibold text-ink btn-bubble">
-                  <Tag className="w-3.5 h-3.5 text-caramel" /> Discounts
-                  {selectedDiscountCodes.length > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-linear-to-br from-caramel to-rose text-white text-[10px] font-bold flex items-center justify-center">
-                      {selectedDiscountCodes.length}
-                    </span>
-                  )}
-                </button>
                 <button type="button" onClick={() => setFilterOpen(true)} className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm font-sans font-semibold text-ink btn-bubble">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-caramel" /> Filters
                   {activeCount > 0 && <span className="w-5 h-5 rounded-full bg-linear-to-br from-caramel to-rose text-white text-[10px] font-bold flex items-center justify-center">{activeCount}</span>}
@@ -932,15 +864,6 @@ function ShopContent() {
           </div>
         </div>
       </div>
-
-      <DiscountFilterDrawer
-        open={discountDrawerOpen}
-        onClose={() => setDiscountDrawerOpen(false)}
-        discounts={shopNowDiscounts}
-        selectedCodes={selectedDiscountCodes}
-        onToggleCode={toggleDiscountCode}
-        onClear={() => handleDiscountCodesChange([])}
-      />
 
       {/* Mobile filter drawer */}
       <AnimatePresence>

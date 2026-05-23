@@ -34,6 +34,7 @@ type CheckoutBody = {
     timeframe?: string;
     estimatedPrice?: string;
   };
+  couponCode?: string;
 };
 
 const isUuid = (value: string) =>
@@ -139,7 +140,64 @@ export async function POST(req: Request) {
     }
 
     const subtotal = safeItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-    const totalAmount = isCustomOrder ? 0 : Math.max(0, subtotal);
+    
+    // Process Coupon
+    let discountAmount = 0;
+    let appliedCouponStr = "";
+    if (body.couponCode && !isCustomOrder && subtotal > 0) {
+      const code = body.couponCode.trim().toUpperCase();
+      const { data: couponRecord } = await service
+        .from("discounts")
+        .select("code, discount_type, discount_value, active, end_date, applies_to, target_id, max_uses, uses_count")
+        .eq("code", code)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (
+        couponRecord &&
+        couponRecord.active &&
+        (!couponRecord.end_date || new Date(couponRecord.end_date) >= new Date()) &&
+        (couponRecord.max_uses === null || (couponRecord.uses_count ?? 0) < couponRecord.max_uses)
+      ) {
+        let eligibleSubtotal = 0;
+        const appliesTo = couponRecord.applies_to ?? "all";
+        
+        if (appliesTo === "all" || appliesTo === "cart") {
+          eligibleSubtotal = subtotal;
+        } else if (appliesTo === "product" && couponRecord.target_id) {
+          eligibleSubtotal = safeItems
+            .filter(i => i.productId === couponRecord.target_id)
+            .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+        } else if (appliesTo === "category" && couponRecord.target_id) {
+          const pids = safeItems.map(i => i.productId).filter(id => typeof id === "string" && id);
+          if (pids.length > 0) {
+            const { data: prods } = await service.from("products").select("id, category_id").in("id", pids);
+            const prodCatMap = new Map((prods || []).map((p: any) => [p.id, p.category_id]));
+            eligibleSubtotal = safeItems
+              .filter(i => i.productId && prodCatMap.get(i.productId) === couponRecord.target_id)
+              .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+          }
+        }
+
+        if (eligibleSubtotal > 0) {
+          if (couponRecord.discount_type === "flat") {
+             discountAmount = Math.min(Number(couponRecord.discount_value), eligibleSubtotal);
+          } else {
+             discountAmount = Math.min(eligibleSubtotal, Math.round((eligibleSubtotal * Number(couponRecord.discount_value)) / 100));
+          }
+          if (discountAmount > 0) {
+             appliedCouponStr = code;
+             // Optimistically increment uses_count
+             try {
+               await service.rpc("increment_discount_usage", { discount_code: code });
+             } catch {}
+          }
+        }
+      }
+    }
+
+    const totalAmount = isCustomOrder ? 0 : Math.max(0, subtotal - discountAmount);
 
     let linkedUserId: string | null =
       typeof body.userId === "string" && isUuid(body.userId) ? body.userId : null;
@@ -222,7 +280,7 @@ export async function POST(req: Request) {
         source,
         status: "pending",
         total_amount: totalAmount,
-        discount_amount: 0,
+        discount_amount: discountAmount,
         note: noteParts.join("\n"),
       })
       .select("id")
@@ -399,6 +457,10 @@ export async function POST(req: Request) {
         lines.push(`${item.name} x${item.quantity} - PKR ${(item.unitPrice * item.quantity).toLocaleString()}`);
       });
       lines.push("----------------------------");
+      lines.push(`Subtotal: PKR ${subtotal.toLocaleString()}`);
+      if (discountAmount > 0) {
+        lines.push(`Discount (${appliedCouponStr}): -PKR ${discountAmount.toLocaleString()}`);
+      }
       lines.push(`TOTAL: PKR ${totalAmount.toLocaleString()}`);
     }
 

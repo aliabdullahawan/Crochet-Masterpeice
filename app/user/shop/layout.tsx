@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Shop Handmade Crochet",
-  description:
-    "Browse handmade crochet products — bags, accessories, gifts, and more. Filter by category and order online.",
-  alternates: { canonical: "/user/shop" },
+  title: "Shop All Products | Crochet Masterpiece",
+  description: "Browse our entire collection of handmade crochet items, from warm sweaters to beautiful custom accessories. Order directly from Crochet Masterpiece.",
+  openGraph: {
+    title: "Shop Crochet Masterpiece",
+    description: "Browse our entire collection of handmade crochet items.",
+  },
 };
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <>{children}</>;
 }

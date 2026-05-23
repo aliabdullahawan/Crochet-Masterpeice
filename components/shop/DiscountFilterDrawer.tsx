@@ -2,10 +2,10 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tag, X, Check } from "lucide-react";
+import { Tag, X, Check, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ShopDiscount } from "@/lib/shopDiscounts";
-import { discountScopeLabel } from "@/lib/shopDiscounts";
+import { discountScopeLabel, shopUrlWithDiscount } from "@/lib/shopDiscounts";
 
 type Props = {
   open: boolean;
@@ -62,52 +62,80 @@ export function DiscountFilterDrawer({
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
               {groups.map((group) => (
                 <div key={group.key}>
-                  <p className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest mb-2">
+                  <p className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest mb-3">
                     {group.title}
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {group.items.map((d) => {
                       const isCartOnly = d.appliesTo === "cart";
                       const selected = !isCartOnly && selectedCodes.includes(d.code);
                       const valueLabel =
                         d.discountType === "flat"
-                          ? `PKR ${d.percent.toLocaleString()}`
+                          ? `PKR ${d.percent.toLocaleString()} off`
                           : `-${d.percent}%`;
                       return (
-                        <button
+                        <div
                           key={d.id}
-                          type="button"
-                          disabled={isCartOnly}
-                          onClick={() => {
-                            if (!isCartOnly) {
-                              onToggleCode(d.code);
-                              onClose();
-                            }
+                          className="rounded-xl overflow-hidden"
+                          style={{
+                            border: "2px solid #1a0a00",
+                            boxShadow: selected
+                              ? "3px 3px 0px 0px #1a0a00, 5px 5px 0px 0px #C8956C"
+                              : "2px 2px 0px 0px #1a0a00, 3px 3px 0px 0px #7a4a1e",
+                            transform: selected ? "translate(-1px, -1px)" : "translate(0,0)",
+                            transition: "all 0.2s ease",
                           }}
-                          className={cn(
-                            "w-full text-left px-3 py-2.5 rounded-xl border text-xs font-sans transition-all",
-                            selected
-                              ? "bg-caramel/12 border-caramel/35 text-caramel"
-                              : "border-caramel/15 bg-white/70 text-ink hover:border-caramel/30",
-                            isCartOnly && "opacity-55 cursor-not-allowed"
-                          )}
                         >
-                          <div className="flex items-start gap-2">
-                            <div
-                              className={cn(
-                                "w-4 h-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5",
-                                selected ? "bg-caramel border-caramel" : "border-caramel/25"
-                              )}
+                          <button
+                            type="button"
+                            disabled={isCartOnly}
+                            onClick={() => {
+                              if (!isCartOnly) {
+                                onToggleCode(d.code);
+                              }
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-2.5 text-xs font-sans transition-all",
+                              selected
+                                ? "bg-caramel/12 text-caramel"
+                                : "bg-white/90 text-ink",
+                              isCartOnly && "opacity-55 cursor-not-allowed"
+                            )}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div
+                                className={cn(
+                                  "w-4 h-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5",
+                                  selected ? "bg-caramel border-caramel" : "border-caramel/25"
+                                )}
+                              >
+                                {selected && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="font-bold">{d.code}</span>
+                                <span className="text-caramel ml-1.5">{valueLabel}</span>
+                                <p className="text-[10px] text-ink-light/55 mt-0.5">{discountScopeLabel(d)}</p>
+                                {d.endsAt && (
+                                  <p className="text-[10px] text-ink-light/40 mt-0.5">Ends {d.endsAt}</p>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                          {!isCartOnly && (
+                            <a
+                              href={shopUrlWithDiscount(d.code)}
+                              onClick={onClose}
+                              className="flex items-center justify-center gap-1.5 py-2 text-[11px] font-black uppercase tracking-widest text-white transition-all"
+                              style={{
+                                background: "linear-gradient(135deg, #C8956C, #E8A0A8)",
+                                borderTop: "1.5px solid #1a0a00",
+                              }}
                             >
-                              {selected && <Check className="w-3 h-3 text-white" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="font-bold">{d.code}</span>
-                              <span className="text-caramel ml-1.5">{valueLabel}</span>
-                              <p className="text-[10px] text-ink-light/55 mt-0.5">{discountScopeLabel(d)}</p>
-                            </div>
-                          </div>
-                        </button>
+                              <ShoppingBag className="w-3 h-3" />
+                              Shop now
+                            </a>
+                          )}
+                        </div>
                       );
                     })}
                   </div>

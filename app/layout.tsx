@@ -3,6 +3,7 @@ import "./globals.css";
 import { ShopProvider } from "@/lib/ShopContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import WhatsAppFloatingButton from "@/components/ui/WhatsAppFloatingButton";
+import SplashScreen from "@/components/ui/SplashScreen";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -61,11 +62,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://api.dicebear.com" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       </head>
-      <body className="antialiased min-h-screen bg-cream-100" suppressHydrationWarning>
+      <body className="antialiased min-h-screen bg-cream-100 relative" suppressHydrationWarning>
+        <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-caramel/15 blur-[120px]" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-mauve/15 blur-[150px]" />
+          <div className="absolute top-[40%] left-[20%] w-[400px] h-[400px] rounded-full bg-pink-300/10 blur-[100px]" />
+        </div>
         <AuthProvider>
           <ShopProvider>
-            {children}
-            <WhatsAppFloatingButton />
+            <SplashScreen>
+              {children}
+              <WhatsAppFloatingButton />
+            </SplashScreen>
           </ShopProvider>
         </AuthProvider>
       </body>

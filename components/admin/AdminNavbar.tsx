@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearAdminSession } from "@/lib/adminSession";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 interface AdminNotification {
   id: string;
@@ -173,11 +175,8 @@ export const AdminNavbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notifs, setNotifs] = useState<AdminNotification[]>(MOCK_ADMIN_NOTIFS);
-  const [adminNotifSetupHint, setAdminNotifSetupHint] = useState<string | null>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const unread = notifs.filter((n) => !n.read).length;
   const [adminName, setAdminName] = React.useState("Admin");
 
   React.useEffect(() => {
@@ -202,40 +201,20 @@ export const AdminNavbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
+  const { data, mutate } = useSWR("/api/admin/admin-notifications?limit=8", fetcher, {
+    revalidateOnFocus: false,
+  });
 
-    const loadAdminNotifs = async () => {
-      const res = await fetch("/api/admin/admin-notifications?limit=8", { cache: "no-store" });
-      const body = await res.json().catch(() => ({}));
-      if (!mounted) return;
-      if (!res.ok) {
-        setAdminNotifSetupHint(null);
-        return;
-      }
+  const mapType = (raw: string): AdminNotification["type"] => {
+    const t = String(raw ?? "").toLowerCase();
+    if (t === "low_stock" || t === "out_of_stock") return "inventory";
+    if (t.includes("order")) return "order";
+    if (t.includes("user")) return "user";
+    return "system";
+  };
 
-      const hint = typeof body.setup_hint === "string" && body.setup_hint.trim() ? body.setup_hint.trim() : null;
-      setAdminNotifSetupHint(hint);
-
-      if (!Array.isArray(body?.notifications)) return;
-
-      const mapType = (raw: string): AdminNotification["type"] => {
-        const t = String(raw ?? "").toLowerCase();
-        if (t === "low_stock" || t === "out_of_stock") return "inventory";
-        if (t.includes("order")) return "order";
-        if (t.includes("user")) return "user";
-        return "system";
-      };
-
-      const mapped = (body.notifications as {
-        id: string;
-        type: string;
-        title: string;
-        message: string;
-        link: string | null;
-        is_read: boolean;
-        created_at: string;
-      }[]).map((n) => ({
+  const notifs: AdminNotification[] = Array.isArray(data?.notifications)
+    ? data.notifications.map((n: any) => ({
         id: n.id,
         title: n.title,
         message: n.message,
@@ -243,21 +222,12 @@ export const AdminNavbar = () => {
         read: n.is_read,
         link: n.link ?? undefined,
         type: mapType(n.type),
-      }));
+      }))
+    : [];
 
-      setNotifs(mapped);
-    };
+  const unread = notifs.filter((n) => !n.read).length;
 
-    loadAdminNotifs();
-    const timer = setInterval(loadAdminNotifs, 30000);
-    const onFocus = () => loadAdminNotifs();
-    window.addEventListener("focus", onFocus);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, []);
+  const adminNotifSetupHint = typeof data?.setup_hint === "string" && data.setup_hint.trim() ? data.setup_hint.trim() : null;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -298,8 +268,11 @@ export const AdminNavbar = () => {
           <div className="flex items-center justify-between gap-4">
             {/* Logo */}
             <Link href="/admin/dashboard" className="flex items-center gap-2.5 shrink-0 group">
-              <div className="w-9 h-9 rounded-xl overflow-hidden ring-2 ring-caramel/20 transition-all duration-300 group-hover:ring-caramel/50">
-                <Image src="/images/logo.png" alt="Logo" width={36} height={36} className="object-cover" />
+              <div
+                className="w-10 h-10 rounded-full overflow-hidden transition-all duration-300 group-hover:scale-105"
+                style={{ boxShadow: "0 2px 10px rgba(200,149,108,0.25), 0 1px 4px rgba(244,184,193,0.3)" }}
+              >
+                <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
               </div>
               <div className="hidden sm:block">
                 <p className="font-display text-sm font-semibold text-ink-dark leading-none">Crochet</p>
@@ -348,21 +321,25 @@ export const AdminNavbar = () => {
                     notifs={notifs}
                     setupHint={adminNotifSetupHint}
                     onClose={() => setNotifOpen(false)}
-                    onMarkRead={(id) => {
-                      setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
-                      void fetch("/api/admin/admin-notifications", {
+                    onMarkRead={async (id) => {
+                      const updated = notifs.map((n) => (n.id === id ? { ...n, read: true } : n));
+                      mutate({ ...data, notifications: updated }, false);
+                      await fetch("/api/admin/admin-notifications", {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: "mark_read", id }),
                       });
+                      mutate();
                     }}
-                    onMarkAll={() => {
-                      setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
-                      void fetch("/api/admin/admin-notifications", {
+                    onMarkAll={async () => {
+                      const updated = notifs.map((n) => ({ ...n, read: true }));
+                      mutate({ ...data, notifications: updated }, false);
+                      await fetch("/api/admin/admin-notifications", {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: "mark_all_read" }),
                       });
+                      mutate();
                     }}
                   />
                 )}

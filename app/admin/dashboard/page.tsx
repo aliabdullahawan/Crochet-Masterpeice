@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import {
   ShoppingBag, Package, Users, Star, TrendingUp,
   Tag, Plus, ArrowRight, Clock, Check, Truck,
@@ -11,6 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { GLSLHills } from "@/components/ui/glsl-hills";
+
 function useAdminAuth() {
   const router = useRouter();
   useEffect(() => {
@@ -82,61 +86,30 @@ const ORDER_STATUS_CFG: Record<string, { label: string; color: string; icon: Rea
 export default function AdminDashboardPage() {
   useAdminAuth();
 
-  const [stats, setStats] = useState({
-    orders: 0, products: 0, users: 0, revenue: 0,
-    avgRating: 0, activeDiscounts: 0,
+  const { data: body, isLoading: loading } = useSWR("/api/admin/dashboard", fetcher, {
+    revalidateOnFocus: false,
   });
-  const [recentOrders, setRecentOrders] = useState<{
+
+  const stats = {
+    orders: body?.stats?.orders ?? 0,
+    products: body?.stats?.products ?? 0,
+    users: body?.stats?.users ?? 0,
+    revenue: body?.stats?.revenue ?? 0,
+    avgRating: body?.stats?.avgRating ?? 0,
+    activeDiscounts: body?.stats?.activeDiscounts ?? 0,
+  };
+  const recentOrders = (body?.recentOrders ?? []) as {
     id: string; customer_name: string; total_amount: number;
     status: string; created_at: string;
-  }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [socialCounts, setSocialCounts] = useState({ instagram: 0, facebook: 0, tiktok: 0, whatsapp: 0 });
+  }[];
+  const socialCounts = body?.socialCounts ?? { instagram: 0, facebook: 0, tiktok: 0, whatsapp: 0 };
 
   const [adminName, setAdminName] = useState("Admin");
   useEffect(() => {
     setAdminName(localStorage.getItem("cm_admin_name") ?? "Admin");
   }, []);
 
-  useEffect(() => {
-    void loadData();
-    const timer = setInterval(() => void loadData(), 45_000);
-    const onFocus = () => void loadData();
-    window.addEventListener("focus", onFocus);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const res = await fetch("/api/admin/dashboard", { cache: "no-store" });
-      const body = await res.json();
-      if (!res.ok) {
-        throw new Error(typeof body?.error === "string" ? body.error : "Could not load dashboard.");
-      }
-
-      setStats({
-        orders: body.stats?.orders ?? 0,
-        products: body.stats?.products ?? 0,
-        users: body.stats?.users ?? 0,
-        revenue: body.stats?.revenue ?? 0,
-        avgRating: body.stats?.avgRating ?? 0,
-        activeDiscounts: body.stats?.activeDiscounts ?? 0,
-      });
-      setRecentOrders((body.recentOrders ?? []) as typeof recentOrders);
-      if (body.socialCounts) {
-        setSocialCounts(body.socialCounts);
-      }
-    } catch (e) {
-      console.error("Dashboard load error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const totalCommunity = Object.values(socialCounts).reduce((a, b) => a + b, 0) + stats.users;
+  const totalCommunity = Object.values(socialCounts).reduce((a, b) => (a as number) + (b as number), 0) + stats.users;
 
   const highlightChips = [
     { label: "Orders", value: stats.orders.toLocaleString(), tone: "bg-white/80 border-caramel/20 text-ink" },
@@ -161,9 +134,11 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-cream-100">
-      <AdminNavbar />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="relative min-h-screen overflow-hidden bg-cream-100">
+      <GLSLHills />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <AdminNavbar />
+        <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 space-y-8 w-full">
 
         {/* Header */}
         <div className="relative overflow-hidden rounded-3xl border border-caramel/15 bg-linear-to-br from-cream-50 via-blush/10 to-mauve/10 p-6">
@@ -315,6 +290,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import OrdersListSkeleton from "@/components/ui/OrdersListSkeleton";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import {
   normalizeReturnStatus,
   RETURN_STATUS_LABEL,
@@ -249,64 +251,36 @@ const OrderDetailPanel = ({ order, onClose, onStatusChange, onReturnChange, onSe
    ============================================= */
 export default function AdminOrdersPage() {
   useAdminAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [dbLoading, setDbLoading] = useState(true);
+  
+  const { data: body, isLoading: dbLoading, mutate } = useSWR("/api/admin/orders", fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  const rawOrders = Array.isArray(body?.orders) ? body.orders : [];
+  const orders: Order[] = rawOrders.map((o: any) => ({
+    id: o.id,
+    user_id: o.user_id,
+    customer_name: o.customer_name,
+    customer_email: o.customer_email || undefined,
+    customer_phone: o.customer_phone,
+    items: (o.items ?? []).map((item: any) => ({
+      name: item.product_name,
+      qty: item.quantity,
+      price: item.unit_price,
+      product_id: item.product_id,
+    })),
+    total: o.total_amount,
+    status: o.status as Order["status"],
+    source: o.source as Order["source"],
+    date: new Date(o.created_at).toISOString().split("T")[0],
+    note: o.note || undefined,
+    address: o.address || undefined,
+    return_status: normalizeReturnStatus(o.return_status),
+  }));
+
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/admin/orders", { cache: "no-store" });
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(typeof body?.error === "string" ? body.error : "Could not load orders.");
-        }
 
-        const orderRows = Array.isArray(body?.orders) ? body.orders : [];
-        setOrders(orderRows.map((o: {
-          id: string;
-          user_id: string | null;
-          customer_name: string;
-          customer_email: string;
-          customer_phone: string;
-          total_amount: number;
-          status: string;
-          source: string;
-          created_at: string;
-          note: string;
-          address: string;
-          return_status?: string;
-          items: Array<{
-            product_id: string | null;
-            product_name: string;
-            quantity: number;
-            unit_price: number;
-          }>;
-        }) => ({
-          id: o.id,
-          user_id: o.user_id,
-          customer_name: o.customer_name,
-          customer_email: o.customer_email || undefined,
-          customer_phone: o.customer_phone,
-          items: (o.items ?? []).map((item) => ({
-            name: item.product_name,
-            qty: item.quantity,
-            price: item.unit_price,
-            product_id: item.product_id,
-          })),
-          total: o.total_amount,
-          status: o.status as Order["status"],
-          source: o.source as Order["source"],
-          date: new Date(o.created_at).toISOString().split("T")[0],
-          note: o.note || undefined,
-          address: o.address || undefined,
-          return_status: normalizeReturnStatus(o.return_status),
-        })));
-      } catch(e) { console.error(e); }
-      finally { setDbLoading(false); }
-    };
-    load();
-  }, []);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "all">("all");
   const [viewMode, setViewMode] = useState<"all" | "returns">("all");
@@ -366,7 +340,7 @@ export default function AdminOrdersPage() {
     const resolvedId = (data as { id: string } | null)?.id ?? null;
     if (resolvedId) {
       await supabase.from("orders").update({ user_id: resolvedId } as unknown as never).eq("id", order.id);
-      setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, user_id: resolvedId } : o));
+      mutate(); // revalidate orders
       setSelected((prev) => prev?.id === order.id ? { ...prev, user_id: resolvedId } : prev);
     }
     return resolvedId;
@@ -402,7 +376,7 @@ export default function AdminOrdersPage() {
       await decrementStockForOrder(id);
     }
 
-    setOrders(p => p.map(o => o.id === id ? { ...o, status } : o));
+    mutate(); // Refresh the order list
     setSelected(s => s?.id === id ? { ...s, status } : s);
   };
 
@@ -444,7 +418,7 @@ export default function AdminOrdersPage() {
           return;
         }
 
-        setOrders((prev) => prev.map((o) => o.id === id ? { ...o, note: mergedNote } : o));
+        mutate(); // revalidate orders
         setSelected((prev) => prev?.id === id ? { ...prev, note: mergedNote } : prev);
       } else {
         alert("Could not save admin note: " + adminNoteErr.message);
@@ -485,7 +459,7 @@ export default function AdminOrdersPage() {
       return;
     }
     const next = normalizeReturnStatus(body?.return_status ?? returnStatus);
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, return_status: next } : o)));
+    mutate(); // Revalidate orders
     setSelected((prev) => (prev?.id === id ? { ...prev, return_status: next } : prev));
   };
 
@@ -499,7 +473,7 @@ export default function AdminOrdersPage() {
       alert("Delete failed: " + (body?.error || "Unknown error"));
       return;
     }
-    setOrders((prev) => prev.filter((o) => o.id !== id));
+    mutate(); // Refresh orders
     setSelected((prev) => (prev?.id === id ? null : prev));
     alert("Order deleted.");
   };

@@ -15,7 +15,8 @@ import {
   Scissors, Phone, Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CrochetLogo } from "@/components/ui/CrochetLogo";
+
+
 
 /* =============================================
    TYPES
@@ -266,7 +267,7 @@ const ProfileDropdown = ({
 );
 
 /* =============================================
-   DISCOUNT TICKER BANNER
+   DISCOUNT TICKER BANNER — all discounts marquee
    ============================================= */
 type BannerDiscount = {
   id?: string;
@@ -275,6 +276,7 @@ type BannerDiscount = {
   value: number;
   discountType: "percent" | "flat";
   appliesTo: "all" | "product" | "category" | "cart";
+  targetId?: string | null;
   endsAt?: string;
 };
 
@@ -283,38 +285,51 @@ const DiscountBanner = ({
 }: {
   discounts: BannerDiscount[];
 }) => {
-  const shopNowDiscounts = discounts.filter((d) => d.code && d.appliesTo !== "cart");
-  if (!shopNowDiscounts.length) return null;
+  if (!discounts.length) return null;
+
+  // Duration scales with number of discounts so speed stays consistent
+  const duration = Math.max(discounts.length * 8, 24);
+
   return (
-    <div className="relative overflow-hidden bg-linear-to-r from-caramel/90 via-blush/90 to-mauve/90 text-white py-2 text-xs font-sans font-semibold tracking-wide">
+    <div className="relative overflow-hidden bg-linear-to-r from-caramel via-rose/80 to-mauve/90 text-white py-1.5 text-xs font-sans font-semibold tracking-wide h-8 flex items-center">
+      {/* Double the list so the scroll loops seamlessly */}
       <div
-        className="flex gap-12 whitespace-nowrap items-center"
-        style={{ animation: "marquee 32s linear infinite" }}
+        className="flex items-center gap-0 whitespace-nowrap"
+        style={{ animation: `discountMarquee ${duration}s linear infinite`, width: "max-content" }}
       >
-        {[...shopNowDiscounts, ...shopNowDiscounts].map((d, i) => (
-          <span key={`${d.id ?? d.code ?? "discount"}-${i}`} className="inline-flex items-center gap-2 shrink-0">
-            <Tag className="w-3 h-3 inline shrink-0" />
-            <span className="font-script text-sm">{d.code ?? "Special"}</span>
-            <span>
-              — {d.discountType === "flat" ? `PKR ${d.value.toLocaleString()}` : `${d.value}%`} off {d.label}
+        {[...discounts, ...discounts].map((d, i) => {
+          const valueLabel = d.discountType === "flat" ? `PKR ${d.value.toLocaleString()} off` : `${d.value}% off`;
+          const hasShopNow = Boolean(d.code && d.appliesTo !== "cart");
+          let shopUrl = d.code ? shopUrlWithDiscount(d.code) : "/user/shop";
+          if (d.appliesTo === "product" && d.targetId) {
+            shopUrl = `/user/shop/${d.targetId}${d.code ? `?discounts=${d.code}` : ""}`;
+          } else if (d.appliesTo === "category" && d.targetId) {
+            shopUrl = `/user/shop?category=${d.targetId}${d.code ? `&discounts=${d.code}` : ""}`;
+          }
+
+          return (
+            <span key={`${d.id ?? d.code ?? "d"}-${i}`} className="inline-flex items-center gap-2 px-5 shrink-0">
+              <Tag className="w-3 h-3 opacity-80 shrink-0" />
+              <span className="font-script text-[13px] leading-none">{d.code ?? "Special"}</span>
+              <span className="opacity-90">{valueLabel} on {d.label}</span>
+              {d.endsAt && <span className="opacity-60 text-[10px]">· ends {d.endsAt}</span>}
+              {hasShopNow && (
+                <Link
+                  href={shopUrl}
+                  className="px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-black uppercase tracking-wide hover:bg-white transition-all shadow-xs shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Shop now
+                </Link>
+              )}
+              <span className="opacity-30 ml-2">✦</span>
             </span>
-            {d.endsAt && <span className="opacity-70">· ends {d.endsAt}</span>}
-            {d.code && d.appliesTo !== "cart" && (
-              <Link
-                href={shopUrlWithDiscount(d.code)}
-                className="ml-1 px-2.5 py-0.5 rounded-full bg-white/95 text-caramel text-[10px] font-bold uppercase tracking-wide hover:bg-white transition shadow-xs"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Shop now
-              </Link>
-            )}
-            <span className="opacity-40 mx-2">✦</span>
-          </span>
-        ))}
+          );
+        })}
       </div>
       <style jsx>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
+        @keyframes discountMarquee {
+          0%   { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
       `}</style>
@@ -507,6 +522,7 @@ export const Navbar = () => {
         value: d.discount_value,
         discountType: d.discount_type ?? "percent",
         appliesTo,
+        targetId: d.target_id,
         endsAt: d.end_date ? new Date(d.end_date).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) : undefined,
       };
     });
@@ -654,12 +670,12 @@ export const Navbar = () => {
           <DiscountBanner discounts={activeDiscounts} />
         </div>
       )}
-      {activeDiscounts.length > 0 && <div className="h-7" />}
+      {activeDiscounts.length > 0 && <div className="h-8" />}
 
       <header
         className={cn(
           "sticky z-100 w-full transition-all duration-500",
-          activeDiscounts.length > 0 ? "top-7" : "top-0",
+          activeDiscounts.length > 0 ? "top-8" : "top-0",
           scrolled
             ? "glass-navbar shadow-navbar py-3"
             : "bg-transparent py-4"
@@ -669,9 +685,16 @@ export const Navbar = () => {
           <div className="flex items-center justify-between gap-4">
 
             {/* ── Logo ── */}
-            <Link href="/" className="shrink-0 group">
-              <div className="transition-transform duration-300 group-hover:scale-105">
-                <CrochetLogo variant="horizontal" size={56} showText />
+            <Link href="/" className="shrink-0 group flex items-center gap-2">
+              <div
+                className="transition-all duration-300 group-hover:scale-105 w-14 h-14 rounded-full overflow-hidden"
+                style={{ boxShadow: "0 4px 18px rgba(200,149,108,0.25), 0 1px 6px rgba(244,184,193,0.3)" }}
+              >
+                <img src="/images/logo.png" alt="Crochet Masterpiece" className="w-full h-full object-cover" />
+              </div>
+              <div className="hidden sm:flex flex-col leading-tight ml-0.5">
+                <span className="font-display font-semibold text-ink-dark text-sm">Crochet</span>
+                <span className="font-script text-caramel text-sm">Masterpiece</span>
               </div>
             </Link>
 

@@ -95,6 +95,7 @@ function CheckoutPageContent() {
 
   const itemsFromQuery = decodeJson<DraftItem[]>(params.get("items"));
   const customDraft = decodeJson<CustomDraft>(params.get("custom"));
+  const couponQuery = params.get("coupon") ?? undefined;
 
   const items = useMemo(() => {
     if (Array.isArray(itemsFromQuery) && itemsFromQuery.length > 0) return itemsFromQuery;
@@ -258,6 +259,7 @@ function CheckoutPageContent() {
           rememberMe: form.rememberMe,
           emailOptIn: form.emailOptIn,
           customOrder: source === "custom" ? customDraft : undefined,
+          couponCode: couponQuery,
         }),
       });
       const body = await response.json().catch(() => ({}));

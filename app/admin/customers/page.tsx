@@ -11,6 +11,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { Skeleton } from "@/components/ui/Skeleton";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 interface Customer {
   id: string; name: string; email: string; phone?: string;
@@ -285,27 +287,15 @@ const CustomerDetailPanel = ({
    ============================================= */
 export default function AdminCustomersPage() {
   useAdminAuth();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [dbLoading, setDbLoading] = useState(true);
+
+  const { data: body, isLoading: dbLoading, mutate } = useSWR("/api/admin/customers", fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  const customers: Customer[] = Array.isArray(body?.customers) ? body.customers : [];
+
   const [isMobile, setIsMobile] = useState(false);
   const [showBulkEmail, setShowBulkEmail] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/admin/customers", { cache: "no-store" });
-        const body = await res.json();
-        if (res.ok && Array.isArray(body.customers)) {
-          setCustomers(body.customers);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setDbLoading(false);
-      }
-    };
-    load();
-  }, []);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Customer | null>(null);
 
@@ -342,7 +332,7 @@ export default function AdminCustomersPage() {
       alert("Delete failed: " + error.message);
       return;
     }
-    setCustomers((prev) => prev.filter((c) => c.id !== customer.id));
+    mutate(); // revalidate customers
     setSelected((prev) => (prev?.id === customer.id ? null : prev));
     alert("User removed from users table.");
   };

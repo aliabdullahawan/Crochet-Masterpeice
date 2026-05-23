@@ -2,9 +2,8 @@
 
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, ArrowRight, Star, Instagram, Facebook, Play } from "lucide-react";
 import { cn, formatNumber } from "@/lib/utils";
 import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
@@ -75,7 +74,6 @@ const AnimatedCounter = ({ target, duration = 2000 }: { target: number; duration
     const step = () => {
       const elapsed = Date.now() - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const next = Math.floor(from + (to - from) * eased);
       setCount(next);
@@ -89,36 +87,66 @@ const AnimatedCounter = ({ target, duration = 2000 }: { target: number; duration
 };
 
 /* =============================================
-   SOCIAL STAT CARD
+   SOCIAL STAT CHIP
    ============================================= */
-const SocialCard = ({ platform, count, icon, color, url }: SocialCount) => (
+const SocialChip = ({ platform, count, icon, color, url }: SocialCount) => (
   <a
     href={url}
     target="_blank"
     rel="noopener noreferrer"
     className={cn(
-      "flex items-center gap-3 px-4 py-3 rounded-2xl",
-      "glass border border-white/40 hover:border-blush/40",
-      "transition-all duration-300 hover:-translate-y-1 hover:shadow-card",
-      "group cursor-pointer btn-bubble"
+      "flex items-center gap-2.5 px-3.5 py-2 rounded-2xl",
+      "bg-white/80 border border-white/60 hover:border-blush/50",
+      "transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+      "group cursor-pointer"
     )}
   >
-    <div
-      className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-white transition-transform duration-300 group-hover:scale-110", color)}
-    >
+    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-white transition-transform duration-300 group-hover:scale-110 shrink-0", color)}>
       {icon}
     </div>
     <div>
       <p className="text-sm font-bold font-sans text-ink-dark leading-none">
         <AnimatedCounter target={count} />
       </p>
-      <p className="text-[10px] text-ink-light/60 font-sans mt-0.5">{platform}</p>
+      <p className="text-[10px] text-ink-light/55 font-sans mt-0.5">{platform}</p>
     </div>
   </a>
 );
 
 /* =============================================
-   PRODUCT CARD (carousel item)
+   PHOTO GRID CARD (reference-inspired)
+   ============================================= */
+const PhotoCard = ({
+  img, label, sub, cta, ctaHref, tall = false,
+}: {
+  img: string; label: string; sub?: string; cta?: string; ctaHref?: string; tall?: boolean;
+}) => (
+  <div
+    className={cn(
+      "relative rounded-2xl overflow-hidden group cursor-pointer",
+      tall ? "row-span-2" : "row-span-1"
+    )}
+    style={{ minHeight: tall ? 360 : 170 }}
+  >
+    <img src={img} alt={label} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+    <div className="absolute inset-0 bg-linear-to-t from-ink-dark/75 via-ink-dark/20 to-transparent" />
+    <div className="absolute inset-0 p-5 flex flex-col justify-end">
+      <p className="text-white font-display text-xl font-semibold leading-tight mb-1">{label}</p>
+      {sub && <p className="text-white/70 text-xs font-sans mb-3">{sub}</p>}
+      {cta && ctaHref && (
+        <Link
+          href={ctaHref}
+          className="w-fit inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/95 text-ink-dark text-xs font-sans font-bold hover:bg-white transition-all shadow-sm group-hover:-translate-y-0.5"
+        >
+          {cta} <ArrowRight className="w-3 h-3" />
+        </Link>
+      )}
+    </div>
+  </div>
+);
+
+/* =============================================
+   PRODUCT CAROUSEL CARD
    ============================================= */
 const ProductCard = ({
   product,
@@ -132,66 +160,47 @@ const ProductCard = ({
 
   return (
     <motion.div
-      className="shrink-0 w-[260px] sm:w-[300px] cursor-pointer"
-      whileHover={{ scale: 1.04, y: -10 }}
+      className="shrink-0 w-[240px] sm:w-[270px] cursor-pointer"
+      whileHover={{ scale: 1.03, y: -8 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
     >
       <Link href={`/user/shop/${product.id}`}>
         <div className={cn(
-          "relative rounded-3xl overflow-hidden",
-          "border border-blush/20",
-          "shadow-card transition-shadow duration-300",
-          hovered ? "shadow-[0_20px_50px_rgba(74,55,40,0.2)]" : ""
+          "relative rounded-2xl overflow-hidden border border-blush/20",
+          "shadow-sm transition-shadow duration-300",
+          hovered ? "shadow-[0_16px_40px_rgba(74,55,40,0.18)]" : ""
         )}
-          style={{ height: "340px" }}
+          style={{ height: "300px" }}
         >
-          {/* Product image / placeholder */}
           <div className="absolute inset-0 bg-linear-to-br from-cream-100 via-blush/20 to-mauve/20">
             {primaryImage && (
               <img src={primaryImage} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
             )}
-
             {!primaryImage && (
-              <>
-                {/* Decorative yarn pattern as placeholder */}
-                <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 300 340">
-                  <circle cx="150" cy="170" r="120" stroke="#C8956C" strokeWidth="2" fill="none" strokeDasharray="8 5" />
-                  <circle cx="150" cy="170" r="80" stroke="#F4B8C1" strokeWidth="1.5" fill="none" strokeDasharray="5 8" />
-                  <circle cx="150" cy="170" r="40" stroke="#C9A0DC" strokeWidth="1" fill="rgba(244,184,193,0.2)" />
-                </svg>
-
-                {/* Initial circle fallback */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <div className="w-16 h-16 rounded-full bg-linear-to-br from-blush/35 to-mauve/25 border-2 border-blush/25 flex items-center justify-center shadow-soft">
-                    <span className="font-display text-2xl font-semibold text-caramel/80">{product.name.charAt(0)}</span>
-                  </div>
-                  <p className="text-[10px] font-sans font-semibold text-ink-light/40 tracking-wider uppercase">{product.category_name}</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-linear-to-br from-blush/35 to-mauve/25 border-2 border-blush/25 flex items-center justify-center shadow-soft">
+                  <span className="font-display text-2xl font-semibold text-caramel/80">{product.name.charAt(0)}</span>
                 </div>
-              </>
+              </div>
             )}
-
-            {/* Cream gradient background */}
-            <div className="absolute inset-0 bg-linear-to-br from-cream-50/80 via-blush/10 to-cream-100/88" />
+            <div className="absolute inset-0 bg-linear-to-br from-cream-50/60 via-blush/10 to-cream-100/70" />
           </div>
 
-          {/* Discount badge */}
           {product.discount_percent && product.discount_percent > 0 && (
-            <div className="absolute top-3 left-3 z-10 bg-linear-to-r from-caramel to-rose text-white text-[11px] font-bold font-sans px-2 py-1 rounded-xl shadow-button animate-pulse-soft">
+            <div className="absolute top-3 left-3 z-10 bg-linear-to-r from-caramel to-rose text-white text-[11px] font-bold font-sans px-2 py-1 rounded-xl shadow-button">
               -{product.discount_percent}%
             </div>
           )}
 
-          {/* Hover overlay */}
           <motion.div
-            className="absolute inset-0 bg-linear-to-t from-ink-dark/70 via-ink-dark/20 to-transparent z-10"
+            className="absolute inset-0 bg-linear-to-t from-ink-dark/65 via-ink-dark/15 to-transparent z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: hovered ? 1 : 0 }}
             transition={{ duration: 0.3 }}
           />
 
-          {/* Quick buy button — appears on hover */}
           <AnimatePresence>
             {hovered && (
               <motion.div
@@ -213,19 +222,14 @@ const ProductCard = ({
             )}
           </AnimatePresence>
 
-          {/* Info bar (always visible) */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 z-10 p-4",
             "bg-linear-to-t from-white/95 to-transparent",
             "transition-all duration-300",
             hovered ? "pb-16" : "pb-4"
           )}>
-            <p className="text-[10px] text-ink-light/60 font-sans uppercase tracking-wider mb-0.5">
-              {product.category_name}
-            </p>
-            <p className="text-sm font-display font-semibold text-ink-dark leading-tight truncate">
-              {product.name}
-            </p>
+            <p className="text-[10px] text-ink-light/60 font-sans uppercase tracking-wider mb-0.5">{product.category_name}</p>
+            <p className="text-sm font-display font-semibold text-ink-dark leading-tight truncate">{product.name}</p>
             <div className="flex items-center justify-between mt-1.5">
               <div className="flex items-center gap-1">
                 {product.original_price && product.original_price > product.price ? (
@@ -243,15 +247,6 @@ const ProductCard = ({
               </div>
             </div>
           </div>
-
-          {/* Spotlight glow follows hover */}
-          {hovered && (
-            <div className="absolute inset-0 pointer-events-none z-0"
-              style={{
-                background: "radial-gradient(circle at 50% 30%, rgba(244,184,193,0.25) 0%, transparent 60%)"
-              }}
-            />
-          )}
         </div>
       </Link>
     </motion.div>
@@ -264,7 +259,6 @@ const ProductCard = ({
 const ProductCarousel = ({ products }: { products: Product[] }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(Math.max(products.length * 4, 20));
-
   const doubled = [...products, ...products];
 
   useEffect(() => {
@@ -273,7 +267,6 @@ const ProductCarousel = ({ products }: { products: Product[] }) => {
       const secondsPerCard = w < 640 ? 3.0 : w < 1024 ? 3.6 : 4.6;
       setDuration(Math.max(products.length * secondsPerCard, 16));
     };
-
     syncSpeed();
     window.addEventListener("resize", syncSpeed);
     return () => window.removeEventListener("resize", syncSpeed);
@@ -283,13 +276,11 @@ const ProductCarousel = ({ products }: { products: Product[] }) => {
 
   return (
     <div className="relative w-full overflow-hidden">
-      {/* Edge fades */}
-      <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-cream-100 via-cream-100/85 to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-24 bg-linear-to-l from-cream-100 via-cream-100/85 to-transparent z-10 pointer-events-none" />
-
+      <div className="absolute left-0 top-0 bottom-0 w-20 bg-linear-to-r from-cream-100 to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-20 bg-linear-to-l from-cream-100 to-transparent z-10 pointer-events-none" />
       <div
         ref={trackRef}
-        className="flex gap-5 py-5 px-8"
+        className="flex gap-4 py-5 px-8"
         style={{
           animation: `carouselScroll ${duration}s linear infinite`,
           width: "max-content",
@@ -300,7 +291,6 @@ const ProductCarousel = ({ products }: { products: Product[] }) => {
           <ProductCard key={`${product.id}-${i}`} product={product} index={i} />
         ))}
       </div>
-
       <style jsx>{`
         @keyframes carouselScroll {
           0%   { transform: translateX(0); }
@@ -312,292 +302,117 @@ const ProductCarousel = ({ products }: { products: Product[] }) => {
 };
 
 /* =============================================
-   FLOATING YARN DECORATION
-   ============================================= */
-const FloatingYarn = ({ style, color }: { style: React.CSSProperties; color: string }) => (
-  <motion.div
-    className="absolute pointer-events-none select-none"
-    style={style}
-    animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0] }}
-    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-  >
-    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="30" r="22" fill={color} fillOpacity="0.15" />
-      <circle cx="30" cy="30" r="22" stroke={color} strokeWidth="1.5" strokeOpacity="0.3" />
-      <path d={`M 20 24 Q 30 16 40 24 Q 30 32 20 24`} stroke={color} strokeWidth="1" fill="none" strokeOpacity="0.5" />
-      <path d={`M 20 36 Q 30 44 40 36 Q 30 28 20 36`} stroke={color} strokeWidth="1" fill="none" strokeOpacity="0.4" />
-    </svg>
-  </motion.div>
-);
-
-/* =============================================
    MAIN HERO SECTION
    ============================================= */
 export const HeroSection = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
-
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -140]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.97]);
-
-  // ── Fetch real social counts from /api/social-counts ──
-  // That route tries official APIs first, falls back to admin-set values in Supabase
+  // ── Social counts
   const [socialData, setSocialData] = useState({
-    whatsapp: 0,
-    instagram: 0,
-    facebook: 0,
-    tiktok: 0,
-    site_users: 0,
-    total_community: 0,
+    whatsapp: 0, instagram: 0, facebook: 0, tiktok: 0, site_users: 0, total_community: 0,
   });
-  const [countsLoaded, setCountsLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
-
-    const loadManualCountsFromSupabase = async () => {
-      type SiteSettingRow = { key: string; value: string | null };
-
-      const [{ data: settings }, { count: usersCount }]: [
-        { data: SiteSettingRow[] | null },
-        { count: number | null }
-      ] = await Promise.all([
-        supabase
-          .from("site_settings")
-          .select("key,value")
-          .in("key", [
-            "instagram_count_manual",
-            "facebook_count_manual",
-            "tiktok_count_manual",
-            "whatsapp_count_manual",
-          ]),
+    const loadManualCounts = async () => {
+      type Row = { key: string; value: string | null };
+      const [{ data: settings }, { count: usersCount }] = await Promise.all([
+        supabase.from("site_settings").select("key,value").in("key", [
+          "instagram_count_manual", "facebook_count_manual",
+          "tiktok_count_manual", "whatsapp_count_manual",
+        ]) as unknown as Promise<{ data: Row[] | null }>,
         supabase.from("users").select("*", { count: "exact", head: true }),
       ]);
-
-      const getManual = (key: string) => {
-        const raw = settings?.find((s) => s.key === key)?.value;
-        const parsed = parseInt(raw ?? "", 10);
-        return Number.isFinite(parsed) ? parsed : 0;
+      const get = (key: string) => {
+        const raw = (settings as Row[] | null)?.find((s) => s.key === key)?.value;
+        const n = parseInt(raw ?? "", 10);
+        return Number.isFinite(n) ? n : 0;
       };
-
-      const whatsapp = getManual("whatsapp_count_manual");
-      const instagram = getManual("instagram_count_manual");
-      const facebook = getManual("facebook_count_manual");
-      const tiktok = getManual("tiktok_count_manual");
-      const siteUsers = usersCount ?? 0;
-
-      return {
-        whatsapp,
-        instagram,
-        facebook,
-        tiktok,
-        site_users: siteUsers,
-        total_community: whatsapp + instagram + facebook + tiktok + siteUsers,
-      };
+      const wa = get("whatsapp_count_manual");
+      const ig = get("instagram_count_manual");
+      const fb = get("facebook_count_manual");
+      const tt = get("tiktok_count_manual");
+      const su = (usersCount as number | null) ?? 0;
+      return { whatsapp: wa, instagram: ig, facebook: fb, tiktok: tt, site_users: su, total_community: wa + ig + fb + tt + su };
     };
 
-    const loadSocialCounts = async () => {
+    const load = async () => {
       try {
         const r = await fetch("/api/social-counts", { cache: "no-store" });
-        if (!r.ok) throw new Error(`social-counts HTTP ${r.status}`);
+        if (!r.ok) throw new Error();
         const d = await r.json();
         if (!active) return;
         const next = {
-          whatsapp: d.whatsapp?.count ?? 0,
-          instagram: d.instagram?.count ?? 0,
-          facebook: d.facebook?.count ?? 0,
-          tiktok: d.tiktok?.count ?? 0,
-          site_users: d.site_users?.count ?? 0,
-          total_community: d.total_community?.count ?? 0,
+          whatsapp: d.whatsapp?.count ?? 0, instagram: d.instagram?.count ?? 0,
+          facebook: d.facebook?.count ?? 0, tiktok: d.tiktok?.count ?? 0,
+          site_users: d.site_users?.count ?? 0, total_community: d.total_community?.count ?? 0,
         };
-
-        const looksEmpty =
-          next.whatsapp === 0 &&
-          next.instagram === 0 &&
-          next.facebook === 0 &&
-          next.tiktok === 0;
-
-        if (looksEmpty) {
-          const manual = await loadManualCountsFromSupabase();
-          if (!active) return;
-          setSocialData(manual);
-          return;
-        }
-
-        setSocialData(next);
+        if (!next.whatsapp && !next.instagram && !next.facebook && !next.tiktok) {
+          const m = await loadManualCounts(); if (!active) return; setSocialData(m);
+        } else { setSocialData(next); }
       } catch {
-        const manual = await loadManualCountsFromSupabase();
-        if (!active) return;
-        setSocialData(manual);
-      } finally {
-        if (active) setCountsLoaded(true);
+        const m = await loadManualCounts(); if (!active) return; setSocialData(m);
       }
     };
 
-    loadSocialCounts();
-    const timer = setInterval(loadSocialCounts, 10000);
-    const onFocus = () => loadSocialCounts();
-    window.addEventListener("focus", onFocus);
-
-    const channel = supabase
-      .channel("hero-live-updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, () => {
-        loadSocialCounts();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "discounts" }, () => {
-        loadSocialCounts();
-      })
-      .subscribe();
-
-    return () => {
-      active = false;
-      clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      supabase.removeChannel(channel);
-    };
+    load();
+    const timer = setInterval(load, 10000);
+    window.addEventListener("focus", load);
+    return () => { active = false; clearInterval(timer); window.removeEventListener("focus", load); };
   }, []);
 
-  // Products — fetched from Supabase
+  // ── Products
   const [products, setProducts] = useState<Product[]>([]);
   useEffect(() => {
     const loadHeroProducts = async () => {
-      const productSelect =
-        "id, name, price, original_price, is_featured, average_rating, categories(name), image_url, images";
-
-      let { data } = await supabase
-        .from("products")
-        .select(productSelect)
-        .eq("is_active", true)
-        .eq("is_featured", true)
-        .limit(6);
-
+      const sel = "id, name, price, original_price, is_featured, average_rating, categories(name), image_url, images";
+      let { data } = await supabase.from("products").select(sel).eq("is_active", true).eq("is_featured", true).limit(8);
       if (!data?.length) {
-        const fallback = await supabase
-          .from("products")
-          .select(productSelect)
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(6);
-        data = fallback.data;
+        const fb = await supabase.from("products").select(sel).eq("is_active", true).order("created_at", { ascending: false }).limit(8);
+        data = fb.data;
       }
-
       if (!data?.length) return;
 
-      const mapped = data.map((p: {id:string;name:string;price:number;original_price:number|null;average_rating:number|null;categories:{name:string}|null;image_url?:string|null;images?:string[]|null}) => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        original_price: p.original_price ?? undefined,
-        category_name: (p.categories as {name:string}|null)?.name ?? "",
-        average_rating: p.average_rating ?? 0,
-        image_url: p.image_url ?? undefined,
-        images: p.images ?? [],
+      type PR = { id: string; name: string; price: number; original_price: number | null; average_rating: number | null; categories: { name: string } | null; image_url?: string | null; images?: string[] | null };
+      const mapped = (data as PR[]).map((p) => ({
+        id: p.id, name: p.name, price: p.price, original_price: p.original_price ?? undefined,
+        category_name: p.categories?.name ?? "", average_rating: p.average_rating ?? 0,
+        image_url: p.image_url ?? undefined, images: p.images ?? [],
       }));
 
-      const productIds = mapped.map((p) => p.id);
-      if (productIds.length === 0) {
-        setProducts(mapped);
-        return;
-      }
+      const pids = mapped.map((p) => p.id);
+      if (!pids.length) { setProducts(mapped); return; }
 
-      const hiddenReviewIds = await getHiddenReviewIdSet();
-
-      type ReviewRow = {
-        id: string;
-        product_id: string;
-        rating: number;
-        admin_reply?: string | null;
-      };
-
-      let reviewRows: ReviewRow[] | null = null;
-
-      const withModeration: { data: ReviewRow[] | null; error: { message: string } | null } = await supabase
-        .from("reviews")
-        .select("id, product_id, rating, admin_reply")
-        .in("product_id", productIds);
-
-      if (!withModeration.error) {
-        reviewRows = withModeration.data ?? [];
-      } else {
-        const legacy: {
-          data: Array<Omit<ReviewRow, "admin_reply">> | null;
-          error: { message: string } | null;
-        } = await supabase
-          .from("reviews")
-          .select("id, product_id, rating")
-          .in("product_id", productIds);
-
-        reviewRows = (legacy.data ?? []).map((r) => ({
-          ...(r as { id: string; product_id: string; rating: number }),
-          admin_reply: null,
-        }));
-      }
-
-      if (!reviewRows) {
-        setProducts(mapped);
-        return;
-      }
+      const hiddenIds = await getHiddenReviewIdSet();
+      type RR = { id: string; product_id: string; rating: number; admin_reply?: string | null };
+      const { data: revData } = await supabase.from("reviews").select("id, product_id, rating, admin_reply").in("product_id", pids);
+      const reviewRows = (revData ?? []) as RR[];
 
       const stats = new Map<string, { sum: number; count: number }>();
       for (const row of reviewRows) {
-        if (isReviewHiddenByModeration(row.id, row.admin_reply, hiddenReviewIds)) continue;
-        const current = stats.get(row.product_id) ?? { sum: 0, count: 0 };
-        stats.set(row.product_id, {
-          sum: current.sum + (Number(row.rating) || 0),
-          count: current.count + 1,
-        });
+        if (isReviewHiddenByModeration(row.id, row.admin_reply, hiddenIds)) continue;
+        const cur = stats.get(row.product_id) ?? { sum: 0, count: 0 };
+        stats.set(row.product_id, { sum: cur.sum + (Number(row.rating) || 0), count: cur.count + 1 });
       }
 
-      setProducts(
-        mapped.map((p) => {
-          const stat = stats.get(p.id);
-          if (!stat || stat.count === 0) return p;
-          return { ...p, average_rating: Number((stat.sum / stat.count).toFixed(1)) };
-        })
-      );
+      setProducts(mapped.map((p) => {
+        const s = stats.get(p.id);
+        return s && s.count > 0 ? { ...p, average_rating: Number((s.sum / s.count).toFixed(1)) } : p;
+      }));
     };
-
     void loadHeroProducts();
   }, []);
 
+  const totalCommunity = socialData.total_community > 0
+    ? socialData.total_community
+    : socialData.whatsapp + socialData.instagram + socialData.facebook + socialData.tiktok + socialData.site_users;
+
   const socialCounts: SocialCount[] = [
-    {
-      platform: "WhatsApp", count: socialData.whatsapp,
-      icon: <WhatsAppIcon size={18} />,
-      color: "bg-[#25D366]",
-      url: "https://whatsapp.com/channel/0029VbBXbGv9WtC90s3UER04",
-    },
-    {
-      platform: "Instagram", count: socialData.instagram,
-      icon: <Instagram size={18} />,
-      color: "bg-linear-to-br from-[#E1306C] to-[#833AB4]",
-      url: "https://www.instagram.com/croch_etmasterpiece",
-    },
-    {
-      platform: "Facebook", count: socialData.facebook,
-      icon: <Facebook size={18} />,
-      color: "bg-[#1877F2]",
-      url: "https://www.facebook.com/profile.php?id=61579353555271",
-    },
-    {
-      platform: "TikTok", count: socialData.tiktok,
-      icon: <TikTokIcon size={18} />,
-      color: "bg-ink-dark",
-      url: "https://www.tiktok.com/@croch_et.masterpiece",
-    },
+    { platform: "WhatsApp", count: socialData.whatsapp, icon: <WhatsAppIcon size={16} />, color: "bg-[#25D366]", url: "https://whatsapp.com/channel/0029VbBXbGv9WtC90s3UER04" },
+    { platform: "Instagram", count: socialData.instagram, icon: <Instagram size={16} />, color: "bg-linear-to-br from-[#E1306C] to-[#833AB4]", url: "https://www.instagram.com/croch_etmasterpiece" },
+    { platform: "Facebook", count: socialData.facebook, icon: <Facebook size={16} />, color: "bg-[#1877F2]", url: "https://www.facebook.com/profile.php?id=61579353555271" },
+    { platform: "TikTok", count: socialData.tiktok, icon: <TikTokIcon size={16} />, color: "bg-ink-dark", url: "https://www.tiktok.com/@croch_et.masterpiece" },
   ];
 
-  const totalCommunity =
-    socialData.total_community > 0
-      ? socialData.total_community
-      : socialData.whatsapp + socialData.instagram + socialData.facebook + socialData.tiktok + socialData.site_users;
-
-  // Text cycling animation
+  // Cycling headline text
   const heroTexts = [
     "Made with hands, sent with heart",
     "No two pieces are ever the same",
@@ -610,230 +425,270 @@ export const HeroSection = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const stripImages = [
+    "/images/bg-crochet-pink.jpg",
+    "/images/crochet-3.jpg",
+    "/images/bg-hands-knitting.jpg",
+    "/images/crochet-4.jpg",
+    "/images/bg-yarn-table.jpg",
+    "/images/crochet-6.jpg",
+  ];
+
+  const [fadeIndex, setFadeIndex] = useState(0);
+  useEffect(() => {
+    const fadeTimer = setInterval(() => {
+      setFadeIndex((i) => (i + 1) % stripImages.length);
+    }, 4000); // 4 seconds per image
+    return () => clearInterval(fadeTimer);
+  }, [stripImages.length]);
+
   return (
-    <section
-      ref={containerRef}
-      className="relative min-h-screen overflow-hidden"
-    >
-      {/* Soft baby-pink background — no faded photo overlays */}
-      <div className="absolute inset-0 z-0 pointer-events-none bg-linear-to-br from-baby-50 via-cream-100 to-blush/25" />
-      <div
-        className="absolute inset-0 z-0 pointer-events-none opacity-90"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,220,235,0.45) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 85% 75%, rgba(240,214,245,0.35) 0%, transparent 50%)",
-        }}
-      />
-      {/* ── Subtle background decorations ── */}
-      <FloatingYarn style={{ top: "8%", left: "3%", opacity: 0.35 }} color="#F4B8C1" />
-      <FloatingYarn style={{ top: "15%", right: "5%", opacity: 0.3 }} color="#C9A0DC" />
-      <FloatingYarn style={{ bottom: "20%", left: "8%", opacity: 0.25 }} color="#C8956C" />
-      <FloatingYarn style={{ top: "50%", right: "2%", opacity: 0.2 }} color="#E8A0A8" />
-
-      {/* Large soft orb behind text */}
-      <motion.div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{
-          y: y1,
-          background: "radial-gradient(circle, rgba(244,184,193,0.25) 0%, rgba(201,160,220,0.1) 40%, transparent 70%)",
-        }}
-      />
-
-      {/* ── Main content ── */}
-      <motion.div
-        style={{ opacity, scale }}
-        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8"
-      >
-        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
-          {/* Left: story + CTA */}
-          <div className="text-center lg:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="inline-flex items-center gap-2 bg-blush/20 border border-blush/40 rounded-full px-4 py-1.5 mb-6"
-            >
-              <span className="text-xs font-sans font-semibold text-caramel tracking-widest uppercase">Atelier Drop</span>
-              <span className="w-1 h-1 rounded-full bg-caramel/50" />
-              <span className="text-xs font-sans text-ink-light/70">Handmade originals</span>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-ink-dark leading-tight mb-5"
-            >
-              Crochet that feels
-              <span className="block text-gradient-blush">like a warm hug.</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.35 }}
-              className="text-base sm:text-lg text-ink-light/80 font-sans max-w-xl mx-auto lg:mx-0 mb-6 leading-relaxed"
-            >
-              I craft every piece slowly and carefully, with yarn I love and patterns I test by hand.
-              <span className="font-script text-caramel text-lg"> Just a girl who loves crochet.</span>
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-8"
-            >
-              {[
-                "Pakistan-wide delivery",
-                "Custom orders welcome",
-                "Limited weekly batches",
-              ].map((label) => (
-                <span key={label} className="px-3 py-1.5 rounded-full border border-caramel/20 bg-white/70 text-[11px] font-sans font-semibold text-ink-light/70">
-                  {label}
-                </span>
-              ))}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.45 }}
-              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
-            >
-              <Link
-                href="/user/shop"
-                className={cn(
-                  "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
-                  "bg-linear-to-r from-caramel via-rose to-blush",
-                  "text-white text-sm font-sans font-bold tracking-wide",
-                  "shadow-button hover:shadow-button-hover hover:-translate-y-0.5",
-                  "transition-all duration-300 btn-bubble relative overflow-hidden group"
-                )}
-              >
-                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <ShoppingBag className="w-4 h-4" />
-                Shop Bestsellers
-                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </Link>
-
-              <Link
-                href="/user/custom-order"
-                className={cn(
-                  "flex items-center gap-2 px-7 py-3.5 rounded-2xl",
-                  "bg-white/70 border border-caramel/20",
-                  "text-ink text-sm font-sans font-semibold",
-                  "hover:bg-white hover:border-blush/40 hover:-translate-y-0.5",
-                  "transition-all duration-300 btn-bubble"
-                )}
-              >
-                <span className="text-base">✂️</span>
-                Start Custom Order
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Right: collage + rotating line */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.25 }}
-            className="relative w-full max-w-md mx-auto"
-          >
-            <div className="relative rounded-[32px] border border-white/60 bg-white/70 backdrop-blur-xs p-4 shadow-card">
-              <div className="relative rounded-3xl overflow-hidden aspect-4/5">
-                <img src="/images/crochet-6.jpg" alt="Crochet bestseller" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-linear-to-t from-ink-dark/40 via-transparent to-transparent" />
-              </div>
-
-              <div className="absolute -bottom-8 -left-6 w-36 rounded-2xl border border-blush/30 bg-white/90 p-3 shadow-button">
-                <p className="text-[10px] text-ink-light/60 font-sans uppercase tracking-widest">Spotlight</p>
-                <p className="text-sm font-display font-semibold text-ink-dark">Crochet Bloom Set</p>
-                <p className="text-xs font-sans text-caramel font-semibold">PKR 2,900</p>
-              </div>
-
-              <div className="absolute -top-6 -right-6 w-32 rounded-2xl bg-cream-50/95 border border-caramel/20 p-3 shadow-card">
-                <p className="text-[10px] text-ink-light/55 font-sans uppercase tracking-widest">Signature line</p>
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={textIndex}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-xs font-sans font-semibold text-ink-dark"
-                  >
-                    {heroTexts[textIndex]}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Social stats */}
+    <section className="relative overflow-hidden bg-cream-100">
+      {/* ═══════════════════════════════════
+          UPPER HERO — Split Layout (LIHMON/Kindred inspired)
+          ═══════════════════════════════════ */}
+      <div className="grid lg:grid-cols-2 min-h-[85vh] lg:min-h-[88vh]">
+        {/* LEFT — large hero image */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.1 }}
-          className="flex flex-wrap justify-center lg:justify-start gap-3 mt-10"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="relative overflow-hidden lg:min-h-full min-h-[50vw]"
         >
+          <AnimatePresence mode="popLayout">
+            <motion.img
+              key={fadeIndex}
+              src={stripImages[fadeIndex]}
+              alt={`Crochet Masterpiece Gallery ${fadeIndex + 1}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </AnimatePresence>
+          {/* Subtle vignette */}
+          <div className="absolute inset-0 bg-linear-to-r from-ink-dark/10 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-ink-dark/30 via-transparent to-transparent" />
+
+          {/* Floating info card — bottom-left */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="absolute bottom-8 left-6 max-w-[200px] bg-white/92 backdrop-blur-sm rounded-2xl p-4 shadow-card border border-white/60"
+          >
+            <p className="text-[9px] text-ink-light/55 font-sans uppercase tracking-widest mb-1">Signature line</p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={textIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.4 }}
+                className="text-xs font-sans font-semibold text-ink-dark leading-snug"
+              >
+                {heroTexts[textIndex]}
+              </motion.p>
+            </AnimatePresence>
+          </motion.div>
+
+        </motion.div>
+
+        {/* RIGHT — headline + CTAs */}
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col justify-center px-8 sm:px-12 lg:px-16 py-16 lg:py-20 bg-cream-100"
+        >
+          {/* Label tag */}
+          <motion.span
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-2 self-start bg-blush/20 border border-blush/35 rounded-full px-4 py-1.5 text-[11px] font-sans font-bold text-caramel uppercase tracking-widest mb-6"
+          >
+            Handmade Originals · Pakistan
+          </motion.span>
+
+          {/* Main headline - H1 optimized for SEO (no initial opacity 0) */}
+          <motion.h1
+            initial={{ y: 24 }}
+            animate={{ y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="font-display text-5xl sm:text-6xl lg:text-[4.5rem] font-semibold text-ink-dark leading-[1.08] mb-6"
+          >
+            Crochet that
+            <span className="block text-gradient-blush">feels like a</span>
+            warm hug.
+          </motion.h1>
+
+          {/* Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.6 }}
+            className="text-base text-ink-light/75 font-sans max-w-sm leading-relaxed mb-3"
+          >
+            I craft every piece slowly and carefully, with yarn I love and patterns I test by hand.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55 }}
+            className="font-script text-caramel text-xl mb-8"
+          >
+            Just a girl who loves crochet.
+          </motion.p>
+
+          {/* Feature pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex flex-wrap gap-2 mb-8"
+          >
+            {["Pakistan-wide delivery", "Custom orders welcome", "Limited weekly batches"].map((l) => (
+              <span key={l} className="px-3 py-1.5 rounded-full border border-caramel/20 bg-white/70 text-[11px] font-sans font-semibold text-ink-light/70">
+                {l}
+              </span>
+            ))}
+          </motion.div>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="flex flex-col sm:flex-row gap-3"
+          >
+            <Link
+              href="/user/shop"
+              className={cn(
+                "flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl",
+                "bg-ink-dark text-white text-sm font-sans font-bold tracking-wide",
+                "hover:bg-ink hover:-translate-y-0.5 transition-all duration-300 shadow-lg"
+              )}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Shop Bestsellers
+              <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/user/custom-order"
+              className={cn(
+                "flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl",
+                "bg-white border-2 border-caramel/20 text-ink text-sm font-sans font-semibold",
+                "hover:border-caramel/50 hover:-translate-y-0.5 transition-all duration-300"
+              )}
+            >
+              <span>✂️</span>
+              Start Custom Order
+            </Link>
+          </motion.div>
+
+        </motion.div>
+      </div>
+
+      {/* ═══════════════════════════════════
+          SOCIAL CHIPS ROW (Below Hero, Above Fading Image)
+          ═══════════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.85 }}
+        className="w-full bg-cream-100 py-8 border-t border-caramel/10"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center gap-3 sm:gap-4">
           {socialCounts.map((s) => (
-            <SocialCard key={s.platform} {...s} />
+            <SocialChip key={s.platform} {...s} />
           ))}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass border border-caramel/20">
-            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-blush to-mauve flex items-center justify-center text-white text-sm font-bold font-display">
-              C
-            </div>
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-white/60 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+            <div className="w-7 h-7 rounded-lg bg-linear-to-br from-blush to-mauve flex items-center justify-center text-white text-xs font-bold font-display">C</div>
             <div>
-              <p className="text-sm font-bold font-sans text-ink-dark leading-none">
-                <AnimatedCounter target={totalCommunity} />
-              </p>
-              <p className="text-[10px] text-ink-light/60 font-sans mt-0.5">Total Community</p>
+              <p className="text-sm font-bold font-sans text-ink-dark leading-none"><AnimatedCounter target={totalCommunity} /></p>
+              <p className="text-[10px] text-ink-light/55 font-sans mt-0.5">Community</p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </motion.div>
 
-      {/* ── Product Carousel — First visible section ── */}
+
+
+      {/* ═══════════════════════════════════
+          CARD GRID — Yoga/Serenity inspired
+          ═══════════════════════════════════ */}
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        style={{ y: y2 }}
-        className="relative z-10 w-full pb-8"
+        transition={{ delay: 0.6, duration: 0.7 }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
       >
-        {/* Section label */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 auto-rows-[180px]">
+          {/* Large card */}
+          <div className="sm:col-span-2 sm:row-span-2" style={{ minHeight: 360 }}>
+            <PhotoCard
+              img="/images/crochet-2.jpg"
+              label="Explore the Full Collection"
+              sub="Handmade pieces for every occasion"
+              cta="Shop now"
+              ctaHref="/user/shop"
+              tall
+            />
+          </div>
+          {/* Small card 1 */}
+          <PhotoCard
+            img="/images/bg-crochet-pink.jpg"
+            label="Improved Comfort"
+            sub="Soft yarns, gentle on skin"
+            cta="Discover"
+            ctaHref="/user/shop"
+          />
+          {/* Small card 2 */}
+          <div className="relative rounded-2xl overflow-hidden bg-ink-dark group" style={{ minHeight: 180 }}>
+            <img src="/images/crochet-5.jpg" alt="Custom crochet" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-75 transition-opacity duration-500 group-hover:scale-105 transform-gpu" />
+            <div className="absolute inset-0 bg-linear-to-t from-ink-dark/80 via-ink-dark/40 to-transparent" />
+            <div className="absolute inset-0 p-5 flex flex-col justify-end gap-3">
+              <p className="text-white font-display text-lg font-semibold leading-tight">Start your custom order</p>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Describe your idea..."
+                  className="flex-1 bg-white/15 backdrop-blur-sm border border-white/25 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/50 outline-none focus:border-white/50 transition"
+                />
+                <Link
+                  href="/user/custom-order"
+                  className="shrink-0 px-3 py-2 rounded-xl bg-white text-ink-dark text-xs font-bold hover:bg-cream-100 transition"
+                >
+                  Get started
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ═══════════════════════════════════
+          PRODUCT CAROUSEL
+          ═══════════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, duration: 0.8 }}
+        className="relative z-10 w-full pb-10"
+      >
         <div className="flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5">
           <div>
             <p className="text-xs font-sans font-semibold text-ink-light/50 tracking-widest uppercase mb-0.5">Featured Collection</p>
             <h2 className="font-display text-xl font-semibold text-ink-dark">Our Best Pieces</h2>
           </div>
-          <Link
-            href="/user/shop?filter=featured"
-            className="flex items-center gap-1.5 text-xs font-sans font-semibold text-caramel hover:text-ink transition-colors group"
-          >
+          <Link href="/user/shop?filter=featured" className="flex items-center gap-1.5 text-xs font-sans font-semibold text-caramel hover:text-ink transition-colors group">
             Explore all
             <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
           </Link>
         </div>
-
         <ProductCarousel products={products} />
-      </motion.div>
-
-      
-      <motion.div
-        style={{ opacity }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
-      >
-        <p className="text-xs text-ink-light/40 font-sans tracking-widest uppercase">Scroll to explore</p>
-        <div className="w-5 h-8 rounded-full border-[1.5px] border-caramel/30 flex items-start justify-center p-1">
-          <motion.div
-            className="w-1 h-1.5 rounded-full bg-caramel/60"
-            animate={{ y: [0, 14, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
       </motion.div>
     </section>
   );

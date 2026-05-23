@@ -12,7 +12,9 @@ const buildWhatsAppUrl = (rawNumber: string) => {
 export default function WhatsAppFloatingButton() {
   const pathname = usePathname();
   const isUserPage = pathname === "/" || pathname.startsWith("/user");
-  if (!isUserPage) return null;
+  const isExcludedPage = pathname === "/user/cart" || pathname === "/user/wishlist";
+  
+  if (!isUserPage || isExcludedPage) return null;
 
   const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? DEFAULT_NUMBER;
   const href = buildWhatsAppUrl(number);

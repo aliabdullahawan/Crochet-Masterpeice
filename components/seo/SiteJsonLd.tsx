@@ -10,7 +10,12 @@ export function SiteJsonLd() {
     logo: `${siteUrl}/images/logo.png`,
     description:
       "Handmade crochet products, custom orders, and gifts — crafted with love in Pakistan.",
-    sameAs: [] as string[],
+    sameAs: [
+      "https://www.instagram.com/croch_etmasterpiece",
+      "https://www.facebook.com/profile.php?id=61579353555271",
+      "https://www.tiktok.com/@croch_et.masterpiece",
+      "https://whatsapp.com/channel/0029VbBXbGv9WtC90s3UER04",
+    ],
   };
 
   const website = {
