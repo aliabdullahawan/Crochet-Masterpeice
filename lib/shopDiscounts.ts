@@ -20,7 +20,8 @@ export function parseDiscountCodesFromSearch(params: {
 }
 
 export function shopUrlWithDiscount(code: string, extra?: Record<string, string>) {
-  const q = new URLSearchParams({ discount: code.trim().toUpperCase(), ...extra });
+  const normalized = code.trim().toUpperCase();
+  const q = new URLSearchParams({ discounts: normalized, ...extra });
   return `/user/shop?${q.toString()}`;
 }
 

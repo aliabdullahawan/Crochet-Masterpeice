@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import React, { useEffect, useMemo, useState } from "react";
 import { useShop } from "@/lib/ShopContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -68,85 +69,85 @@ const EmptyCart = () => (
    ============================================= */
 const CartRow = ({
   item, onQty, onRemove, lineDiscount,
-}: { item: CartItem; onQty: (id: string, q: number) => void; onRemove: (id: string) => void; lineDiscount: number }) => (
-  (() => {
-    const maxQty = item.stock_quantity ?? Infinity;
-    const outOfStock = maxQty <= 0;
-    const atMax = item.quantity >= maxQty;
-    const lineSubtotal = item.price * item.quantity;
-    const discountedLineTotal = Math.max(0, lineSubtotal - lineDiscount);
-    const discountedUnitPrice = discountedLineTotal / item.quantity;
-    return (
-  <motion.div
-    layout
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
-    transition={{ duration: 0.3 }}
-    onClick={(e) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("button, a")) return;
-      window.location.href = `/user/shop/${item.productId}`;
-    }}
-    className="flex gap-4 p-4 rounded-2xl glass border border-blush/20 hover:border-blush/35 transition-all duration-200 group cursor-pointer"
-  >
-    {/* Product image placeholder */}
-    <Link href={`/user/shop/${item.productId}`}
-      className="w-20 h-20 rounded-xl bg-linear-to-br from-cream-100 to-blush/15 flex items-center justify-center text-3xl shrink-0 hover:scale-105 transition-transform duration-200">
-      {item.emoji}
-    </Link>
+}: { item: CartItem; onQty: (id: string, q: number) => void; onRemove: (id: string) => void; lineDiscount: number }) => {
+  const router = useRouter();
+  const maxQty = item.stock_quantity ?? Infinity;
+  const outOfStock = maxQty <= 0;
+  const atMax = item.quantity >= maxQty;
+  const lineSubtotal = item.price * item.quantity;
+  const discountedLineTotal = Math.max(0, lineSubtotal - lineDiscount);
+  const discountedUnitPrice = discountedLineTotal / item.quantity;
 
-    {/* Info */}
-    <div className="flex-1 min-w-0">
-      <p className="text-[10px] font-sans font-semibold text-ink-light/50 uppercase tracking-wider mb-0.5">{item.category}</p>
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
+      transition={{ duration: 0.3 }}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a")) return;
+        router.push(`/user/shop/${item.productId}`);
+      }}
+      className="flex gap-4 p-4 rounded-2xl glass border border-blush/20 hover:border-blush/35 transition-all duration-200 group cursor-pointer"
+    >
+      {/* Product image placeholder */}
       <Link href={`/user/shop/${item.productId}`}
-        className="font-display text-sm font-semibold text-ink-dark hover:text-caramel transition-colors line-clamp-1">
-        {item.name}
+        className="w-20 h-20 rounded-xl bg-linear-to-br from-cream-100 to-blush/15 flex items-center justify-center text-3xl shrink-0 hover:scale-105 transition-transform duration-200">
+        {item.emoji}
       </Link>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-sm font-bold font-sans text-ink-dark">
-          PKR {lineDiscount > 0 ? Math.round(discountedUnitPrice).toLocaleString() : item.price.toLocaleString()}
-        </span>
-        {lineDiscount > 0 && (
-          <span className="text-xs text-ink-light/35 line-through">PKR {item.price.toLocaleString()}</span>
-        )}
-        {item.original_price && item.original_price > item.price && (
-          <span className="text-xs text-ink-light/35 line-through">PKR {item.original_price.toLocaleString()}</span>
-        )}
-      </div>
-        {outOfStock && <p className="text-[11px] text-red-500 font-sans mt-1">Out of stock</p>}
-    </div>
 
-    {/* Qty + remove */}
-    <div className="flex flex-col items-end justify-between gap-2 shrink-0">
-      <button onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
-        className="p-1.5 rounded-lg text-ink-light/30 hover:text-rose hover:bg-rose/10 transition-all duration-200 btn-bubble opacity-0 group-hover:opacity-100">
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
-      <div className="flex items-center gap-1.5 rounded-xl border border-caramel/20 bg-white/60 px-1">
-        <button onClick={(e) => { e.stopPropagation(); onQty(item.id, item.quantity - 1); }}
-          className="p-1 text-ink-light/50 hover:text-caramel transition-colors btn-bubble">
-          <Minus className="w-3 h-3" />
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-sans font-semibold text-ink-light/50 uppercase tracking-wider mb-0.5">{item.category}</p>
+        <Link href={`/user/shop/${item.productId}`}
+          className="font-display text-sm font-semibold text-ink-dark hover:text-caramel transition-colors line-clamp-1">
+          {item.name}
+        </Link>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-sm font-bold font-sans text-ink-dark">
+            PKR {lineDiscount > 0 ? Math.round(discountedUnitPrice).toLocaleString() : item.price.toLocaleString()}
+          </span>
+          {lineDiscount > 0 && (
+            <span className="text-xs text-ink-light/35 line-through">PKR {item.price.toLocaleString()}</span>
+          )}
+          {item.original_price && item.original_price > item.price && (
+            <span className="text-xs text-ink-light/35 line-through">PKR {item.original_price.toLocaleString()}</span>
+          )}
+        </div>
+        {outOfStock && <p className="text-[11px] text-red-500 font-sans mt-1">Out of stock</p>}
+      </div>
+
+      {/* Qty + remove */}
+      <div className="flex flex-col items-end justify-between gap-2 shrink-0">
+        <button onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
+          className="p-1.5 rounded-lg text-ink-light/30 hover:text-rose hover:bg-rose/10 transition-all duration-200 btn-bubble opacity-0 group-hover:opacity-100">
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
-        <span className="w-6 text-center text-sm font-bold font-sans text-ink">{item.quantity}</span>
+        <div className="flex items-center gap-1.5 rounded-xl border border-caramel/20 bg-white/60 px-1">
+          <button onClick={(e) => { e.stopPropagation(); onQty(item.id, item.quantity - 1); }}
+            className="p-1 text-ink-light/50 hover:text-caramel transition-colors btn-bubble">
+            <Minus className="w-3 h-3" />
+          </button>
+          <span className="w-6 text-center text-sm font-bold font-sans text-ink">{item.quantity}</span>
           <button disabled={outOfStock || atMax} onClick={(e) => { e.stopPropagation(); onQty(item.id, item.quantity + 1); }}
             className={cn("p-1 transition-colors btn-bubble", outOfStock || atMax ? "text-ink-light/25 cursor-not-allowed" : "text-ink-light/50 hover:text-caramel")}>
-          <Plus className="w-3 h-3" />
-        </button>
-      </div>
-      <span className="text-xs font-sans font-semibold text-caramel">
-        PKR {Math.round(discountedLineTotal).toLocaleString()}
-      </span>
-      {lineDiscount > 0 && (
-        <span className="text-[10px] font-sans text-ink-light/40 line-through -mt-1">
-          PKR {lineSubtotal.toLocaleString()}
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+        <span className="text-xs font-sans font-semibold text-caramel">
+          PKR {Math.round(discountedLineTotal).toLocaleString()}
         </span>
-      )}
-    </div>
-  </motion.div>
-    );
-  })()
-);
+        {lineDiscount > 0 && (
+          <span className="text-[10px] font-sans text-ink-light/40 line-through -mt-1">
+            PKR {lineSubtotal.toLocaleString()}
+          </span>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 const RemoveCouponModal = ({ onCancel, onConfirm, totalWithoutCoupon }: { onCancel: () => void; onConfirm: () => void; totalWithoutCoupon: number }) => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

@@ -100,6 +100,7 @@ const OrderPopup = ({ product, onClose }: { product: Product; onClose: () => voi
    ============================================= */
 const ShopCard = ({ product }: { product: Product }) => {
   const { addToWishlist, removeFromWishlist, isWishlisted, addToCart, cartItems } = useShop();
+  const router = useRouter();
   const wishlisted = isWishlisted(product.id);
   const [hover, setHover] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
@@ -118,7 +119,7 @@ const ShopCard = ({ product }: { product: Product }) => {
           onClick={(e) => {
             const target = e.target as HTMLElement;
             if (target.closest("button, a")) return;
-            window.location.href = `/user/shop/${product.id}`;
+            router.push(`/user/shop/${product.id}`);
           }}
           className={cn("relative rounded-3xl overflow-hidden border border-blush/20 bg-white/90 transition-all duration-300 group", hover ? "shadow-[0_16px_40px_rgba(74,55,40,0.15)] -translate-y-1.5" : "shadow-card")}
         >
@@ -306,6 +307,19 @@ const FilterPanel = ({
           </button>
         ))}
       </div>
+      {/* Categories */}
+      <div className="space-y-1">
+        <p className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest">Category</p>
+        <button onClick={() => onCategory("")} className={cn("w-full text-left px-3 py-2 rounded-xl text-xs font-sans transition-all", !selectedCategory ? "bg-caramel/12 font-semibold text-caramel" : "text-ink hover:bg-blush/8")}>All</button>
+        {(showAll ? categories : categories.slice(0, 3)).map((c) => (
+          <button key={c.id} onClick={() => onCategory(c.id)} className={cn("w-full text-left px-3 py-2 rounded-xl text-xs font-sans transition-all", selectedCategory === c.id ? "bg-caramel/12 font-semibold text-caramel" : "text-ink hover:bg-blush/8")}>{c.name}</button>
+        ))}
+        {categories.length > 3 && (
+          <button onClick={() => setShowAll(!showAll)} className="w-full text-left px-3 py-1.5 text-[10px] font-sans font-semibold text-caramel hover:text-ink transition-colors btn-bubble">
+            {showAll ? "Show less ▲" : `+${categories.length - 3} more ▼`}
+          </button>
+        )}
+      </div>
       {/* Discount codes — multi-select */}
       {shopDiscounts.length > 0 && (
         <div className="space-y-2">
@@ -356,19 +370,6 @@ const FilterPanel = ({
           )}
         </div>
       )}
-      {/* Categories */}
-      <div className="space-y-1">
-        <p className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest">Category</p>
-        <button onClick={() => onCategory("")} className={cn("w-full text-left px-3 py-2 rounded-xl text-xs font-sans transition-all", !selectedCategory ? "bg-caramel/12 font-semibold text-caramel" : "text-ink hover:bg-blush/8")}>All</button>
-        {(showAll ? categories : categories.slice(0, 3)).map((c) => (
-          <button key={c.id} onClick={() => onCategory(c.id)} className={cn("w-full text-left px-3 py-2 rounded-xl text-xs font-sans transition-all", selectedCategory === c.id ? "bg-caramel/12 font-semibold text-caramel" : "text-ink hover:bg-blush/8")}>{c.name}</button>
-        ))}
-        {categories.length > 3 && (
-          <button onClick={() => setShowAll(!showAll)} className="w-full text-left px-3 py-1.5 text-[10px] font-sans font-semibold text-caramel hover:text-ink transition-colors btn-bubble">
-            {showAll ? "Show less ▲" : `+${categories.length - 3} more ▼`}
-          </button>
-        )}
-      </div>
       {/* Price — clamped to prevent negative or invalid values */}
       <div className="space-y-2.5">
         <p className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest">Price Range</p>
@@ -480,6 +481,23 @@ function ShopContent() {
       syncDiscountUrl(codes);
     },
     [syncDiscountUrl]
+  );
+
+  const shopNowDiscounts = React.useMemo(
+    () => shopDiscounts.filter((d) => d.appliesTo !== "cart"),
+    [shopDiscounts]
+  );
+
+  const toggleDiscountCode = React.useCallback(
+    (code: string) => {
+      const normalized = code.trim().toUpperCase();
+      if (selectedDiscountCodes.includes(normalized)) {
+        handleDiscountCodesChange(selectedDiscountCodes.filter((c) => c !== normalized));
+      } else {
+        handleDiscountCodesChange([...selectedDiscountCodes, normalized]);
+      }
+    },
+    [handleDiscountCodesChange, selectedDiscountCodes]
   );
 
   useEffect(() => {
@@ -785,6 +803,53 @@ function ShopContent() {
                   {c.name}
                 </button>
               ))}
+            </motion.div>
+          )}
+          {shopNowDiscounts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-4 flex flex-wrap items-center justify-center gap-2"
+            >
+              <span className="text-[10px] font-sans font-semibold text-ink-light/55 uppercase tracking-widest flex items-center gap-1.5">
+                <Tag className="w-3 h-3 text-caramel" /> Discounts
+              </span>
+              {shopNowDiscounts.map((d) => {
+                const selected = selectedDiscountCodes.includes(d.code);
+                const valueLabel = d.discountType === "flat"
+                  ? `PKR ${d.percent.toLocaleString()}`
+                  : `-${d.percent}%`;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => toggleDiscountCode(d.code)}
+                    title={`${d.code} · ${d.label}`}
+                    className={cn(
+                      "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border transition-all btn-bubble",
+                      selected
+                        ? "bg-caramel/15 border-caramel/30 text-caramel"
+                        : "border-caramel/15 text-ink-light/70 hover:border-caramel/40"
+                    )}
+                  >
+                    <Tag className="w-3 h-3" />
+                    <span>{d.code}</span>
+                    <span className={cn("text-[10px]", selected ? "text-caramel/80" : "text-ink-light/50")}>
+                      {valueLabel}
+                    </span>
+                  </button>
+                );
+              })}
+              {selectedDiscountCodes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => handleDiscountCodesChange([])}
+                  className="px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border border-blush/30 text-ink-light/70 hover:text-caramel hover:border-caramel/40 transition-all btn-bubble"
+                >
+                  Clear discounts
+                </button>
+              )}
             </motion.div>
           )}
           <AnimatePresence>

@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package, Plus, Pencil, Trash2, Save, X, Search,
@@ -43,10 +44,12 @@ const MOCK_PRODUCTS: Product[] = []; // Loaded from Supabase
    AUTH GUARD
    ============================================= */
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 /* =============================================

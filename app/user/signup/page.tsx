@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, ArrowRight, Loader2, Heart, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +84,7 @@ const Field = ({
    MAIN SIGNUP PAGE
    ============================================= */
 export default function SignupPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -144,7 +146,7 @@ export default function SignupPage() {
         if (msg.includes("already") || msg.includes("registered") || msg.includes("User already registered")) {
           // Auto-redirect to login after 2 seconds
           setErrors({ email: "✓ This email is already registered. Redirecting to login..." });
-          setTimeout(() => { window.location.href = "/user/login?email=" + encodeURIComponent(form.email.trim()); }, 1800);
+          setTimeout(() => { router.replace("/user/login?email=" + encodeURIComponent(form.email.trim())); }, 1800);
         } else if (msg.includes("password")) {
           setErrors({ confirmPassword: "Password must be at least 6 characters." });
         } else if (msg.includes("rate") || msg.includes("too many")) {
@@ -156,7 +158,7 @@ export default function SignupPage() {
       }
       // data.session exists → email confirmation is OFF → logged in immediately
       if (data?.session) {
-        window.location.href = "/user/home";
+        router.replace("/user/home");
       } else {
         // Email confirmation is ON → tell user to check email
         setErrors({ email: "✓ Account created! Check your email inbox for a confirmation link, then sign in. (Check spam too.)" });

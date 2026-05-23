@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import LoadingWrapper from "@/components/ui/LoadingWrapper";
@@ -24,6 +25,7 @@ type CustomOrderRow = {
 };
 
 export default function AdminCustomOrdersPage() {
+  const router = useRouter();
   const [rows, setRows] = useState<CustomOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [quoteId, setQuoteId] = useState<string | null>(null);
@@ -43,11 +45,11 @@ export default function AdminCustomOrdersPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
-      window.location.href = "/admin/login";
+      router.replace("/admin/login");
       return;
     }
     void load();
-  }, []);
+  }, [router]);
 
   const awaiting = rows.filter((r) => (r.pricing_status ?? "awaiting_quote") === "awaiting_quote");
 

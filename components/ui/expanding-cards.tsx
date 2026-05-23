@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export interface CardItem {
@@ -19,6 +20,7 @@ interface ExpandingCardsProps extends React.HTMLAttributes<HTMLUListElement> {
 
 export const ExpandingCards = React.forwardRef<HTMLUListElement, ExpandingCardsProps>(
   ({ className, items, defaultActiveIndex = 0, ...props }, ref) => {
+    const router = useRouter();
     const [activeIndex, setActiveIndex] = React.useState<number | null>(defaultActiveIndex);
     const [isDesktop, setIsDesktop] = React.useState(false);
 
@@ -79,7 +81,7 @@ export const ExpandingCards = React.forwardRef<HTMLUListElement, ExpandingCardsP
             onFocus={() => handleInteraction(index)}
             onClick={() => {
               if (activeIndex === index) {
-                window.location.href = item.linkHref;
+                router.push(item.linkHref);
                 return;
               }
               handleInteraction(index);

@@ -1,11 +1,5 @@
-"use client";
-
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
 
 export default function AdminLoginPage() {
-  useEffect(() => {
-    window.location.href = "/user/login";
-  }, []);
-
-  return null;
+  redirect("/user/login");
 }

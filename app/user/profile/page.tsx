@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, MapPin, Package, Heart, Bell, LogOut, Edit2, Save, X, ShoppingBag, Star, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,9 +31,10 @@ function dicebearUrl(seed: string, style: string) {
    ============================================= */
 function useRequireAuth() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   useEffect(() => {
-    if (!loading && !user) window.location.href = "/user/login";
-  }, [user, loading]);
+    if (!loading && !user) router.replace("/user/login");
+  }, [user, loading, router]);
   return { user, loading };
 }
 
@@ -53,6 +55,7 @@ const STATUS_COLORS: Record<string, string> = {
    ============================================= */
 export default function UserProfilePage() {
   const { user, loading } = useRequireAuth();
+  const router = useRouter();
   const [tab, setTab] = useState<"profile" | "orders" | "reviews" | "avatar">("profile");
   const [orders, setOrders] = useState<{id:string;product:string;total:number;status:string;date:string}[]>([]);
   const [reviews, setReviews] = useState<Array<{
@@ -223,7 +226,7 @@ export default function UserProfilePage() {
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.href = "/user/login";
+    router.replace("/user/login");
   };
 
   const deleteMyReview = async (reviewId: string) => {
@@ -432,7 +435,7 @@ export default function UserProfilePage() {
                   onClick={(e) => {
                     const target = e.target as HTMLElement;
                     if (target.closest("button, a")) return;
-                    window.location.href = `/user/shop/${r.product_id}?review=${r.id}&mine=1#review-${r.id}`;
+                    router.push(`/user/shop/${r.product_id}?review=${r.id}&mine=1#review-${r.id}`);
                   }}
                 >
                   <div className="flex items-start justify-between gap-3">

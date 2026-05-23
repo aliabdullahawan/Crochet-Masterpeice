@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { EyeOff, Eye, Trash2, RefreshCw, Star, ExternalLink } from "lucide-react";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
@@ -22,6 +23,7 @@ type ReviewRow = {
 };
 
 export default function AdminReviewsPage() {
+  const router = useRouter();
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export default function AdminReviewsPage() {
                   onClick={(e) => {
                     const target = e.target as HTMLElement;
                     if (target.closest("button, a")) return;
-                    window.location.href = `/user/shop/${r.product_id}?review=${r.id}#review-${r.id}`;
+                    router.push(`/user/shop/${r.product_id}?review=${r.id}#review-${r.id}`);
                   }}
                 >
                   <div className="flex items-start justify-between gap-4">

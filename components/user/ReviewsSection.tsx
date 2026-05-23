@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -133,6 +134,7 @@ const ReviewCard = ({
 export const ReviewsSection = () => {
   const sectionRef = useRef(null);
   const inView = useInView(sectionRef, { once: true, margin: "-60px" });
+  const router = useRouter();
   const [cardSize, setCardSize] = useState(340);
 
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -314,7 +316,7 @@ export const ReviewsSection = () => {
               review={review}
               position={position}
               onClick={() => {
-                window.location.href = `/user/shop/${review.product_id}?review=${review.id}#review-${review.id}`;
+                router.push(`/user/shop/${review.product_id}?review=${review.id}#review-${review.id}`);
               }}
               cardSize={cardSize}
             />

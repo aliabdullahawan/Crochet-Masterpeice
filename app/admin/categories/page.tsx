@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Grid3X3, Plus, Pencil, Trash2, Save, X, ChevronDown, ChevronUp, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,10 +25,12 @@ interface CategoryForm {
 // Categories loaded from Supabase
 
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 const FieldInput = ({ label, value, onChange, placeholder, type = "text", required }: {

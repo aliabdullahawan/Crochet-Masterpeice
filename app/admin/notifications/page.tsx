@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bell, ShoppingBag, CheckCheck, ArrowRight, Trash2 } from "lucide-react";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
@@ -18,6 +19,7 @@ type AdminNotif = {
 };
 
 export default function AdminNotificationsPage() {
+  const router = useRouter();
   const [items, setItems] = useState<AdminNotif[]>([]);
   const [loading, setLoading] = useState(true);
   const [setupHint, setSetupHint] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function AdminNotificationsPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
-      window.location.href = "/admin/login";
+      router.replace("/admin/login");
       return;
     }
 
@@ -92,7 +94,7 @@ export default function AdminNotificationsPage() {
     };
 
     load();
-  }, []);
+  }, [router]);
 
   const unread = useMemo(() => items.filter((i) => !i.read).length, [items]);
 

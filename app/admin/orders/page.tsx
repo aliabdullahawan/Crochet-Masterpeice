@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, Search, X, Eye, Check, Clock, Truck, Star,
@@ -50,10 +51,12 @@ const SRC_CFG: Record<OrderSource, { label: string; color: string }> = {
 };
 
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 /* =============================================

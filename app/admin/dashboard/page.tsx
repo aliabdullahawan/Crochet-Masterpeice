@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import {
   ShoppingBag, Package, Users, Star, TrendingUp,
@@ -13,10 +14,12 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabase";
 
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 /* ── Animated counter ── */

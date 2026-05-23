@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useShop } from "@/lib/ShopContext";
 import { useAuth } from "@/lib/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ShoppingCart, Trash2, ArrowRight, Star, Tag, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const EmptyWishlist = () => (
 const WishlistCard = ({
   item, onRemove, onAddCart,
 }: { item: WishlistItem; onRemove: (id: string) => void; onAddCart: (id: string) => void }) => {
+  const router = useRouter();
   const [hover, setHover] = useState(false);
   return (
     <motion.div
@@ -59,7 +61,7 @@ const WishlistCard = ({
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest("button, a")) return;
-        window.location.href = `/user/shop/${item.productId}`;
+        router.push(`/user/shop/${item.productId}`);
       }}
       className={cn(
         "relative rounded-3xl border overflow-hidden transition-all duration-300 cursor-pointer",

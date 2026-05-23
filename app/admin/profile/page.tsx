@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Save, Instagram, Facebook, Users, MessageCircle, TrendingUp, Eye, ShoppingBag, Shield, Mail, Check, Edit2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -7,10 +8,12 @@ import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { supabase } from "@/lib/supabase";
 
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 const TikTokIcon = () => (

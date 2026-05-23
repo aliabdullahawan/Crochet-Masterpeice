@@ -8,7 +8,7 @@ import { shopUrlWithDiscount } from "@/lib/shopDiscounts";
 import { CartDrawer } from "@/components/ui/CartDrawer";
 import { WishlistDrawer } from "@/components/ui/WishlistDrawer";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Heart, ShoppingBag, Bell, User, LogOut, Settings,
   ChevronDown, Menu, X, ShoppingCart, Home, Package,
@@ -283,14 +283,15 @@ const DiscountBanner = ({
 }: {
   discounts: BannerDiscount[];
 }) => {
-  if (!discounts.length) return null;
+  const shopNowDiscounts = discounts.filter((d) => d.code && d.appliesTo !== "cart");
+  if (!shopNowDiscounts.length) return null;
   return (
     <div className="relative overflow-hidden bg-linear-to-r from-caramel/90 via-blush/90 to-mauve/90 text-white py-2 text-xs font-sans font-semibold tracking-wide">
       <div
         className="flex gap-12 whitespace-nowrap items-center"
         style={{ animation: "marquee 32s linear infinite" }}
       >
-        {[...discounts, ...discounts].map((d, i) => (
+        {[...shopNowDiscounts, ...shopNowDiscounts].map((d, i) => (
           <span key={`${d.id ?? d.code ?? "discount"}-${i}`} className="inline-flex items-center gap-2 shrink-0">
             <Tag className="w-3 h-3 inline shrink-0" />
             <span className="font-script text-sm">{d.code ?? "Special"}</span>
@@ -326,6 +327,7 @@ const DiscountBanner = ({
    ============================================= */
 export const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -740,7 +742,7 @@ export const Navbar = () => {
                   active={notifOpen}
                   onClick={() => {
                     if (notifDisabled) {
-                      window.location.href = "/user/login?redirect=%2Fuser%2Fnotifications";
+                      router.push("/user/login?redirect=%2Fuser%2Fnotifications");
                       return;
                     }
                     setNotifOpen((o) => !o);
@@ -814,7 +816,10 @@ export const Navbar = () => {
                     avatarEmoji={avatarUrl ?? "🌸"}
                     userName={displayName}
                     onClose={() => setProfileOpen(false)}
-                    onLogout={async () => { await signOut(); window.location.href = "/"; }}
+                    onLogout={async () => {
+                      await signOut();
+                      router.replace("/");
+                    }}
                   />
                 )}
               </div>

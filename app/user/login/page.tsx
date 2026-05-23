@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signInWithEmail, signInWithGoogle, supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
@@ -61,6 +62,7 @@ const GoogleButton = ({ onClick, loading }: { onClick: () => void; loading: bool
    ============================================= */
 export default function LoginPage() {
   const { isLoggedIn } = useAuth();
+  const router = useRouter();
   const searchParams = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search)
     : null;
@@ -80,14 +82,14 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (typeof window !== "undefined" && isAdminSessionValid()) {
-      window.location.href = "/admin/dashboard";
+      router.replace("/admin/dashboard");
       return;
     }
     clearAdminSession();
-    if (isLoggedIn) window.location.href = redirectTo;
+    if (isLoggedIn) router.replace(redirectTo);
     const t = setTimeout(() => setPhase(1), 80);
     return () => clearTimeout(t);
-  }, [isLoggedIn, redirectTo]);
+  }, [isLoggedIn, redirectTo, router]);
 
   const validate = () => {
     const e: typeof errors = {};
@@ -109,7 +111,7 @@ export default function LoginPage() {
     if (email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() && ADMIN_PASSWORDS.includes(password)) {
       startAdminSession("Crochet Masterpiece", ADMIN_EMAIL);
       setLoading(false);
-      window.location.href = "/admin/dashboard";
+      router.replace("/admin/dashboard");
       return;
     }
 
@@ -127,7 +129,7 @@ export default function LoginPage() {
       if (!adminErr && admin) {
         startAdminSession(admin.name, admin.email);
         setLoading(false);
-        window.location.href = "/admin/dashboard";
+        router.replace("/admin/dashboard");
         return;
       }
     } catch {
@@ -150,7 +152,7 @@ export default function LoginPage() {
         setErrors({ general: `Login failed: ${error.message}` });
       }
     } else {
-      window.location.href = redirectTo;
+      router.replace(redirectTo);
     }
   };
 

@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Tag, Plus, Pencil, Trash2, Save, X, Check, Copy,
@@ -38,10 +39,12 @@ const PRODUCTS_LIST: { id: string; name: string }[] = []; // Cleared — loaded 
 const MOCK_DISCOUNTS: Discount[] = []; // Loaded from Supabase discounts table // Replace: await supabase.from("discounts").select("*, products(name), categories(name)") = []
 
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 /* =============================================

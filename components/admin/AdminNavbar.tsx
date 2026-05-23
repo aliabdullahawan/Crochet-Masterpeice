@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Package, Grid3X3, BarChart3,
   ShoppingBag, Users, Tag, Bell, User, LogOut, Star, Scissors,
@@ -168,6 +168,7 @@ const AdminNotifDropdown = ({
    ============================================= */
 export const AdminNavbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -404,7 +405,7 @@ export const AdminNavbar = () => {
                     <button
                       onClick={() => {
                         clearAdminSession();
-                        window.location.href = "/admin/login";
+                        router.replace("/admin/login");
                       }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-sans text-red-400 hover:bg-red-50 transition-colors">
                       <LogOut className="w-4 h-4" /> Sign Out

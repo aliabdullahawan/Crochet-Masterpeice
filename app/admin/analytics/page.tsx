@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import {
   TrendingUp, TrendingDown, ShoppingBag, Users, Star,
@@ -25,10 +26,12 @@ type TopOrderItem = {
 };
 
 function useAdminAuth() {
+  const router = useRouter();
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in"))
-      window.location.href = "/admin/login";
-  }, []);
+    if (typeof window !== "undefined" && !localStorage.getItem("cm_admin_logged_in")) {
+      router.replace("/admin/login");
+    }
+  }, [router]);
 }
 
 /* =============================================

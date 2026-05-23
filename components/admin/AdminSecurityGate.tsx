@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { clearAdminSession, isAdminSessionValid } from "@/lib/adminSession";
 
 export default function AdminSecurityGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export default function AdminSecurityGate({ children }: { children: React.ReactN
     const verify = () => {
       if (!isAdminSessionValid()) {
         clearAdminSession();
-        window.location.href = "/admin/login";
+        router.replace("/admin/login");
         return false;
       }
       return true;
@@ -41,6 +42,12 @@ export default function AdminSecurityGate({ children }: { children: React.ReactN
     };
   }, [pathname]);
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+        <p className="text-sm font-sans text-ink-light/60">Checking admin session...</p>
+      </div>
+    );
+  }
   return <>{children}</>;
 }
