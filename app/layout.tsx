@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ShopProvider } from "@/lib/ShopContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import WhatsAppFloatingButton from "@/components/ui/WhatsAppFloatingButton";
 
 export const metadata: Metadata = {
   title: "Crochet Masterpiece — Just a Girl Who Loves Crochet",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <ShopProvider>
             {children}
+            <WhatsAppFloatingButton />
           </ShopProvider>
         </AuthProvider>
       </body>
