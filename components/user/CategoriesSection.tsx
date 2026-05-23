@@ -32,7 +32,7 @@ export function CategoriesSection() {
       const [catsRes, productsRes] = await Promise.all([
         supabase
           .from("categories")
-          .select("id, name, description, sort_order")
+          .select("id, name, description, sort_order, image_url")
           .eq("is_active", true)
           .order("sort_order"),
         supabase
@@ -41,7 +41,13 @@ export function CategoriesSection() {
           .eq("is_active", true),
       ]);
 
-      const data = (catsRes.data ?? []) as Array<{ id: string; name: string; description: string | null; sort_order: number }>;
+      const data = (catsRes.data ?? []) as Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        sort_order: number;
+        image_url: string | null;
+      }>;
       const productRows = (productsRes.data ?? []) as Array<{ category_id: string | null }>;
       const usedCategoryIds = new Set(
         productRows
@@ -57,7 +63,7 @@ export function CategoriesSection() {
             id: cat.id,
             title: cat.name,
             description: cat.description ?? "Handmade crochet pieces in this collection.",
-            imgSrc: fallbackImages[i % fallbackImages.length],
+            imgSrc: cat.image_url?.trim() || fallbackImages[i % fallbackImages.length],
             icon: fallbackIcons[i % fallbackIcons.length],
             linkHref: `/user/shop?category=${cat.id}`,
           }))
@@ -92,7 +98,7 @@ export function CategoriesSection() {
   }, [loadCategories]);
 
   return (
-    <section ref={ref} className="py-20 px-4 sm:px-6 lg:px-8 bg-cream-100">
+    <section ref={ref} className="py-20 px-4 sm:px-6 lg:px-8 bg-baby-50/50">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}

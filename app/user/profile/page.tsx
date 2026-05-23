@@ -272,8 +272,6 @@ export default function UserProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           className="glass rounded-3xl border border-blush/20 p-6 mb-6 flex items-center gap-5 relative overflow-hidden">
           {/* BG texture */}
-          <img src="/images/bg-crochet-pink.jpg" alt="" aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover opacity-[0.05] pointer-events-none" />
 
           {/* Avatar */}
           <div className="relative shrink-0 z-10">

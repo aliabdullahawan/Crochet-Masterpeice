@@ -236,8 +236,8 @@ export const Footer = () => {
       <BackToTop />
       <footer ref={ref} className="relative bg-ink-dark overflow-hidden">
         {/* Ambient glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(244,184,193,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(201,160,220,0.05),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,220,235,0.12),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(255,228,239,0.1),transparent_50%)]" />
 
         {/* Main grid */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">

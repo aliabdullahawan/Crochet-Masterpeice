@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { AdminLeftPanel } from "@/components/admin/AdminLeftPanel";
 import { TableSkeleton } from "@/components/ui/PageSkeletons";
 
 /* =============================================
@@ -409,9 +410,10 @@ const ProductModal = ({
 /* =============================================
    PRODUCT ROW
    ============================================= */
-const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
+const ProductRow = ({ product, selected, onSelect, onDelete, onToggle, onToggleFeatured }: {
   product: Product;
-  onEdit: () => void;
+  selected?: boolean;
+  onSelect: () => void;
   onDelete: () => void;
   onToggle: () => void;
   onToggleFeatured: () => void;
@@ -421,7 +423,11 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
 
   return (
   <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.22 }}
-    className="px-4 sm:px-5 py-3.5 hover:bg-caramel/4 transition-colors border-b border-caramel/8 last:border-0 group">
+    onClick={onSelect}
+    className={cn(
+      "px-4 sm:px-5 py-3.5 transition-colors border-b border-caramel/8 last:border-0 group cursor-pointer",
+      selected ? "bg-caramel/10 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
+    )}>
 
     <div className="flex items-start gap-3">
       {/* Image or initial circle */}
@@ -469,20 +475,16 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <button onClick={onToggleFeatured} title={product.is_featured ? "Unfeature" : "Feature"}
+            <button type="button" onClick={(e) => { e.stopPropagation(); onToggleFeatured(); }} title={product.is_featured ? "Unfeature" : "Feature"}
               className={cn("p-1.5 rounded-xl border transition-all btn-bubble",
                 product.is_featured ? "border-mauve/30 bg-mauve/10 text-mauve" : "border-caramel/20 text-ink-light/50 hover:bg-mauve/8 hover:text-mauve hover:border-mauve/25")}>
               <Sparkles className="w-3.5 h-3.5" />
             </button>
-            <button onClick={onToggle} title={product.is_active ? "Hide" : "Show"}
+            <button type="button" onClick={(e) => { e.stopPropagation(); onToggle(); }} title={product.is_active ? "Hide" : "Show"}
               className="p-1.5 rounded-xl border border-caramel/20 text-ink-light/50 hover:bg-caramel/8 hover:text-caramel transition-all btn-bubble">
               {product.is_active ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
-            <button onClick={onEdit}
-              className="p-1.5 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble">
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={onDelete}
+            <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }}
               className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -516,20 +518,16 @@ const ProductRow = ({ product, onEdit, onDelete, onToggle, onToggleFeatured }: {
 
       {/* Actions */}
       <div className="flex gap-1.5 justify-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-        <button onClick={onToggleFeatured} title={product.is_featured ? "Unfeature" : "Feature"}
+        <button type="button" onClick={(e) => { e.stopPropagation(); onToggleFeatured(); }} title={product.is_featured ? "Unfeature" : "Feature"}
           className={cn("p-1.5 rounded-xl border transition-all btn-bubble",
             product.is_featured ? "border-mauve/30 bg-mauve/10 text-mauve" : "border-caramel/20 text-ink-light/50 hover:bg-mauve/8 hover:text-mauve hover:border-mauve/25")}>
           <Sparkles className="w-3.5 h-3.5" />
         </button>
-        <button onClick={onToggle} title={product.is_active ? "Hide" : "Show"}
+        <button type="button" onClick={(e) => { e.stopPropagation(); onToggle(); }} title={product.is_active ? "Hide" : "Show"}
           className="p-1.5 rounded-xl border border-caramel/20 text-ink-light/50 hover:bg-caramel/8 hover:text-caramel transition-all btn-bubble">
           {product.is_active ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         </button>
-        <button onClick={onEdit}
-          className="p-1.5 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble">
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-        <button onClick={onDelete}
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }}
           className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble">
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -803,36 +801,44 @@ export default function AdminProductsPage() {
     price_asc: "Price ↑", price_desc: "Price ↓", rating: "Top Rated",
   };
 
+  const openProduct = (p?: Product) => {
+    setEditing(p);
+    setModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-cream-100">
       <AdminNavbar />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
+      <div className="flex h-[calc(100vh-57px)] overflow-hidden">
+        <AdminLeftPanel
+          open={modal}
+          title={editing ? "Edit product" : "New product"}
+          onClose={() => { setModal(false); setEditing(undefined); }}
+        >
+          <ProductModal
+            embedded
+            product={editing}
+            onSave={handleSave}
+            onClose={() => { setModal(false); setEditing(undefined); }}
+            categories={catList}
+          />
+        </AdminLeftPanel>
+
+      <main className="flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-8 max-w-[1400px] mx-auto w-full">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink-dark">Products</h1>
             <p className="text-sm text-ink-light/55 font-sans mt-0.5">
-              {filtered.length} of {products.length} products · {products.filter(p => p.is_active).length} active
+              {filtered.length} of {products.length} products · {products.filter(p => p.is_active).length} active · click a row to edit
             </p>
           </div>
-          <button onClick={() => { setEditing(undefined); setModal(true); }}
+          <button onClick={() => openProduct(undefined)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <Plus className="w-4 h-4" /> Add Product
           </button>
         </div>
-
-        {modal && (
-          <div className="mb-6">
-            <ProductModal
-              embedded
-              product={editing}
-              onSave={handleSave}
-              onClose={() => { setModal(false); setEditing(undefined); }}
-              categories={catList}
-            />
-          </div>
-        )}
 
         {/* Toolbar */}
         <div className="flex flex-wrap gap-3 mb-5">
@@ -907,7 +913,8 @@ export default function AdminProductsPage() {
               <AnimatePresence mode="popLayout">
                 {filtered.map((p) => (
                   <ProductRow key={p.id} product={p}
-                    onEdit={() => { setEditing(p); setModal(true); }}
+                    selected={editing?.id === p.id && modal}
+                    onSelect={() => openProduct(p)}
                     onDelete={() => setDelId(p.id)}
                     onToggle={async () => {
                       const newVal = !p.is_active;
@@ -939,6 +946,7 @@ export default function AdminProductsPage() {
           )}
         </div>
       </main>
+      </div>
 
       {/* Delete confirm */}
       <AnimatePresence>

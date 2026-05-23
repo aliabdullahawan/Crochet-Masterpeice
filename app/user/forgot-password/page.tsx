@@ -206,6 +206,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-blush/25 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-baby-200/40 blur-3xl pointer-events-none" />
       {/* Background decorations */}
       <div className="absolute top-12 left-8 opacity-10 animate-float-slow pointer-events-none">
         <svg width="80" height="80" viewBox="0 0 80 80" fill="none">

@@ -45,7 +45,7 @@ const ShatterBtn = ({
 }) => {
   const [shards, setShards] = useState<Shard[]>([]);
   const [burst, setBurst] = useState(false);
-  const colors = ["#F4B8C1", "#C9A0DC", "#C8956C", "#E8A0A8", "#FFF8ED"];
+  const colors = ["#F4B8C1", "#C9A0DC", "#C8956C", "#E8A0A8", "#FFF5F8"];
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -130,12 +130,6 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
     });
   };
 
-  const bgImages = [
-    "/images/bg-hands-knitting.jpg",
-    "/images/bg-yarn-table.jpg",
-    "/images/bg-crochet-pink.jpg",
-    "/images/bg-crochet-items.jpg",
-  ];
   const primaryImage = product.image_url ?? product.images?.[0] ?? null;
   const inCartQty = cartItems.find((i) => i.productId === product.id)?.quantity ?? 0;
   const remainingStock = Math.max(0, product.stock_quantity - inCartQty);
@@ -177,11 +171,7 @@ const FeaturedCard = ({ product, index }: { product: Product; index: number }) =
             {primaryImage ? (
               <img src={primaryImage} alt={product.name} className="w-full h-full object-cover" />
             ) : (
-              <img
-                src={bgImages[index % 4]}
-                alt="" aria-hidden="true"
-                className="w-full h-full object-cover opacity-[0.22]"
-              />
+              <div className="absolute inset-0 bg-linear-to-br from-blush/40 via-baby to-cream-100" />
             )}
             <div className="absolute inset-0 bg-linear-to-br from-cream-50/80 via-blush/8 to-cream-100/86" />
           </div>
@@ -355,12 +345,25 @@ export const FeaturedProducts = () => {
   // Fetch featured products from Supabase
   const [products, setProducts] = useState<Product[]>([]);
   const loadFeaturedProducts = React.useCallback(async () => {
-    const { data } = await supabase
+    const productSelect =
+      "id, name, price, original_price, stock_quantity, category_id, category_name:categories(name), average_rating, review_count, tags, is_featured, image_url, images";
+
+    let { data } = await supabase
       .from("products")
-      .select("id, name, price, original_price, stock_quantity, category_id, category_name:categories(name), average_rating, review_count, tags, is_featured, image_url, images")
+      .select(productSelect)
       .eq("is_featured", true)
       .eq("is_active", true)
       .limit(6);
+
+    if (!data?.length) {
+      const fallback = await supabase
+        .from("products")
+        .select(productSelect)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      data = fallback.data;
+    }
 
     if (data) {
       const mapped = data.map((p: {id:string;name:string;price:number;original_price:number|null;stock_quantity:number|null;category_id:string|null;category_name:{name:string}|null;average_rating:number|null;review_count:number|null;tags:string[]|null;is_featured:boolean;image_url?:string|null;images?:string[]|null}) => ({
@@ -481,6 +484,11 @@ export const FeaturedProducts = () => {
         />
 
         {/* Grid */}
+        {products.length === 0 ? (
+          <p className="text-center text-sm text-ink-light/60 font-sans py-12">
+            Products will appear here once you add active items in the admin panel.
+          </p>
+        ) : (
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           initial="hidden"
@@ -490,6 +498,7 @@ export const FeaturedProducts = () => {
             <FeaturedCard key={p.id} product={p} index={i} />
           ))}
         </motion.div>
+        )}
 
         {/* Explore more */}
         <motion.div

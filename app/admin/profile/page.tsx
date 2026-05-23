@@ -33,18 +33,16 @@ export default function AdminProfilePage() {
   const [adminName, setAdminName] = useState("Crochet Masterpiece");
   const [statsLive, setStatsLive] = useState({ orders: 0, products: 0, custom: 0 });
   useEffect(() => {
-    // Fetch real stats from Supabase
-    Promise.all([
-      supabase.from("orders").select("id", { count: "exact", head: true }),
-      supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
-      supabase.from("custom_orders").select("id", { count: "exact", head: true }),
-    ]).then(([orders, products, custom]) => {
-      setStatsLive({
-        orders:   orders.count  ?? 0,
-        products: products.count ?? 0,
-        custom:   custom.count  ?? 0,
-      });
-    }).catch(() => {});
+    fetch("/api/admin/dashboard", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((body) => {
+        setStatsLive({
+          orders: body.stats?.orders ?? 0,
+          products: body.stats?.products ?? 0,
+          custom: body.stats?.customOrders ?? 0,
+        });
+      })
+      .catch(() => {});
   }, []);
   const [adminEmail, setAdminEmail] = useState("");
   const [counts, setCounts] = useState({ instagram: 5800, facebook: 3100, tiktok: 9200, whatsapp: 2400 });

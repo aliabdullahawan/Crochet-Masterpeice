@@ -1,6 +1,5 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
@@ -15,15 +14,8 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
-import { netOrderRevenue } from "@/lib/returns";
 
 type DatePreset = "daily" | "weekly" | "monthly" | "yearly" | "max" | "custom";
-
-type TopOrderItem = {
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-};
 
 function useAdminAuth() {
   const router = useRouter();
@@ -179,6 +171,13 @@ export default function AdminAnalyticsPage() {
   const [repeatRate, setRepeatRate] = useState(0);
   const [avgFulfillmentDays, setAvgFulfillmentDays] = useState(0);
   const [customerSatisfaction, setCustomerSatisfaction] = useState(0);
+  const [summary, setSummary] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    revenueGrowth: 0,
+    curMonthRevenue: 0,
+  });
 
   const resolveRange = () => {
     const now = new Date();
@@ -205,160 +204,54 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => {
     void loadAnalyticsData();
+    const timer = setInterval(() => void loadAnalyticsData(), 60_000);
+    const onFocus = () => void loadAnalyticsData();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [datePreset, customFrom, customTo]);
 
   const loadAnalyticsData = async () => {
     try {
       const range = resolveRange();
+      const params = new URLSearchParams();
+      if (range.start) params.set("start", range.start);
+      if (range.end) params.set("end", range.end);
 
-      // Fetch daily analytics from view
-      let dailyQuery = supabase
-        .from("analytics_daily")
-        .select("date, order_count, revenue")
-        .order("date", { ascending: true })
-        .limit(366);
-
-      if (range.start) dailyQuery = dailyQuery.gte("date", range.start.slice(0, 10));
-      if (range.end) dailyQuery = dailyQuery.lte("date", range.end.slice(0, 10));
-
-      const { data: dailyRaw } = await dailyQuery;
-
-      if (dailyRaw?.length) {
-        setDaily(dailyRaw.map((r:{date:string;order_count:number;revenue:number}, i:number) => ({
-          day: String(i + 1),
-          revenue: Number(r.revenue) || 0,
-          orders: r.order_count || 0,
-        })));
+      const res = await fetch(`/api/admin/analytics?${params.toString()}`, { cache: "no-store" });
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof body?.error === "string" ? body.error : "Could not load analytics.");
       }
 
-      // Aggregate monthly from orders
-      let ordersQuery = supabase
-        .from("orders")
-        .select("id, total_amount, created_at, updated_at, user_id, customer_email, customer_phone, return_status")
-        .eq("status", "delivered");
+      setDaily(body.daily ?? []);
+      setMonthly(body.monthly ?? []);
+      setTopProducts(body.topProducts ?? []);
+      setCategoryPie(body.categoryPie ?? []);
+      setOrderSources(body.orderSources ?? []);
 
-      if (range.start) ordersQuery = ordersQuery.gte("created_at", range.start);
-      if (range.end) ordersQuery = ordersQuery.lte("created_at", range.end);
-
-      const { data: ordersRaw } = await ordersQuery;
-
-      if (ordersRaw?.length) {
-        const monthMap: Record<string, {revenue:number;orders:number;customers:Set<string>}> = {};
-        const customerOrders = new Map<string, number>();
-        const fulfillmentDays: number[] = [];
-        const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        ordersRaw.forEach((o:{total_amount:number;created_at:string;updated_at:string;user_id:string|null;customer_email:string|null;customer_phone:string|null;return_status?:string|null}) => {
-          const d = new Date(o.created_at);
-          const key = MONTHS[d.getMonth()];
-          if (!monthMap[key]) monthMap[key] = { revenue: 0, orders: 0, customers: new Set() };
-          monthMap[key].revenue += netOrderRevenue(o.total_amount, o.return_status);
-          monthMap[key].orders += 1;
-
-          const customerKey = (o.user_id || o.customer_email || o.customer_phone || "").trim().toLowerCase();
-          if (customerKey) {
-            monthMap[key].customers.add(customerKey);
-            customerOrders.set(customerKey, (customerOrders.get(customerKey) ?? 0) + 1);
-          }
-
-          const createdAt = new Date(o.created_at).getTime();
-          const updatedAt = new Date(o.updated_at).getTime();
-          if (Number.isFinite(createdAt) && Number.isFinite(updatedAt) && updatedAt >= createdAt) {
-            fulfillmentDays.push((updatedAt - createdAt) / (1000 * 60 * 60 * 24));
-          }
-        });
-
-        const unique = customerOrders.size;
-        const repeat = Array.from(customerOrders.values()).filter((count) => count >= 2).length;
-        setUniqueCustomers(unique);
-        setRepeatRate(unique > 0 ? Math.round((repeat / unique) * 100) : 0);
-
-        const fulfillmentAvg = fulfillmentDays.length
-          ? Math.round(fulfillmentDays.reduce((sum, days) => sum + days, 0) / fulfillmentDays.length)
-          : 0;
-        setAvgFulfillmentDays(fulfillmentAvg);
-
-        setMonthly(Object.entries(monthMap).slice(-6).map(([month, v]) => ({
-          month, revenue: v.revenue, orders: v.orders, customers: v.customers.size,
-        })));
-      }
-
-      let reviewsQuery = supabase
-        .from("reviews")
-        .select("rating, created_at");
-      if (range.start) reviewsQuery = reviewsQuery.gte("created_at", range.start);
-      if (range.end) reviewsQuery = reviewsQuery.lte("created_at", range.end);
-      const { data: ratingsRaw } = await reviewsQuery;
-      if (ratingsRaw?.length) {
-        const avg = (ratingsRaw as { rating: number }[]).reduce((sum, r) => sum + Number(r.rating || 0), 0) / ratingsRaw.length;
-        setCustomerSatisfaction(Math.round(avg * 10));
-      }
-
-      // Top products by revenue
-      const orderIds = (ordersRaw ?? []).map((o:{id:string}) => o.id);
-      let topRaw: TopOrderItem[] = [];
-      if (orderIds.length > 0) {
-        const { data: topData }: { data: TopOrderItem[] | null } = await supabase
-          .from("order_items")
-          .select("product_name, quantity, unit_price")
-          .in("order_id", orderIds);
-        topRaw = topData ?? [];
-      }
-
-      if (topRaw?.length) {
-        const productMap: Record<string, {revenue:number;orders:number}> = {};
-        topRaw.forEach((i:{product_name:string;quantity:number;unit_price:number}) => {
-          if (!productMap[i.product_name]) productMap[i.product_name] = { revenue: 0, orders: 0 };
-          productMap[i.product_name].revenue += i.quantity * i.unit_price;
-          productMap[i.product_name].orders += i.quantity;
-        });
-        const sorted = Object.entries(productMap).sort(([,a],[,b]) => b.revenue - a.revenue).slice(0,5);
-        const maxRev = sorted[0]?.[1]?.revenue || 1;
-        setTopProducts(sorted.map(([name, v]) => ({ name, revenue: v.revenue, orders: v.orders, pct: Math.round((v.revenue/maxRev)*100) })));
-      }
-
-      // Category split
-      const { data: catRaw } = await supabase
-        .from("products")
-        .select("category_id, categories(name)");
-      if (catRaw?.length) {
-        const catCount: Record<string, number> = {};
-        catRaw.forEach((p:{categories:{name:string}|null}) => {
-          const name = p.categories?.name ?? "Uncategorised";
-          catCount[name] = (catCount[name] || 0) + 1;
-        });
-        const fills = ["#C8956C","#F4B8C1","#C9A0DC","#E8A0A8","#D4A890"];
-        const total = Object.values(catCount).reduce((a,b) => a+b, 0);
-        setCategoryPie(Object.entries(catCount).map(([name, count], i) => ({
-          name, value: Math.round((count/total)*100), fill: fills[i % fills.length],
-        })));
-      }
-
-      // Order sources
-      let sourceQuery = supabase
-        .from("orders")
-        .select("source");
-      if (range.start) sourceQuery = sourceQuery.gte("created_at", range.start);
-      if (range.end) sourceQuery = sourceQuery.lte("created_at", range.end);
-      const { data: srcRaw } = await sourceQuery;
-      if (srcRaw?.length) {
-        const srcCount: Record<string, number> = {};
-        srcRaw.forEach((o:{source:string}) => { srcCount[o.source] = (srcCount[o.source]||0)+1; });
-        const srcFills: Record<string,string> = { website:"#C8956C", whatsapp:"#25D366", custom:"#C9A0DC" };
-        setOrderSources(Object.entries(srcCount).map(([source, count]) => ({ source, count, fill: srcFills[source]||"#C8956C" })));
-      }
-
-    } catch(e) { console.error("Analytics load error:", e); }
-    finally { setLoading(false); }
+      const s = body.summary ?? {};
+      setSummary({
+        totalRevenue: s.totalRevenue ?? 0,
+        totalOrders: s.totalOrders ?? 0,
+        avgOrderValue: s.avgOrderValue ?? 0,
+        revenueGrowth: s.revenueGrowth ?? 0,
+        curMonthRevenue: s.curMonthRevenue ?? 0,
+      });
+      setUniqueCustomers(s.uniqueCustomers ?? 0);
+      setRepeatRate(s.repeatRate ?? 0);
+      setAvgFulfillmentDays(s.avgFulfillmentDays ?? 0);
+      setCustomerSatisfaction(s.customerSatisfaction ?? 0);
+    } catch (e) {
+      console.error("Analytics load error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Key metrics derived from loaded data
-  const totalRevenue = monthly.reduce((s, m) => s + m.revenue, 0);
-  const totalOrders = monthly.reduce((s, m) => s + m.orders, 0);
-  const totalCustomers = monthly.reduce((s, m) => s + m.customers, 0);
-  const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  const curMonthRevenue = monthly[monthly.length - 1]?.revenue ?? 0;
-  const prevMonthRevenue = monthly[monthly.length - 2]?.revenue ?? 0;
-  const revenueGrowth = prevMonthRevenue > 0 ? Math.round(((curMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100) : 0;
+  const { totalRevenue, totalOrders, avgOrderValue, revenueGrowth, curMonthRevenue } = summary;
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -369,7 +262,9 @@ export default function AdminAnalyticsPage() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink-dark">Analytics</h1>
-            <p className="text-sm text-ink-light/55 font-sans mt-0.5">Last 6 months · Live from Supabase (delivered orders)</p>
+            <p className="text-sm text-ink-light/55 font-sans mt-0.5">
+              {loading ? "Loading…" : "Live from orders · updates when you confirm sales"}
+            </p>
           </div>
           <div className="flex items-center border border-caramel/20 rounded-2xl overflow-hidden bg-white/80">
             {(["daily", "monthly"] as const).map((p) => (

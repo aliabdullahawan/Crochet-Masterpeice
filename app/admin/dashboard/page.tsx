@@ -11,8 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { supabase } from "@/lib/supabase";
-
 function useAdminAuth() {
   const router = useRouter();
   useEffect(() => {
@@ -100,52 +98,36 @@ export default function AdminDashboardPage() {
     setAdminName(localStorage.getItem("cm_admin_name") ?? "Admin");
   }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    void loadData();
+    const timer = setInterval(() => void loadData(), 45_000);
+    const onFocus = () => void loadData();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   const loadData = async () => {
     try {
-      // Parallel fetches
-      const [
-        { count: orderCount },
-        { count: productCount },
-        { count: userCount },
-        { data: revenueData },
-        { data: ratingData },
-        { count: discountCount },
-        { data: ordersData },
-        { data: settingsData },
-      ] = await Promise.all([
-        supabase.from("orders").select("*", { count: "exact", head: true }).neq("status", "cancelled"),
-        supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("users").select("*", { count: "exact", head: true }),
-        supabase.from("orders").select("total_amount").eq("status", "delivered"),
-        supabase.from("reviews").select("rating"),
-        supabase.from("discounts").select("*", { count: "exact", head: true }).eq("active", true),
-        supabase.from("orders").select("id, customer_name, total_amount, status, created_at")
-          .order("created_at", { ascending: false }).limit(6),
-        supabase.from("site_settings").select("key, value")
-          .in("key", ["instagram_count_manual","facebook_count_manual","tiktok_count_manual","whatsapp_count_manual"]),
-      ]);
-
-      const totalRevenue = (revenueData ?? []).reduce((s: number, r: { total_amount: number }) => s + r.total_amount, 0);
-      const avgRating = ratingData?.length
-        ? (ratingData as { rating: number }[]).reduce((s, r) => s + r.rating, 0) / ratingData.length
-        : 0;
+      const res = await fetch("/api/admin/dashboard", { cache: "no-store" });
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof body?.error === "string" ? body.error : "Could not load dashboard.");
+      }
 
       setStats({
-        orders: orderCount ?? 0,
-        products: productCount ?? 0,
-        users: userCount ?? 0,
-        revenue: totalRevenue,
-        avgRating: Math.round(avgRating * 10) / 10,
-        activeDiscounts: discountCount ?? 0,
+        orders: body.stats?.orders ?? 0,
+        products: body.stats?.products ?? 0,
+        users: body.stats?.users ?? 0,
+        revenue: body.stats?.revenue ?? 0,
+        avgRating: body.stats?.avgRating ?? 0,
+        activeDiscounts: body.stats?.activeDiscounts ?? 0,
       });
-
-      setRecentOrders((ordersData ?? []) as typeof recentOrders);
-
-      if (settingsData) {
-        const m = Object.fromEntries(settingsData.map((s: {key:string;value:string}) => [s.key.replace("_count_manual",""), Number(s.value)]));
-        setSocialCounts({ instagram: m.instagram ?? 0, facebook: m.facebook ?? 0, tiktok: m.tiktok ?? 0, whatsapp: m.whatsapp ?? 0 });
+      setRecentOrders((body.recentOrders ?? []) as typeof recentOrders);
+      if (body.socialCounts) {
+        setSocialCounts(body.socialCounts);
       }
     } catch (e) {
       console.error("Dashboard load error:", e);

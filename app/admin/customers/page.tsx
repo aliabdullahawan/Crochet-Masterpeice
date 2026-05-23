@@ -293,24 +293,16 @@ export default function AdminCustomersPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data } = await supabase
-          .from("users")
-          .select("id, email, name, phone, created_at, is_active")
-          .order("created_at", { ascending: false });
-        if (data) {
-          setCustomers(data.map((u:{id:string;email:string;name:string;phone:string|null;created_at:string;is_active:boolean}, idx:number) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            phone: u.phone ?? undefined,
-            joined: new Date(u.created_at).toISOString().split("T")[0],
-            total_orders: 0,
-            total_spent: 0,
-            is_active: u.is_active,
-          })));
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        const body = await res.json();
+        if (res.ok && Array.isArray(body.customers)) {
+          setCustomers(body.customers);
         }
-      } catch(e) { console.error(e); }
-      finally { setDbLoading(false); }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setDbLoading(false);
+      }
     };
     load();
   }, []);

@@ -5,12 +5,13 @@ import { Sparkles, Truck, Heart } from "lucide-react";
 
 export function ShopHeroBanner() {
   return (
-    <div className="relative overflow-hidden border-b border-caramel/15 bg-linear-to-br from-cream-50 via-blush/15 to-mauve/10">
-      <div className="absolute inset-0 pointer-events-none">
-        <img src="/images/crochet-3.jpg" alt="" className="absolute right-0 top-0 h-full w-1/3 object-cover opacity-40" aria-hidden />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(244,184,193,0.25),transparent_55%)]" />
-        <div className="absolute inset-0 bg-linear-to-r from-cream-100 via-cream-100/85 to-transparent" />
-      </div>
+    <div className="relative overflow-hidden border-b border-blush/20 bg-linear-to-r from-baby-50 via-cream-100 to-blush/20">
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(circle at 15% 50%, rgba(255,228,239,0.5) 0%, transparent 45%)",
+        }}
+      />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>

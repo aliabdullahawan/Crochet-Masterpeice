@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Grid3X3, Plus, Pencil, Trash2, Save, X, ChevronDown, ChevronUp, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { AdminLeftPanel } from "@/components/admin/AdminLeftPanel";
 
 interface Category {
   id: string; name: string; description: string;
@@ -140,27 +141,17 @@ export default function AdminCategoriesPage() {
     });
   };
 
+  const closePanel = () => { setModal(false); setEditing(null); };
+
   return (
     <div className="min-h-screen bg-cream-100">
       <AdminNavbar />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-semibold text-ink-dark">Categories</h1>
-            <p className="text-sm text-ink-light/55 font-sans mt-0.5">{cats.length} categories · {cats.filter(c => c.active).length} active</p>
-          </div>
-          <button onClick={openNew}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
-            <Plus className="w-4 h-4" /> New Category
-          </button>
-        </div>
-
-        {modal && (
-          <div className="glass rounded-3xl border border-caramel/25 shadow-card p-6 mb-6">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg font-semibold text-ink-dark">{editing ? "Edit Category" : "New Category"}</h3>
-              <button onClick={() => setModal(false)} className="p-1.5 rounded-xl hover:bg-caramel/10 text-ink-light btn-bubble"><X className="w-4 h-4" /></button>
-            </div>
+      <div className="flex h-[calc(100vh-57px)] overflow-hidden">
+        <AdminLeftPanel
+          open={modal}
+          title={editing ? "Edit category" : "New category"}
+          onClose={closePanel}
+        >
             <div className="space-y-4">
               {err && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-xl border border-red-100">{err}</p>}
               <FieldInput label="Category Name" value={form.name} onChange={(v) => { setForm(f => ({ ...f, name: v })); setErr(""); }} placeholder="e.g. Cardigans & Tops" required />
@@ -228,13 +219,24 @@ export default function AdminCategoriesPage() {
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setModal(false)} className="flex-1 py-2.5 rounded-2xl border border-caramel/20 text-ink font-sans font-semibold text-sm hover:bg-caramel/8 transition-all btn-bubble">Cancel</button>
-              <button onClick={handleSave} className="flex-1 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
+              <button type="button" onClick={closePanel} className="flex-1 py-2.5 rounded-2xl border border-caramel/20 text-ink font-sans font-semibold text-sm hover:bg-caramel/8 transition-all btn-bubble">Cancel</button>
+              <button type="button" onClick={handleSave} className="flex-1 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white font-sans font-bold text-sm shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble flex items-center justify-center gap-2">
                 <Save className="w-3.5 h-3.5" /> {editing ? "Save" : "Create"}
               </button>
             </div>
+        </AdminLeftPanel>
+
+      <main className="flex-1 min-w-0 overflow-y-auto max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-semibold text-ink-dark">Categories</h1>
+            <p className="text-sm text-ink-light/55 font-sans mt-0.5">{cats.length} categories · click a row to edit</p>
           </div>
-        )}
+          <button onClick={openNew}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
+            <Plus className="w-4 h-4" /> New Category
+          </button>
+        </div>
 
         <div className="glass rounded-3xl border border-caramel/15 overflow-hidden">
           <div className="md:hidden px-4 py-2.5 border-b border-caramel/10 bg-caramel/4">
@@ -262,11 +264,15 @@ export default function AdminCategoriesPage() {
               </div>
             ) : cats.map((cat, i) => (
               <motion.div key={cat.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.22 }}
-                className="grid grid-cols-[28px_40px_1fr] md:grid-cols-[28px_40px_1fr_80px_120px] gap-3 md:gap-4 items-center px-4 md:px-5 py-3.5 hover:bg-caramel/4 transition-colors border-b border-caramel/8 last:border-0 group">
+                onClick={() => openEdit(cat)}
+                className={cn(
+                  "grid grid-cols-[28px_40px_1fr] md:grid-cols-[28px_40px_1fr_80px_120px] gap-3 md:gap-4 items-center px-4 md:px-5 py-3.5 transition-colors border-b border-caramel/8 last:border-0 group cursor-pointer",
+                  editing?.id === cat.id && modal ? "bg-caramel/10 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
+                )}>
                 {/* Sort */}
-                <div className="flex flex-col gap-0.5">
-                  <button onClick={() => move(i, -1)} disabled={i === 0} className="p-0.5 text-ink-light/30 hover:text-caramel disabled:opacity-20 transition-colors btn-bubble"><ChevronUp className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} className="p-0.5 text-ink-light/30 hover:text-caramel disabled:opacity-20 transition-colors btn-bubble"><ChevronDown className="w-3.5 h-3.5" /></button>
+                <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="p-0.5 text-ink-light/30 hover:text-caramel disabled:opacity-20 transition-colors btn-bubble"><ChevronUp className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === cats.length - 1} className="p-0.5 text-ink-light/30 hover:text-caramel disabled:opacity-20 transition-colors btn-bubble"><ChevronDown className="w-3.5 h-3.5" /></button>
                 </div>
                 {/* Icon / Image */}
                 <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-caramel/15">
@@ -292,14 +298,13 @@ export default function AdminCategoriesPage() {
                     <div className="flex items-center gap-1 text-xs font-sans text-ink-light/60">
                       <Package className="w-3.5 h-3.5" />{cat.product_count}
                     </div>
-                    <div className="flex gap-1.5">
-                      <button onClick={() => setCats(p => p.map(c => c.id === cat.id ? { ...c, active: !c.active } : c))}
+                    <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" onClick={() => setCats(p => p.map(c => c.id === cat.id ? { ...c, active: !c.active } : c))}
                         className={cn("px-2.5 py-1 rounded-xl text-[10px] font-sans font-bold border transition-all btn-bubble",
                           cat.active ? "bg-red-50 border-red-200 text-red-400 hover:bg-red-100" : "bg-green-50 border-green-200 text-green-600")}>
                         {cat.active ? "Hide" : "Show"}
                       </button>
-                      <button onClick={() => openEdit(cat)} className="p-1.5 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble"><Pencil className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => setDelId(cat.id)} className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => setDelId(cat.id)} className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                 </div>
@@ -308,14 +313,13 @@ export default function AdminCategoriesPage() {
                   <Package className="w-3.5 h-3.5" />{cat.product_count}
                 </div>
                 {/* Actions */}
-                <div className="hidden md:flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                  <button onClick={() => setCats(p => p.map(c => c.id === cat.id ? { ...c, active: !c.active } : c))}
+                <div className="hidden md:flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity justify-end" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" onClick={() => setCats(p => p.map(c => c.id === cat.id ? { ...c, active: !c.active } : c))}
                     className={cn("px-2.5 py-1 rounded-xl text-[10px] font-sans font-bold border transition-all btn-bubble",
                       cat.active ? "bg-red-50 border-red-200 text-red-400 hover:bg-red-100" : "bg-green-50 border-green-200 text-green-600")}>
                     {cat.active ? "Hide" : "Show"}
                   </button>
-                  <button onClick={() => openEdit(cat)} className="p-1.5 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble"><Pencil className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setDelId(cat.id)} className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => setDelId(cat.id)} className="p-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </motion.div>
             ))}
@@ -330,6 +334,7 @@ export default function AdminCategoriesPage() {
         </div>
         <p className="text-xs text-ink-light/35 font-sans text-center mt-4">Reorder with arrows · Syncs to Supabase when connected</p>
       </main>
+      </div>
 
       {/* Delete confirm */}
       <AnimatePresence>

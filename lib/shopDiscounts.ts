@@ -29,6 +29,19 @@ export function normalizeDiscountCode(code: string) {
   return code.trim().toUpperCase();
 }
 
+/** Human-readable scope for shop UI (filter bar, chips, drawer). */
+export function discountScopeLabel(discount: ShopDiscount) {
+  if (discount.appliesTo === "all") return "All products";
+  if (discount.appliesTo === "cart") return "Cart checkout";
+  if (discount.appliesTo === "category") {
+    return discount.targetName ? `Category: ${discount.targetName}` : "Category discount";
+  }
+  if (discount.appliesTo === "product") {
+    return discount.targetName ? `Product: ${discount.targetName}` : "Product discount";
+  }
+  return discount.label;
+}
+
 export function productMatchesDiscountCodes(
   product: { id: string; category_id?: string | null; discount_code?: string | null },
   selectedCodes: string[],

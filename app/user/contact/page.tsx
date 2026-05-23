@@ -237,14 +237,13 @@ export default function ContactPage() {
   const heroInView = useInView(heroRef, { once: true });
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="min-h-screen bg-baby-50/60">
       <Navbar />
 
       {/* ── Hero ── */}
       <section
         ref={heroRef}
-        className="relative overflow-hidden pt-28 pb-16 px-4 sm:px-6 lg:px-8 text-center"
-        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(244,184,193,0.18) 0%, transparent 60%), #FFF8ED" }}
+        className="relative overflow-hidden pt-28 pb-16 px-4 sm:px-6 lg:px-8 text-center bg-hero-gradient"
       >
         {/* Floating emojis */}
         {["", "", "", ""].map((em, i) => (

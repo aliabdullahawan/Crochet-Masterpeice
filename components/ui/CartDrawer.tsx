@@ -331,15 +331,7 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                       {/* Emoji image */}
                       <Link href={`/user/shop/${item.productId}`} onClick={onClose}
                         className="w-14 h-14 rounded-xl overflow-hidden shrink-0 hover:scale-105 transition-transform relative bg-linear-to-br from-cream-50 to-blush/20">
-                        <img
-                          src={item.productId === "1" || item.productId === "5" ? "/images/bg-hands-knitting.jpg"
-                            : item.productId === "2" ? "/images/bg-yarn-table.jpg"
-                            : item.productId === "3" ? "/images/bg-crochet-items.jpg"
-                            : "/images/bg-crochet-pink.jpg"}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute inset-0 w-full h-full object-cover opacity-[0.12]"
-                        />
+                        <div className="absolute inset-0 bg-linear-to-br from-blush/35 via-baby to-cream-100" />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="font-display text-lg font-semibold text-caramel/70">{item.name.charAt(0)}</span>
                         </div>

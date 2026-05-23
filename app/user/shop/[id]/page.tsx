@@ -972,16 +972,7 @@ export default function ProductDetailPage() {
                   className="block rounded-2xl border border-blush/20 bg-white/80 hover:border-caramel/35 hover:-translate-y-1 hover:shadow-card transition-all duration-300 overflow-hidden group">
                   {/* Card image area */}
                   <div className="relative h-28 overflow-hidden">
-                    {/* Texture strip */}
-                    <img
-                      src={i % 4 === 0 ? "/images/bg-hands-knitting.jpg"
-                        : i % 4 === 1 ? "/images/bg-yarn-table.jpg"
-                        : i % 4 === 2 ? "/images/bg-crochet-pink.jpg"
-                        : "/images/bg-crochet-items.jpg"}
-                      alt="" aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover opacity-[0.10]"
-                    />
-                    <div className={cn("absolute inset-0 bg-linear-to-br", p.gradient, "opacity-80")} />
+                    <div className={cn("absolute inset-0 bg-linear-to-br", p.gradient)} />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 rounded-full bg-white/60 border border-white/80 flex items-center justify-center shadow-soft transition-transform duration-300 group-hover:scale-110">
                         <span className="font-display text-xl font-semibold text-caramel/80">{p.initial}</span>

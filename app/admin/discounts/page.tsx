@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { AdminLeftPanel } from "@/components/admin/AdminLeftPanel";
 import { CardSkeleton, TableSkeleton } from "@/components/ui/PageSkeletons";
 
 /* =============================================
@@ -262,8 +263,14 @@ const DiscountModal = ({ discount, onSave, onClose, productsList = [], categorie
 /* =============================================
    DISCOUNT ROW
    ============================================= */
-const DiscountRow = ({ d, onEdit, onDelete, onToggle, onToggleBanner, onCopy }: {
-  d: Discount; onEdit: () => void; onDelete: () => void; onToggle: () => void; onToggleBanner: () => void; onCopy: () => void;
+const DiscountRow = ({ d, selected, onSelect, onDelete, onToggle, onToggleBanner, onCopy }: {
+  d: Discount;
+  selected?: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  onToggle: () => void;
+  onToggleBanner: () => void;
+  onCopy: () => void;
 }) => {
   const isExpired = d.end_date && new Date(d.end_date) < new Date();
   const isFull = d.max_uses !== null && d.uses_count >= d.max_uses;
@@ -279,7 +286,11 @@ const DiscountRow = ({ d, onEdit, onDelete, onToggle, onToggleBanner, onCopy }: 
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }}
-      className="px-4 sm:px-5 py-4 border-b border-caramel/8 last:border-0 hover:bg-caramel/4 transition-colors group">
+      onClick={onSelect}
+      className={cn(
+        "px-4 sm:px-5 py-4 border-b border-caramel/8 last:border-0 transition-colors group cursor-pointer",
+        selected ? "bg-caramel/10 border-l-2 border-l-caramel" : "hover:bg-caramel/4"
+      )}>
 
       {/* Mobile layout */}
       <div className="md:hidden space-y-2">
@@ -318,19 +329,18 @@ const DiscountRow = ({ d, onEdit, onDelete, onToggle, onToggleBanner, onCopy }: 
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 mt-1">
-          <button onClick={onToggle}
+        <div className="flex flex-wrap items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+          <button type="button" onClick={onToggle}
             className={cn("px-2.5 py-1.5 rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble",
               toggleClass)}>
             {toggleLabel}
           </button>
-          <button onClick={onToggleBanner}
+          <button type="button" onClick={onToggleBanner}
             className={cn("px-2.5 py-1.5 rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble",
               d.hidden_from_banner ? "bg-caramel/12 border-caramel/30 text-caramel hover:bg-caramel/20" : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100")}>
             {d.hidden_from_banner ? "Show Bar" : "Hide Bar"}
           </button>
-          <button onClick={onEdit} className="p-2 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble" title="Edit discount"><Pencil className="w-3.5 h-3.5" /></button>
-          <button onClick={onDelete} className="p-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble" title="Delete discount"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button type="button" onClick={onDelete} className="p-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble" title="Delete discount"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
 
@@ -398,19 +408,18 @@ const DiscountRow = ({ d, onEdit, onDelete, onToggle, onToggleBanner, onCopy }: 
         </span>
 
         {/* Actions */}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-        <button onClick={onToggle}
+        <div className="flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={onToggle}
           className={cn("px-3 py-1.5 min-w-[94px] rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble whitespace-nowrap",
             toggleClass)}>
           {toggleLabel}
         </button>
-        <button onClick={onToggleBanner}
+        <button type="button" onClick={onToggleBanner}
           className={cn("px-3 py-1.5 min-w-[86px] rounded-xl border text-[11px] font-sans font-bold transition-all btn-bubble whitespace-nowrap",
             d.hidden_from_banner ? "bg-caramel/12 border-caramel/30 text-caramel hover:bg-caramel/20" : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100")}>
           {d.hidden_from_banner ? "Show Bar" : "Hide Bar"}
         </button>
-        <button onClick={onEdit} className="p-2 rounded-xl border border-caramel/20 text-caramel hover:bg-caramel/10 transition-all btn-bubble" title="Edit discount"><Pencil className="w-3.5 h-3.5" /></button>
-        <button onClick={onDelete} className="p-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble" title="Delete discount"><Trash2 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={onDelete} className="p-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all btn-bubble" title="Delete discount"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
     </motion.div>
@@ -585,37 +594,45 @@ export default function AdminDiscountsPage() {
     totalUses: discounts.reduce((s, d) => s + d.uses_count, 0),
   };
 
+  const openDiscount = (d?: Discount) => {
+    setEditing(d);
+    setModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-cream-100">
       <AdminNavbar />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
+      <div className="flex h-[calc(100vh-57px)] overflow-hidden">
+        <AdminLeftPanel
+          open={modal}
+          title={editing ? "Edit discount" : "New discount"}
+          onClose={() => { setModal(false); setEditing(undefined); }}
+        >
+          <DiscountModal
+            embedded
+            discount={editing}
+            onSave={handleSave}
+            onClose={() => { setModal(false); setEditing(undefined); }}
+            productsList={productsList}
+            categoriesList={categoriesList}
+          />
+        </AdminLeftPanel>
+
+      <main className="flex-1 min-w-0 overflow-y-auto max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-8">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink-dark">Discounts & Coupons</h1>
             <p className="text-sm text-ink-light/55 font-sans mt-0.5">
-              {stats.total} total · {stats.active} active · {stats.totalUses} total uses
+              {stats.total} total · {stats.active} active · click a row to edit
             </p>
           </div>
-          <button onClick={() => { setEditing(undefined); setModal(true); }}
+          <button onClick={() => openDiscount(undefined)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-linear-to-r from-caramel to-latte text-white text-sm font-sans font-bold shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all btn-bubble">
             <Plus className="w-4 h-4" /> New Discount
           </button>
         </div>
-
-        {modal && (
-          <div className="mb-6">
-            <DiscountModal
-              embedded
-              discount={editing}
-              onSave={handleSave}
-              onClose={() => { setModal(false); setEditing(undefined); }}
-              productsList={productsList}
-              categoriesList={categoriesList}
-            />
-          </div>
-        )}
 
         {/* Stat cards */}
         {dbLoading ? (
@@ -685,7 +702,8 @@ export default function AdminDiscountsPage() {
               <AnimatePresence mode="popLayout">
                 {filtered.map(d => (
                   <DiscountRow key={d.id} d={d}
-                    onEdit={() => { setEditing(d); setModal(true); }}
+                    selected={editing?.id === d.id && modal}
+                    onSelect={() => openDiscount(d)}
                     onDelete={() => setDelId(d.id)}
                     onToggle={async () => {
                       const isExpired = Boolean(d.end_date && new Date(d.end_date) < new Date());
@@ -733,6 +751,7 @@ export default function AdminDiscountsPage() {
           )}
         </div>
       </main>
+      </div>
 
       <AnimatePresence>
         {delId && (

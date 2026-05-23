@@ -204,15 +204,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4"
-      style={{ background: "radial-gradient(ellipse at 25% 35%, rgba(244,184,193,0.22) 0%, transparent 55%), radial-gradient(ellipse at 75% 70%, rgba(201,160,220,0.15) 0%, transparent 50%), #FFF8ED" }}>
-
-      {/* Background images */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <img src="/images/bg-yarn-table.jpg" alt="" aria-hidden className="absolute top-0 left-0 w-1/2 h-full object-cover opacity-[0.06]" />
-        <img src="/images/bg-crochet-pink.jpg" alt="" aria-hidden className="absolute top-0 right-0 w-1/2 h-full object-cover opacity-[0.06]" />
-        <div className="absolute inset-0 bg-linear-to-br from-cream-100/90 via-transparent to-cream-100/80" />
-      </div>
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-hero-gradient">
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 25% 35%, rgba(255,220,235,0.4) 0%, transparent 55%), radial-gradient(ellipse at 75% 70%, rgba(255,228,239,0.3) 0%, transparent 50%)",
+        }}
+      />
 
       <div className={cn("w-full max-w-md relative z-10 transition-all duration-700",
         phase >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8")}>

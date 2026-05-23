@@ -89,14 +89,17 @@ const CategorySelector = ({
             : "border-caramel/15 hover:border-blush/50 hover:scale-[1.02]"
         )}
       >
-        {/* Background image */}
-        <Image
-          src={cat.img}
-          alt={cat.label}
-          fill
-          className="object-cover transition-transform duration-300 hover:scale-110"
-          sizes="150px"
-        />
+        {cat.img ? (
+          <Image
+            src={cat.img}
+            alt={cat.label}
+            fill
+            className="object-cover transition-transform duration-300 hover:scale-110"
+            sizes="150px"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-linear-to-br from-blush/50 via-baby to-mauve/30" />
+        )}
         {/* Overlay */}
         <div className={cn(
           "absolute inset-0 transition-all duration-300",
@@ -177,12 +180,14 @@ export default function CustomOrderPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<CatOption[]>([]);
   useEffect(() => {
-    supabase.from("categories").select("id, name").eq("is_active", true).order("sort_order")
+    supabase.from("categories").select("id, name, image_url").eq("is_active", true).order("sort_order")
       .then(({ data }) => {
-        const cats: CatOption[] = (data ?? []).map((d: {id:string;name:string}, idx: number) => ({
-          value: d.id, label: d.name, img: FALLBACK_IMG(idx),
+        const cats: CatOption[] = (data ?? []).map((d: { id: string; name: string; image_url?: string | null }, idx: number) => ({
+          value: d.id,
+          label: d.name,
+          img: d.image_url?.trim() || FALLBACK_IMG(idx),
         }));
-        setCategories([...cats, { value: "other", label: "Something else...", img: "/images/bg-crochet-items.jpg" }]);
+        setCategories([...cats, { value: "other", label: "Something else...", img: "" }]);
       });
   }, []);
 
@@ -268,16 +273,13 @@ export default function CustomOrderPage() {
         ref={heroRef}
         className="relative overflow-hidden pt-28 pb-16 px-4 sm:px-6 lg:px-8"
       >
-        {/* 3-image background collage */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <img src="/images/bg-crochet-items.jpg" alt="" aria-hidden="true"
-            className="absolute top-0 left-0 w-2/5 h-full object-cover opacity-[0.08]" />
-          <img src="/images/bg-crochet-pink.jpg" alt="" aria-hidden="true"
-            className="absolute top-0 left-2/5 w-1/5 h-full object-cover opacity-[0.06]" />
-          <img src="/images/bg-yarn-table.jpg" alt="" aria-hidden="true"
-            className="absolute top-0 right-0 w-2/5 h-full object-cover opacity-[0.08]" />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 50%, rgba(201,160,220,0.12) 0%, transparent 60%), radial-gradient(ellipse at 30% 80%, rgba(244,184,193,0.15) 0%, transparent 50%), rgba(255,248,237,0.92)" }} />
-        </div>
+        <div
+          className="absolute inset-0 pointer-events-none z-0 bg-linear-to-br from-baby-50 via-cream-100 to-blush/25"
+          style={{
+            background:
+              "linear-gradient(160deg, #fffafc 0%, #fff5f8 45%, #fff0f5 100%), radial-gradient(ellipse at 70% 40%, rgba(255,220,235,0.35) 0%, transparent 55%)",
+          }}
+        />
         {/* Floating decor */}
         {["", "", "", "🪡"].map((em, i) => (
           <motion.span key={`decor-${i}-${em || "empty"}`}

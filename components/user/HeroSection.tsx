@@ -466,14 +466,27 @@ export const HeroSection = () => {
   const [products, setProducts] = useState<Product[]>([]);
   useEffect(() => {
     const loadHeroProducts = async () => {
-      const { data } = await supabase
+      const productSelect =
+        "id, name, price, original_price, is_featured, average_rating, categories(name), image_url, images";
+
+      let { data } = await supabase
         .from("products")
-        .select("id, name, price, original_price, is_featured, average_rating, categories(name), image_url, images")
+        .select(productSelect)
         .eq("is_active", true)
         .eq("is_featured", true)
         .limit(6);
 
-      if (!data) return;
+      if (!data?.length) {
+        const fallback = await supabase
+          .from("products")
+          .select(productSelect)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(6);
+        data = fallback.data;
+      }
+
+      if (!data?.length) return;
 
       const mapped = data.map((p: {id:string;name:string;price:number;original_price:number|null;average_rating:number|null;categories:{name:string}|null;image_url?:string|null;images?:string[]|null}) => ({
         id: p.id,
@@ -602,21 +615,15 @@ export const HeroSection = () => {
       ref={containerRef}
       className="relative min-h-screen overflow-hidden"
     >
-      {/* ── Full-bleed background image carousel with soft overlay ── */}
-      {/* Like crochet.com - real photos fill the section, text sits above */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Three real crochet photos side by side — each covers 1/3 of the width */}
-        <img src="/images/crochet-1.jpg" alt="" aria-hidden="true"
-          className="absolute top-0 left-0 w-1/3 h-full object-cover" />
-        <img src="/images/crochet-5.jpg" alt="" aria-hidden="true"
-          className="absolute top-0 left-1/3 w-1/3 h-full object-cover" />
-        <img src="/images/crochet-4.jpg" alt="" aria-hidden="true"
-          className="absolute top-0 right-0 w-1/3 h-full object-cover" />
-        {/* Cream gradient overlay — keeps text readable while showing photos */}
-        <div className="absolute inset-0 bg-linear-to-br from-cream-100/82 via-cream-100/72 to-cream-100/80" />
-        {/* Extra fade at the very top for navbar contrast */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-cream-100/70 to-transparent" />
-      </div>
+      {/* Soft baby-pink background — no faded photo overlays */}
+      <div className="absolute inset-0 z-0 pointer-events-none bg-linear-to-br from-baby-50 via-cream-100 to-blush/25" />
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-90"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,220,235,0.45) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 85% 75%, rgba(240,214,245,0.35) 0%, transparent 50%)",
+        }}
+      />
       {/* ── Subtle background decorations ── */}
       <FloatingYarn style={{ top: "8%", left: "3%", opacity: 0.35 }} color="#F4B8C1" />
       <FloatingYarn style={{ top: "15%", right: "5%", opacity: 0.3 }} color="#C9A0DC" />

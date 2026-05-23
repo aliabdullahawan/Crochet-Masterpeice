@@ -99,15 +99,7 @@ export const WishlistDrawer = ({ open, onClose, onOpenCart }: WishlistDrawerProp
                       <Link href={`/user/shop/${item.productId}`} onClick={onClose}
                         className="block relative h-32 overflow-hidden bg-linear-to-br from-cream-50 to-blush/10">
                         {/* Subtle texture */}
-                        <img
-                          src={item.productId === "1" || item.productId === "5" ? "/images/bg-hands-knitting.jpg"
-                            : item.productId === "2" ? "/images/bg-yarn-table.jpg"
-                            : item.productId === "3" ? "/images/bg-crochet-items.jpg"
-                            : "/images/bg-crochet-pink.jpg"}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute inset-0 w-full h-full object-cover opacity-[0.1]"
-                        />
+                        <div className="absolute inset-0 bg-linear-to-br from-blush/35 via-baby to-cream-100" />
                         <div className="absolute inset-0 bg-linear-to-br from-cream-50/90 to-blush/15" />
                         {/* Initial circle */}
                         <div className="absolute inset-0 flex items-center justify-center">

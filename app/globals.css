@@ -4,14 +4,19 @@ layer(base);
 @import 'tailwindcss';
 
 @theme {
-  --color-cream-50: #fffdf7;
-  --color-cream-100: #fff8ed;
-  --color-cream-200: #fff1d6;
-  --color-cream-300: #ffe8b8;
-  --color-cream: #f5edd6;
+  --color-baby-50: #fffafc;
+  --color-baby: #fff0f5;
+  --color-baby-100: #ffe4ef;
+  --color-baby-200: #ffd6e8;
 
-  --color-blush-50: #fff0f3;
-  --color-blush-100: #ffd6de;
+  --color-cream-50: #fffafb;
+  --color-cream-100: #fff5f8;
+  --color-cream-200: #ffeef4;
+  --color-cream-300: #ffe0ec;
+  --color-cream: #f8e8ee;
+
+  --color-blush-50: #fff5f8;
+  --color-blush-100: #ffdce8;
   --color-blush-200: #ffb3c1;
   --color-blush-300: #ff8fa3;
   --color-blush-400: #ff6b87;
@@ -63,10 +68,16 @@ layer(base);
   );
   --background-image-hero-gradient: linear-gradient(
     160deg,
-    #fff8ed 0%,
-    #f5edd6 30%,
-    #f0d6f5 60%,
-    #ffd6de 100%
+    #fffafc 0%,
+    #fff0f5 35%,
+    #ffe4ef 65%,
+    #ffdce8 100%
+  );
+  --background-image-site-soft: linear-gradient(
+    180deg,
+    #fffafc 0%,
+    #fff5f8 45%,
+    #fff0f5 100%
   );
   --background-image-card-gradient: linear-gradient(
     145deg,
@@ -96,7 +107,7 @@ layer(base);
       rgba(201, 160, 220, 0.3) 0%,
       transparent 50%
     ),
-    radial-gradient(circle at 50% 50%, rgba(245, 237, 214, 0.8) 0%, #fff8ed 70%);
+    radial-gradient(circle at 50% 50%, rgba(255, 228, 239, 0.6) 0%, #fff5f8 70%);
 
   --shadow-soft:
     0 4px 20px rgba(184, 130, 42, 0.12), 0 2px 8px rgba(244, 184, 193, 0.2);
@@ -292,11 +303,11 @@ layer(base);
    ============================================= */
 :root {
   /* Brand Colors */
-  --cream-50:   #FFFDF7;
-  --cream-100:  #FFF8ED;
-  --cream-200:  #FFF1D6;
-  --cream-300:  #FFE8B8;
-  --cream:      #F5EDD6;
+  --cream-50:   #FFFAFC;
+  --cream-100:  #FFF5F8;
+  --cream-200:  #FFEEF4;
+  --cream-300:  #FFE0EC;
+  --cream:      #F8E8EE;
 
   --blush-50:   #FFF0F3;
   --blush-100:  #FFD6DE;
@@ -353,7 +364,8 @@ html {
 }
 
 body {
-  background-color: var(--cream-100);
+  background: linear-gradient(180deg, #fffafc 0%, #fff5f8 50%, #fff0f5 100%);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: 'Nunito', sans-serif;
   min-height: 100vh;
@@ -772,9 +784,9 @@ h1, h2, h3, h4 {
   background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EE 40%, #FFF8ED 100%);
 }
 
-/* Random stock image overlays for page sections */
-.section-texture-1 { background-image: url("/images/bg-yarn-table.jpg"); background-size: cover; background-position: center; }
-.section-texture-2 { background-image: url("/images/bg-hands-knitting.jpg"); background-size: cover; background-position: center; }
+/* Soft pink section backgrounds (no stock photos) */
+.section-texture-1 { background: linear-gradient(135deg, #fffafc 0%, #ffe4ef 50%, #fff5f8 100%); }
+.section-texture-2 { background: linear-gradient(135deg, #fff0f5 0%, #ffd6e8 40%, #fffafc 100%); }
 
 /* Richer pink button */
 .btn-pink {

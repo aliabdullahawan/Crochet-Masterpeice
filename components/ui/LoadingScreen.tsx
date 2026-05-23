@@ -160,7 +160,7 @@ export const LoadingScreen = ({
           className="fixed inset-0 z-9999 flex flex-col items-center justify-center overflow-hidden"
           style={{
             background:
-              "radial-gradient(ellipse at 30% 40%, rgba(244,184,193,0.25) 0%, transparent 55%), radial-gradient(ellipse at 70% 60%, rgba(201,160,220,0.18) 0%, transparent 50%), #FFF8ED",
+              "radial-gradient(ellipse at 30% 40%, rgba(255,220,235,0.4) 0%, transparent 55%), radial-gradient(ellipse at 70% 60%, rgba(255,228,239,0.35) 0%, transparent 50%), #fff5f8",
           }}
         >
           <FloatingYarnBalls />

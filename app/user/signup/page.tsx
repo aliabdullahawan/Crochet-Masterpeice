@@ -173,9 +173,8 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background orbs */}
-      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-blush/15 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-mauve/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-blush/25 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-baby-200/40 blur-3xl pointer-events-none" />
 
       <div
         className={cn(

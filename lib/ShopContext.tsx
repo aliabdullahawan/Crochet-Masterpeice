@@ -3,45 +3,15 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
+import {
+  adoptGuestShopStateForUser,
+  getShopStorageKeys,
+  GUEST_STORAGE_OWNER,
+} from "@/lib/cartStorage";
 
-/* =============================================
-   TYPES
-   ============================================= */
-export interface CartItem {
-  id: string;
-  productId: string;
-  name: string;
-  price: number;
-  original_price?: number;
-  category: string;
-  category_id?: string;
-  stock_quantity?: number;
-  quantity: number;
-  emoji: string;
-}
+import type { AppliedCoupon, CartItem, WishlistItem } from "@/lib/shopTypes";
 
-export interface WishlistItem {
-  id: string;
-  productId: string;
-  name: string;
-  price: number;
-  original_price?: number;
-  category: string;
-  category_id?: string;
-  average_rating: number;
-  review_count: number;
-  discount_percent?: number;
-  is_featured?: boolean;
-  emoji: string;
-}
-
-export interface AppliedCoupon {
-  code: string;
-  discountType: "percent" | "flat";
-  discountValue: number;
-  appliesTo: "all" | "product" | "category" | "cart";
-  targetId?: string | null;
-}
+export type { AppliedCoupon, CartItem, WishlistItem } from "@/lib/shopTypes";
 
 interface ShopContextType {
   // Cart
@@ -94,12 +64,9 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [appliedCoupon, setAppliedCouponState] = useState<AppliedCoupon | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const prevStorageOwnerRef = React.useRef<string | null>(null);
 
-  const getStorageKeys = useCallback((id: string) => ({
-    cart: `cm_cart_${id}`,
-    wishlist: `cm_wishlist_${id}`,
-    coupon: `cm_coupon_${id}`,
-  }), []);
+  const getStorageKeys = useCallback((id: string) => getShopStorageKeys(id), []);
 
   // Remove old shared keys to avoid cross-account leaks from legacy storage.
   useEffect(() => {
@@ -110,20 +77,37 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
   // Load user-scoped state after auth changes.
   useEffect(() => {
     const hydrateForUser = async () => {
-      // Reset immediately to avoid showing previous account state.
+      if (typeof window === "undefined") return;
+
+      const prevOwner = prevStorageOwnerRef.current;
+      const loggingInFromGuest =
+        prevOwner === GUEST_STORAGE_OWNER &&
+        storageOwnerId !== GUEST_STORAGE_OWNER;
+
+      prevStorageOwnerRef.current = storageOwnerId;
+
       setHydrated(false);
       setCartItems([]);
       setWishlistItems([]);
       setAppliedCouponState(null);
 
-      if (typeof window === "undefined") return;
-
       const keys = getStorageKeys(storageOwnerId);
 
       try {
-        const cart = JSON.parse(localStorage.getItem(keys.cart) ?? "[]") as CartItem[];
-        const wish = JSON.parse(localStorage.getItem(keys.wishlist) ?? "[]") as WishlistItem[];
-        const coupon = JSON.parse(localStorage.getItem(keys.coupon) ?? "null");
+        let cart: CartItem[];
+        let wish: WishlistItem[];
+        let coupon: AppliedCoupon | null;
+
+        if (loggingInFromGuest) {
+          const adopted = adoptGuestShopStateForUser(storageOwnerId);
+          cart = adopted.cart;
+          wish = adopted.wishlist;
+          coupon = adopted.coupon;
+        } else {
+          cart = JSON.parse(localStorage.getItem(keys.cart) ?? "[]") as CartItem[];
+          wish = JSON.parse(localStorage.getItem(keys.wishlist) ?? "[]") as WishlistItem[];
+          coupon = JSON.parse(localStorage.getItem(keys.coupon) ?? "null");
+        }
 
         const missingIds = Array.from(new Set([
           ...cart.filter((i) => !i.category_id).map((i) => i.productId),

@@ -15,7 +15,8 @@ import { useShop } from "@/lib/ShopContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { getHiddenReviewIdSet, isReviewHiddenByModeration } from "@/lib/reviewModeration";
-import { parseDiscountCodesFromSearch, productMatchesDiscountCodes, type ShopDiscount } from "@/lib/shopDiscounts";
+import { parseDiscountCodesFromSearch, productMatchesDiscountCodes, discountScopeLabel, type ShopDiscount } from "@/lib/shopDiscounts";
+import { DiscountFilterDrawer } from "@/components/shop/DiscountFilterDrawer";
 import { ShopHeroBanner } from "@/components/shop/ShopHeroBanner";
 import { ShopGridSkeleton } from "@/components/ui/Skeleton";
 import { useRouter } from "next/navigation";
@@ -133,9 +134,8 @@ const ShopCard = ({ product }: { product: Product }) => {
               {product.image_url ? (
                 <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
               ) : (
-                <img src="/images/crochet-1.jpg" alt="" aria-hidden="true" className="w-full h-full object-cover opacity-[0.35]" />
+                <div className="absolute inset-0 bg-linear-to-br from-blush/35 via-baby to-cream-100" />
               )}
-              <div className="absolute inset-0 bg-linear-to-br from-cream-50/95 via-blush/10 to-cream-100/90" />
             </div>
 
             {/* Clickable link — z-10 */}
@@ -356,7 +356,7 @@ const FilterPanel = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="block truncate">{d.code}</span>
-                      <span className="block text-[10px] text-ink-light/45 truncate">{d.label}</span>
+                      <span className="block text-[10px] text-ink-light/45 truncate">{discountScopeLabel(d)}</span>
                     </div>
                     {isCartOnly ? (
                       <span className="text-[10px] text-ink-light/45">Cart only · {valueLabel}</span>
@@ -456,6 +456,7 @@ function ShopContent() {
     })
   );
   const [filterOpen, setFilterOpen] = useState(false);
+  const [discountDrawerOpen, setDiscountDrawerOpen] = useState(false);
   const [grid, setGrid] = useState(true);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -750,21 +751,16 @@ function ShopContent() {
   };
   const activeCount = [!!cat, featured, discounted, selectedDiscountCodes.length > 0, price[0] > 0 || price[1] < 10000].filter(Boolean).length;
 
-  const appliedDiscountLabels = selectedDiscountCodes.map(
-    (code) => shopDiscounts.find((d) => d.code === code)?.code ?? code
-  );
+  const selectedDiscountDetails = selectedDiscountCodes
+    .map((code) => shopDiscounts.find((d) => d.code === code))
+    .filter((d): d is ShopDiscount => Boolean(d));
 
   return (
     <div className="min-h-screen bg-cream-100">
       <Navbar />
       <ShopHeroBanner />
       <div className="relative pt-20 pb-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Real crochet photo backgrounds */}
-        <div className="absolute inset-0 pointer-events-none">
-          <img src="/images/crochet-6.jpg" alt="" aria-hidden="true" className="absolute top-0 right-0 w-2/5 h-full object-cover opacity-[0.18]" />
-          <img src="/images/crochet-2.jpg" alt="" aria-hidden="true" className="absolute top-0 left-0 w-1/3 h-full object-cover opacity-[0.12]" />
-          <div className="absolute inset-0 bg-linear-to-br from-cream-100/90 via-cream-100/80 to-cream-100/90" />
-        </div>
+        <div className="absolute inset-0 pointer-events-none bg-linear-to-b from-baby-50/80 via-cream-100/60 to-cream-100" />
         <div className="max-w-7xl mx-auto text-center">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl sm:text-4xl font-semibold text-ink-dark mb-5">Our Shop</motion.h1>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex justify-center">
@@ -825,22 +821,30 @@ function ShopContent() {
                     key={d.id}
                     type="button"
                     onClick={() => toggleDiscountCode(d.code)}
-                    title={`${d.code} · ${d.label}`}
+                    title={`${d.code} · ${discountScopeLabel(d)}`}
                     className={cn(
-                      "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border transition-all btn-bubble",
+                      "inline-flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 px-3 py-1.5 rounded-2xl text-[11px] font-sans font-semibold border transition-all btn-bubble text-left sm:text-center",
                       selected
                         ? "bg-caramel/15 border-caramel/30 text-caramel"
                         : "border-caramel/15 text-ink-light/70 hover:border-caramel/40"
                     )}
                   >
-                    <Tag className="w-3 h-3" />
-                    <span>{d.code}</span>
-                    <span className={cn("text-[10px]", selected ? "text-caramel/80" : "text-ink-light/50")}>
-                      {valueLabel}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Tag className="w-3 h-3 shrink-0" />
+                      <span className="font-bold">{d.code}</span>
+                      <span className={cn(selected ? "text-caramel/80" : "text-ink-light/50")}>{valueLabel}</span>
                     </span>
+                    <span className="text-[9px] font-normal text-ink-light/55 sm:ml-0">{discountScopeLabel(d)}</span>
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setDiscountDrawerOpen(true)}
+                className="px-3 py-1.5 rounded-full text-[11px] font-sans font-semibold border border-caramel/25 text-caramel hover:bg-caramel/10"
+              >
+                All discounts →
+              </button>
               {selectedDiscountCodes.length > 0 && (
                 <button
                   type="button"
@@ -857,19 +861,20 @@ function ShopContent() {
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-wrap justify-center gap-2 mt-4">
                 {featured && <span className="flex items-center gap-1.5 bg-mauve/15 border border-mauve/25 text-mauve px-3 py-1 rounded-full text-xs font-sans font-semibold"><Sparkles className="w-3 h-3" /> Featured <button onClick={() => setFeatured(false)}><X className="w-3 h-3" /></button></span>}
                 {discounted && <span className="flex items-center gap-1.5 bg-caramel/12 border border-caramel/25 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold"><Tag className="w-3 h-3" /> On Sale <button onClick={() => setDiscounted(false)}><X className="w-3 h-3" /></button></span>}
-                {appliedDiscountLabels.map((code) => (
-                  <span key={code} className="flex items-center gap-1.5 bg-caramel/12 border border-caramel/25 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold">
-                    <Tag className="w-3 h-3" /> {code}
-                    <button type="button" onClick={() => handleDiscountCodesChange(selectedDiscountCodes.filter((c) => c !== code))}><X className="w-3 h-3" /></button>
+                {selectedDiscountDetails.map((d) => (
+                  <span key={d.code} className="flex items-center gap-1.5 bg-caramel/12 border border-caramel/25 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold max-w-full">
+                    <Tag className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{d.code} · {discountScopeLabel(d)}</span>
+                    <button type="button" onClick={() => handleDiscountCodesChange(selectedDiscountCodes.filter((c) => c !== d.code))}><X className="w-3 h-3" /></button>
                   </span>
                 ))}
                 {cat && <span className="flex items-center gap-1.5 bg-blush/15 border border-blush/30 text-caramel px-3 py-1 rounded-full text-xs font-sans font-semibold">{selectedCategory?.name ?? cat} <button onClick={() => setCat("")}><X className="w-3 h-3" /></button></span>}
               </motion.div>
             )}
           </AnimatePresence>
-          {selectedDiscountCodes.length > 0 && (
-            <p className="mt-3 text-xs text-caramel font-sans font-semibold">
-              Showing products with {selectedDiscountCodes.length === 1 ? "discount" : "discounts"}: {selectedDiscountCodes.join(", ")}
+          {selectedDiscountDetails.length > 0 && (
+            <p className="mt-3 text-xs text-caramel font-sans font-semibold max-w-2xl mx-auto">
+              Filtering by {selectedDiscountDetails.map((d) => `${d.code} (${discountScopeLabel(d)})`).join(" · ")}
             </p>
           )}
         </div>
@@ -888,8 +893,16 @@ function ShopContent() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
               <p className="text-sm text-ink-light/70 font-sans"><span className="font-semibold text-ink">{results.length}</span> products{query && <> for <span className="text-caramel font-semibold">&ldquo;{query}&rdquo;</span></>}</p>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setFilterOpen(true)} className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm font-sans font-semibold text-ink btn-bubble">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button type="button" onClick={() => setDiscountDrawerOpen(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm font-sans font-semibold text-ink btn-bubble">
+                  <Tag className="w-3.5 h-3.5 text-caramel" /> Discounts
+                  {selectedDiscountCodes.length > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-linear-to-br from-caramel to-rose text-white text-[10px] font-bold flex items-center justify-center">
+                      {selectedDiscountCodes.length}
+                    </span>
+                  )}
+                </button>
+                <button type="button" onClick={() => setFilterOpen(true)} className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border border-caramel/20 bg-white/80 text-sm font-sans font-semibold text-ink btn-bubble">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-caramel" /> Filters
                   {activeCount > 0 && <span className="w-5 h-5 rounded-full bg-linear-to-br from-caramel to-rose text-white text-[10px] font-bold flex items-center justify-center">{activeCount}</span>}
                 </button>
@@ -919,6 +932,15 @@ function ShopContent() {
           </div>
         </div>
       </div>
+
+      <DiscountFilterDrawer
+        open={discountDrawerOpen}
+        onClose={() => setDiscountDrawerOpen(false)}
+        discounts={shopNowDiscounts}
+        selectedCodes={selectedDiscountCodes}
+        onToggleCode={toggleDiscountCode}
+        onClear={() => handleDiscountCodesChange([])}
+      />
 
       {/* Mobile filter drawer */}
       <AnimatePresence>
