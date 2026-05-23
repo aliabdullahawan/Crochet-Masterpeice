@@ -900,13 +900,13 @@ export default function AdminProductsPage() {
                     onToggle={async () => {
                       const newVal = !p.is_active;
                       const { error } = await supabase.from("products").update({ is_active: newVal } as unknown as never).eq("id", p.id);
-                      if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_active: newVal } : pr));
+                      if (!error) mutate();
                       else alert("Update failed: " + error.message);
                     }}
                     onToggleFeatured={async () => {
                       const newVal = !p.is_featured;
                       const { error } = await supabase.from("products").update({ is_featured: newVal } as unknown as never).eq("id", p.id);
-                      if (!error) setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, is_featured: newVal } : pr));
+                      if (!error) mutate();
                       else alert("Update failed: " + error.message);
                     }}
                   />
@@ -950,7 +950,7 @@ export default function AdminProductsPage() {
                 <button onClick={() => { (async () => {
       const { error } = await supabase.from("products").delete().eq("id", delId!);
       if (error) { alert("Delete failed: " + error.message); return; }
-      setProducts(p => p.filter(pr => pr.id !== delId));
+      mutate();
     })(); setDelId(null); }}
                   className="flex-1 py-2.5 rounded-2xl bg-red-400 text-white font-sans font-bold text-sm hover:bg-red-500 transition-all btn-bubble">Delete</button>
               </div>
