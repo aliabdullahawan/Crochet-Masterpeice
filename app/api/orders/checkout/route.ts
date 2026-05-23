@@ -66,13 +66,20 @@ async function notifyAdminPanel(
   const title = isCustomOrder ? `New custom order ${readableOrder}` : `New order ${readableOrder}`;
   const message = `${customerName} (${customerEmail}) submitted a ${isCustomOrder ? "custom" : "shop"} order — PKR ${totalAmount.toLocaleString()}. Review in admin.`;
 
-  await adminDb.from("admin_notifications").insert({
+  const { error } = await adminDb.from("admin_notifications").insert({
     type: "order",
     title,
     message,
     link: "/admin/orders",
     meta: orderId,
   });
+
+  if (error) {
+    console.error("[checkout] admin_notifications insert failed:", error.message, {
+      orderId,
+      hint: "Ensure ADD_ADMIN_NOTIFICATIONS.sql ran and SUPABASE_SERVICE_ROLE_KEY is set on the server.",
+    });
+  }
 }
 
 export async function POST(req: Request) {

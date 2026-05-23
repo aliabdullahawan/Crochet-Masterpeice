@@ -8,6 +8,7 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, Sparkles } from "lucide-r
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signInWithEmail, signInWithGoogle, supabase } from "@/lib/supabase";
+import { describeAuthError } from "@/lib/authErrors";
 import { useAuth } from "@/lib/AuthContext";
 import { startAdminSession, isAdminSessionValid, clearAdminSession } from "@/lib/adminSession";
 
@@ -139,18 +140,7 @@ export default function LoginPage() {
     const { error } = await signInWithEmail(email.trim(), password, rememberMe);
     setLoading(false);
     if (error) {
-      const msg = error.message.toLowerCase();
-      if (msg.includes("email not confirmed")) {
-        setErrors({ general: "Email not confirmed — go to your Supabase dashboard → Auth → Providers → Email → disable Confirm email → Save." });
-      } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("wrong")) {
-        setErrors({ general: "Wrong email or password. Please check and try again." });
-      } else if (msg.includes("too many") || msg.includes("rate")) {
-        setErrors({ general: "Too many attempts. Please wait a minute and try again." });
-      } else if (msg.includes("not found") || msg.includes("no user")) {
-        setErrors({ general: "No account found. Please sign up first." });
-      } else {
-        setErrors({ general: `Login failed: ${error.message}` });
-      }
+      setErrors({ general: describeAuthError(error.message, "login") });
     } else {
       router.replace(redirectTo);
     }

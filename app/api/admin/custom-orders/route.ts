@@ -92,6 +92,18 @@ export async function PATCH(req: Request) {
           .from("orders")
           .update({ status: "cancelled", cancellation_reason: "Custom order rejected by admin" } as never)
           .eq("id", row.linked_order_id);
+
+        const orderRef = `#${row.linked_order_id.slice(0, 6).toUpperCase()}`;
+        if (row.user_id) {
+          await service.from("notifications").insert({
+            user_id: row.user_id,
+            type: "order_update",
+            title: "Custom order declined",
+            message: `We could not fulfill your custom request (${row.category}) for order ${orderRef}. Contact us on WhatsApp if you have questions.`,
+            link: `/user/orders/${row.linked_order_id}`,
+            meta: orderRef,
+          } as never);
+        }
       }
 
       return NextResponse.json({ ok: true, rejected: true });

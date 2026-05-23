@@ -1,6 +1,7 @@
 "use client";
 
 import { signUpWithEmail, signInWithGoogle } from "@/lib/supabase";
+import { describeAuthError } from "@/lib/authErrors";
 import { useAuth } from "@/lib/AuthContext";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
@@ -142,17 +143,14 @@ export default function SignupPage() {
         form.phone || undefined
       );
       if (error) {
-        const msg = error.message;
-        if (msg.includes("already") || msg.includes("registered") || msg.includes("User already registered")) {
-          // Auto-redirect to login after 2 seconds
+        const friendly = describeAuthError(error.message, "signup");
+        if (error.message.toLowerCase().includes("already") || error.message.toLowerCase().includes("registered")) {
           setErrors({ email: "✓ This email is already registered. Redirecting to login..." });
           setTimeout(() => { router.replace("/user/login?email=" + encodeURIComponent(form.email.trim())); }, 1800);
-        } else if (msg.includes("password")) {
-          setErrors({ confirmPassword: "Password must be at least 6 characters." });
-        } else if (msg.includes("rate") || msg.includes("too many")) {
-          setErrors({ email: "Too many attempts. Please wait a moment and try again." });
+        } else if (error.message.toLowerCase().includes("password")) {
+          setErrors({ password: friendly });
         } else {
-          setErrors({ email: `Signup error: ${msg}` });
+          setErrors({ general: friendly });
         }
         return;
       }
@@ -181,7 +179,7 @@ export default function SignupPage() {
 
       <div
         className={cn(
-          "w-full max-w-lg relative z-10 transition-all duration-700",
+          "w-full max-w-2xl relative z-10 transition-all duration-700",
           animationPhase >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
         )}
       >
@@ -203,6 +201,11 @@ export default function SignupPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="px-8 py-6 space-y-4">
+            {errors.general && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-xs text-red-600 font-sans">
+                {errors.general}
+              </div>
+            )}
             {/* Avatar */}
             <div
               className={cn(

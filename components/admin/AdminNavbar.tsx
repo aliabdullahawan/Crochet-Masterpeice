@@ -318,8 +318,9 @@ export const AdminNavbar = () => {
             {/* Right: notifications + profile */}
             <div className="flex items-center gap-2">
               {/* View user site */}
-              <Link href="/" target="_blank"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-sans font-semibold text-ink-light/60 hover:text-caramel hover:bg-caramel/8 transition-all btn-bubble">
+              <Link href="/user/home?store=1" target="_blank" rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-sans font-semibold text-ink-light/60 hover:text-caramel hover:bg-caramel/8 transition-all btn-bubble"
+                title="Open customer storefront (admin stays in this tab)">
                 <ExternalLink className="w-3 h-3" /> View Site
               </Link>
 

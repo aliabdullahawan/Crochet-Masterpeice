@@ -384,42 +384,18 @@ export default function AdminOrdersPage() {
 
     const shouldDeductStock = status === "shipped" && current.status !== "shipped" && current.status !== "delivered";
 
-    const { error } = await supabase.from("orders").update({ status } as unknown as never).eq("id", id);
-    if (error) { alert("Status update failed: " + error.message); return; }
-
-    const timestampColumnByStatus: Partial<Record<OrderStatus, string>> = {
-      confirmed: "confirmed_at",
-      processing: "processing_at",
-      shipped: "shipped_at",
-      delivered: "delivered_at",
-      cancelled: "cancelled_at",
-    };
-    const timestampColumn = timestampColumnByStatus[status];
-    if (timestampColumn) {
-      await supabase.from("orders").update({ [timestampColumn]: new Date().toISOString() } as unknown as never).eq("id", id);
+    const res = await fetch("/api/admin/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert("Status update failed: " + (body?.error || "Unknown error"));
+      return;
     }
-
-    await supabase.from("order_status_history").insert({
-      order_id: id,
-      from_status: current.status,
-      to_status: status,
-      changed_by: "admin",
-    } as unknown as never);
-
-    const notifyUserId = await resolveOrderUserId(current);
-    if (notifyUserId) {
-      await fetch("/api/admin/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: notifyUserId,
-          type: "order_update",
-          title: `Order ${STATUS_CFG[status].label}`,
-          message: `Your order ${formatOrderId(id)} is now ${STATUS_CFG[status].label.toLowerCase()}.`,
-          link: `/user/orders/${id}`,
-          meta: formatOrderId(id),
-        }),
-      });
+    if (body?.notify_error) {
+      console.warn("[orders] Customer notification failed:", body.notify_error);
     }
 
     if (shouldDeductStock) {

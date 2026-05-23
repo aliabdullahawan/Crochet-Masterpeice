@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase";
+import { orderStatusUserNotification } from "@/lib/orderNotifications";
 
 type OrderRow = {
   id: string;
@@ -23,6 +24,17 @@ type ItemRow = {
   quantity: number;
   unit_price: number;
 };
+
+const ORDER_STATUS = new Set([
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+]);
+
+const formatOrderId = (id: string) => `#${id.slice(0, 6).toUpperCase()}`;
 
 export async function GET(req: Request) {
   try {
@@ -49,7 +61,7 @@ export async function GET(req: Request) {
     const orders = (ordersData ?? []) as OrderRow[];
     const orderIds = orders.map((order) => order.id);
 
-    let itemsByOrder = new Map<string, ItemRow[]>();
+    const itemsByOrder = new Map<string, ItemRow[]>();
     if (orderIds.length) {
       const { data: itemsData, error: itemsError } = await service
         .from("order_items")
@@ -60,11 +72,11 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: itemsError.message }, { status: 500 });
       }
 
-      const rows = (itemsData ?? []) as ItemRow[];
-      rows.forEach((row) => {
-        const list = itemsByOrder.get(row.order_id) ?? [];
-        list.push(row);
-        itemsByOrder.set(row.order_id, list);
+      (itemsData ?? []).forEach((row) => {
+        const item = row as ItemRow;
+        const list = itemsByOrder.get(item.order_id) ?? [];
+        list.push(item);
+        itemsByOrder.set(item.order_id, list);
       });
     }
 
@@ -126,21 +138,123 @@ export async function PATCH(req: Request) {
   try {
     const body = (await req.json()) as {
       id?: string;
+      status?: string;
       return_status?: string;
       return_reason?: string;
     };
 
     const id = String(body.id ?? "").trim();
+    const nextStatus = String(body.status ?? "").trim().toLowerCase();
     const returnStatus = String(body.return_status ?? "").trim().toLowerCase();
 
     if (!id) {
       return NextResponse.json({ error: "Order id is required" }, { status: 400 });
     }
+
+    const service = createServiceClient();
+
+    if (nextStatus) {
+      if (!ORDER_STATUS.has(nextStatus)) {
+        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+      }
+
+      const { data: orderRow, error: orderError } = await service
+        .from("orders")
+        .select("id, status, user_id, customer_email")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (orderError) {
+        return NextResponse.json({ error: orderError.message }, { status: 500 });
+      }
+
+      const order = orderRow as {
+        id: string;
+        status: string | null;
+        user_id: string | null;
+        customer_email: string | null;
+      } | null;
+
+      if (!order) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+
+      if (order.status !== nextStatus) {
+        const { error: updateError } = await service
+          .from("orders")
+          .update({ status: nextStatus } as never)
+          .eq("id", id);
+
+        if (updateError) {
+          return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+
+        const timestampColumnByStatus: Partial<Record<string, string>> = {
+          confirmed: "confirmed_at",
+          processing: "processing_at",
+          shipped: "shipped_at",
+          delivered: "delivered_at",
+          cancelled: "cancelled_at",
+        };
+        const timestampColumn = timestampColumnByStatus[nextStatus];
+        if (timestampColumn) {
+          await service
+            .from("orders")
+            .update({ [timestampColumn]: new Date().toISOString() } as never)
+            .eq("id", id);
+        }
+
+        await service.from("order_status_history").insert({
+          order_id: id,
+          from_status: order.status,
+          to_status: nextStatus,
+          changed_by: "admin",
+        } as never);
+      }
+
+      let notifyUserId = order.user_id;
+      if (!notifyUserId && order.customer_email) {
+        const { data: userRow } = await service
+          .from("users")
+          .select("id")
+          .eq("email", order.customer_email)
+          .maybeSingle();
+
+        notifyUserId = (userRow as { id: string } | null)?.id ?? null;
+        if (notifyUserId) {
+          await service.from("orders").update({ user_id: notifyUserId } as never).eq("id", id);
+        }
+      }
+
+      let notifyError: string | null = null;
+      if (notifyUserId) {
+        const ref = formatOrderId(id);
+        const copy = orderStatusUserNotification(nextStatus, ref);
+        const { error: notifError } = await service.from("notifications").insert({
+          user_id: notifyUserId,
+          type: "order_update",
+          title: copy.title,
+          message: copy.message,
+          link: `/user/orders/${id}`,
+          meta: ref,
+        } as never);
+
+        if (notifError) {
+          notifyError = notifError.message;
+          console.error("[admin/orders] user notification failed:", notifError.message);
+        }
+      }
+
+      return NextResponse.json({ ok: true, status: nextStatus, notify_error: notifyError });
+    }
+
+    if (!returnStatus) {
+      return NextResponse.json({ error: "status or return_status is required" }, { status: 400 });
+    }
     if (!["none", "pending", "confirmed"].includes(returnStatus)) {
       return NextResponse.json({ error: "Invalid return_status" }, { status: 400 });
     }
 
-    const service = createServiceClient();
     const patch: Record<string, string | null> = { return_status: returnStatus };
 
     if (returnStatus === "pending") {
